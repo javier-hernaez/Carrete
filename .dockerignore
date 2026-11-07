@@ -1,0 +1,15 @@
+**/.git
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.coverage
+**/coverage
+web/dist
+android
+docs
+.env
+deploy/.env
+*.md
+!web/**/*.md

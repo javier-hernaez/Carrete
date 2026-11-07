@@ -1,0 +1,37 @@
+# Secretos y datos: nunca en git
+.env
+deploy/.env
+*.dump
+datos/
+copias/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+.venv/
+
+# Web
+node_modules/
+web/dist/
+web/coverage/
+*.tsbuildinfo
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+
+# Editores y sistema
+.idea/
+.vscode/
+.DS_Store
