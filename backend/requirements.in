@@ -10,3 +10,4 @@ pyotp
 cryptography
 pyvips
 segno
+webauthn
