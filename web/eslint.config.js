@@ -21,6 +21,7 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       "no-console": ["error", { allow: ["warn", "error"] }],
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
     },
   },
   {

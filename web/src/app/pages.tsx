@@ -7,6 +7,7 @@ import { Icon, type IconName } from "../design-system/components/Icon";
 import { cx } from "../design-system/cx";
 import { t, type MessageKey } from "../i18n";
 import styles from "./pages.module.css";
+import { useSession } from "./session";
 
 export function PhotosPage() {
   return <EmptyState title={t("photos.empty.title")}>{t("photos.empty.text")}</EmptyState>;
@@ -28,31 +29,50 @@ export function UploadPage() {
   return <EmptyState title={t("upload.soon.title")}>{t("upload.soon.text")}</EmptyState>;
 }
 
-const MORE: { label: MessageKey; icon: IconName }[] = [
+interface MoreItem {
+  label: MessageKey;
+  icon: IconName;
+  to?: string;
+  adminOnly?: boolean;
+}
+
+const MORE: MoreItem[] = [
   { label: "more.duplicates", icon: "duplicates" },
   { label: "more.discarded", icon: "discarded" },
   { label: "more.trash", icon: "trash" },
   { label: "more.export", icon: "export" },
   { label: "more.activity", icon: "activity" },
-  { label: "more.settings", icon: "settings" },
-  { label: "more.admin", icon: "admin" },
+  { label: "more.space", icon: "albums", to: "/espacio" },
+  { label: "more.settings", icon: "settings", to: "/ajustes" },
+  { label: "more.admin", icon: "admin", to: "/admin", adminOnly: true },
 ];
 
 export function MorePage() {
   const info = useQuery({ queryKey: ["info"], queryFn: api.info, staleTime: Infinity });
+  const { me } = useSession();
   return (
     <section className={styles.more} aria-labelledby="more-title">
       <h1 id="more-title" className={styles.title}>
         {t("more.title")}
       </h1>
       <ul className={styles.list}>
-        {MORE.map((item) => (
-          <li key={item.label} className={styles.item}>
-            <Icon name={item.icon} />
-            <span className={styles.itemText}>{t(item.label)}</span>
-            <span className={styles.badge}>{t("more.soon")}</span>
-          </li>
-        ))}
+        {MORE.filter((item) => !item.adminOnly || me.is_admin).map((item) =>
+          item.to ? (
+            <li key={item.label}>
+              <Link to={item.to} className={cx(styles.item, styles.itemLink)}>
+                <Icon name={item.icon} />
+                <span className={styles.itemText}>{t(item.label)}</span>
+                <Icon name="chevron" size={20} />
+              </Link>
+            </li>
+          ) : (
+            <li key={item.label} className={styles.item}>
+              <Icon name={item.icon} />
+              <span className={styles.itemText}>{t(item.label)}</span>
+              <span className={styles.badge}>{t("more.soon")}</span>
+            </li>
+          ),
+        )}
       </ul>
       {info.data && <p className={styles.version}>{t("more.version", { version: info.data.version })}</p>}
     </section>

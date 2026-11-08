@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router";
 
 import { api } from "../api/client";
@@ -7,6 +8,9 @@ import { Logo } from "../design-system/components/Logo";
 import { cx } from "../design-system/cx";
 import { t, type MessageKey } from "../i18n";
 import styles from "./AppShell.module.css";
+import { useSession } from "./session";
+import { applyTheme } from "./theme";
+import { SpaceSwitcher } from "./SpaceSwitcher";
 
 interface NavItem {
   to: string;
@@ -28,6 +32,11 @@ const NAV: NavItem[] = [
  */
 export function AppShell() {
   const info = useQuery({ queryKey: ["info"], queryFn: api.info, staleTime: Infinity });
+  const { me } = useSession();
+  const theme = me.preferences.theme as string | undefined;
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
   const items = NAV.filter((item) => item.to !== "/mapa" || info.data?.map_enabled === true);
 
   return (
@@ -37,9 +46,12 @@ export function AppShell() {
       </a>
 
       <header className={styles.header}>
-        <NavLink to="/" className={cx(styles.brand)} aria-label={t("app.name")}>
-          <Logo />
-        </NavLink>
+        <div className={styles.headerStart}>
+          <NavLink to="/" className={cx(styles.brand)} aria-label={t("app.name")}>
+            <Logo />
+          </NavLink>
+          <SpaceSwitcher />
+        </div>
         <NavLink to="/subir" className={cx(styles.uploadHeader)}>
           <Icon name="upload" size={20} />
           <span>{t("action.upload")}</span>

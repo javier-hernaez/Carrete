@@ -26,6 +26,7 @@ export const es = {
   "more.trash": "Papelera",
   "more.export": "Exportar",
   "more.activity": "Actividad",
+  "more.space": "Espacio y miembros",
   "more.settings": "Ajustes",
   "more.admin": "Administración",
   "more.soon": "Pronto",
