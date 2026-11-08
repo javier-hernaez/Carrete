@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.observability import request_id_var
+from app.services.errors import RateLimited, ServiceError
 
 log = logging.getLogger(__name__)
 
@@ -58,12 +59,21 @@ async def _validation_exception(_: Request, exc: Exception) -> JSONResponse:
     return problem(422, "Los datos enviados no son válidos", extra={"errors": errors})
 
 
+async def _service_exception(_: Request, exc: Exception) -> JSONResponse:
+    assert isinstance(exc, ServiceError)
+    headers = None
+    if isinstance(exc, RateLimited) and "retry_after" in exc.extra:
+        headers = {"Retry-After": str(exc.extra["retry_after"])}
+    return problem(exc.status, exc.message, extra={"code": exc.code, **exc.extra}, headers=headers)
+
+
 async def _unhandled_exception(_: Request, exc: Exception) -> JSONResponse:
     log.exception("Error no controlado", exc_info=exc)
     return problem(500, "Algo ha fallado en el servidor. Se ha registrado el error.")
 
 
 def install_error_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(ServiceError, _service_exception)
     app.add_exception_handler(StarletteHTTPException, _http_exception)
     app.add_exception_handler(RequestValidationError, _validation_exception)
     app.add_exception_handler(Exception, _unhandled_exception)

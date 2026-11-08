@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.jobs import queue
 from app.jobs import tasks as _tasks  # noqa: F401  # registra los manejadores
+from app.security import ratelimit
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +91,8 @@ class Worker:
         self._last_maintenance = now
         with self.sessions() as session:
             requeued = queue.requeue_stale(session, STALE_AFTER)
+            ratelimit.purge_old(session)
+            session.commit()
         if requeued:
             log.warning("Tareas abandonadas devueltas a la cola", extra={"count": requeued})
 
