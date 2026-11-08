@@ -29,6 +29,8 @@ ignore = [
   "S101",  # assert en pruebas
   "B008",  # Depends() en argumentos por defecto es el estilo de FastAPI
   "PLC0415",
+  "PLR0917",  # rutas de FastAPI: los parámetros son dependencias inyectadas
+  "N818",     # excepciones de dominio con nombres cortos (NotFound, Forbidden…)
 ]
 
 [tool.ruff.lint.per-file-ignores]

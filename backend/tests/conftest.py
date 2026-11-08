@@ -77,7 +77,32 @@ def sessions(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 
+def make_client(settings: Settings, engine: Engine | object) -> TestClient:
+    """Cliente que se comporta como la web: origen público por HTTPS y cabecera anti-CSRF."""
+    return TestClient(
+        create_app(settings, engine),  # type: ignore[arg-type]
+        base_url=settings.public_url,
+        headers={"Origin": settings.public_origin, "X-Carrete-Request": "1"},
+    )
+
+
 @pytest.fixture
 def client(settings: Settings, engine: Engine) -> Iterator[TestClient]:
-    with TestClient(create_app(settings, engine)) as test_client:
+    with make_client(settings, engine) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def new_client(settings: Settings, engine: Engine):  # type: ignore[no-untyped-def]
+    """Fábrica de clientes adicionales (otra persona, otro navegador) contra la misma base de datos."""
+    clients: list[TestClient] = []
+
+    def factory() -> TestClient:
+        c = make_client(settings, engine)
+        c.__enter__()
+        clients.append(c)
+        return c
+
+    yield factory
+    for c in clients:
+        c.__exit__(None, None, None)

@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     )
 
     require_2fa: bool = True
+    # Código del asistente inicial. Si no se define, se genera uno y se imprime en el registro.
+    setup_token: SecretStr | None = None
     max_upload_bytes: int = Field(default=10 * GIB, gt=0)
     min_free_bytes: int = Field(default=20 * GB, ge=0)
     map_style_url: str | None = None
@@ -115,6 +117,11 @@ class Settings(BaseSettings):
         """Origen exacto (esquema, equipo y puerto) que se exige en la cabecera Origin."""
         parts = urlsplit(self.public_url)
         return f"{parts.scheme}://{parts.netloc}".lower()
+
+    @property
+    def cookie_name(self) -> str:
+        # El prefijo __Host- obliga al navegador a exigir Secure, ruta / y ningún dominio.
+        return "__Host-carrete" if self.is_https else "carrete"
 
     @property
     def is_https(self) -> bool:
