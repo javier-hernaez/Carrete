@@ -23,6 +23,7 @@ from app.db.models import Job
 Handler = Callable[[Session, dict[str, Any]], None]
 
 _handlers: dict[str, Handler] = {}
+_failure_hooks: dict[str, Callable[[Session, dict[str, Any], str], None]] = {}
 
 
 def handler(kind: str) -> Callable[[Handler], Handler]:
@@ -35,6 +36,26 @@ def handler(kind: str) -> Callable[[Handler], Handler]:
         return fn
 
     return register
+
+
+def on_final_failure(
+    kind: str,
+) -> Callable[
+    [Callable[[Session, dict[str, Any], str], None]], Callable[[Session, dict[str, Any], str], None]
+]:
+    """Registra qué hacer cuando una tarea agota sus reintentos (p. ej. marcar el elemento)."""
+
+    def register(
+        fn: Callable[[Session, dict[str, Any], str], None],
+    ) -> Callable[[Session, dict[str, Any], str], None]:
+        _failure_hooks[kind] = fn
+        return fn
+
+    return register
+
+
+def get_failure_hook(kind: str) -> Callable[[Session, dict[str, Any], str], None] | None:
+    return _failure_hooks.get(kind)
 
 
 def get_handler(kind: str) -> Handler | None:
