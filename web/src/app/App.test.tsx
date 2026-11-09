@@ -40,7 +40,7 @@ describe("armazón de la aplicación", () => {
     await user.click(await within(nav).findByRole("link", { name: "Mapa" }));
     expect(screen.getByRole("heading", { name: "El mapa está vacío" })).toBeInTheDocument();
     await user.click(screen.getAllByRole("link", { name: "Subir" })[0]!);
-    expect(screen.getByRole("heading", { name: "La subida llega pronto" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Subir a «Pareja»" })).toBeInTheDocument();
   });
 
   it("muestra el resto de secciones y la versión en «Más»", async () => {

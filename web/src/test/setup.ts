@@ -15,3 +15,7 @@ HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogEleme
 HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
   this.open = false;
 };
+
+// jsdom tampoco implementa la captura de punteros.
+Element.prototype.setPointerCapture = function setPointerCapture() {};
+Element.prototype.releasePointerCapture = function releasePointerCapture() {};
