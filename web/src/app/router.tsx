@@ -6,7 +6,9 @@ import { InviteScreen, ResetScreen } from "../features/auth/screens";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { SpaceSettingsPage } from "../features/space/SpaceSettingsPage";
 import { AppShell } from "./AppShell";
-import { AlbumsPage, MapPage, MorePage, NotFoundPage, PhotosPage, ReviewPage, UploadPage } from "./pages";
+import { PhotosPage } from "../features/photos/PhotosPage";
+import { UploadPage } from "../features/upload/UploadPage";
+import { AlbumsPage, MapPage, MorePage, NotFoundPage, ReviewPage } from "./pages";
 
 export const routes: RouteObject[] = [
   // Públicas: se abren desde un enlace, con o sin sesión.

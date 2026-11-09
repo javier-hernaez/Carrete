@@ -35,3 +35,5 @@ android/local.properties
 .idea/
 .vscode/
 .DS_Store
+web/test-results/
+web/playwright-report/

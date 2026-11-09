@@ -32,8 +32,11 @@ STALE_AFTER = timedelta(minutes=30)
 
 
 class Worker:
-    def __init__(self, sessions: sessionmaker[Session], *, poll_seconds: float = 2.0) -> None:
+    def __init__(
+        self, sessions: sessionmaker[Session], *, poll_seconds: float = 2.0, data_dir: Path | None = None
+    ) -> None:
         self.sessions = sessions
+        self.data_dir = data_dir
         self.poll_seconds = poll_seconds
         self.worker_id = f"{socket.gethostname()}:{os.getpid()}"
         self.stopping = threading.Event()
@@ -77,6 +80,10 @@ class Worker:
             error = "".join(traceback.format_exception_only(exc)).strip()
             with self.sessions() as session:
                 state = queue.mark_failed(session, job, error)
+                hook = queue.get_failure_hook(job.kind)
+                if state == "failed" and hook is not None:
+                    hook(session, job.payload, error)
+                    session.commit()
             log.warning("Tarea fallida", extra={**extra, "next_state": state, "error": error})
         else:
             with self.sessions() as session:
@@ -93,6 +100,11 @@ class Worker:
             requeued = queue.requeue_stale(session, STALE_AFTER)
             ratelimit.purge_old(session)
             session.commit()
+            if self.data_dir is not None:
+                from app.api.uploads import purge_expired
+                from app.storage.files import Storage
+
+                purge_expired(session, Storage(self.data_dir))
         if requeued:
             log.warning("Tareas abandonadas devueltas a la cola", extra={"count": requeued})
 

@@ -9,10 +9,6 @@ import { t, type MessageKey } from "../i18n";
 import styles from "./pages.module.css";
 import { useSession } from "./session";
 
-export function PhotosPage() {
-  return <EmptyState title={t("photos.empty.title")}>{t("photos.empty.text")}</EmptyState>;
-}
-
 export function ReviewPage() {
   return <EmptyState title={t("review.empty.title")}>{t("review.empty.text")}</EmptyState>;
 }
@@ -23,10 +19,6 @@ export function AlbumsPage() {
 
 export function MapPage() {
   return <EmptyState title={t("map.empty.title")}>{t("map.empty.text")}</EmptyState>;
-}
-
-export function UploadPage() {
-  return <EmptyState title={t("upload.soon.title")}>{t("upload.soon.text")}</EmptyState>;
 }
 
 interface MoreItem {

@@ -36,6 +36,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "PLR", "DTZ", "PTH"]
 "app/migrations/**" = ["N", "E501"]
+# Horas «de pared» sin zona a propósito: la zona se guarda aparte, como desfase.
+"app/media/dates.py" = ["DTZ001"]
 
 [tool.mypy]
 strict = true

@@ -11,6 +11,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    Double,
     ForeignKey,
     Index,
     LargeBinary,
@@ -287,4 +288,132 @@ class Notice(Base):
             unique=True,
             postgresql_where=text("acknowledged_at IS NULL AND dedup_key IS NOT NULL"),
         ),
+    )
+
+
+class Blob(TimestampMixin, Base):
+    """Original direccionado por contenido (SHA-256). Inmutable; compartido entre espacios."""
+
+    __tablename__ = "blobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    sha256: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    mime: Mapped[str] = mapped_column(Text, nullable=False)
+    ext: Mapped[str] = mapped_column(Text, nullable=False)
+    ref_count: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    purge_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Asset(TimestampMixin, Base):
+    """Foto o vídeo dentro de un espacio. Un mismo original solo puede estar una vez por espacio."""
+
+    __tablename__ = "assets"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    blob_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("blobs.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    kind: Mapped[str] = mapped_column(Text, nullable=False)
+    original_filename: Mapped[str] = mapped_column(Text, nullable=False)
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    uploaded_via: Mapped[str] = mapped_column(Text, nullable=False, server_default="web")
+    source: Mapped[str] = mapped_column(Text, nullable=False, server_default="other")
+    taken_at_local: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    taken_at_offset: Mapped[int | None] = mapped_column(SmallInteger)
+    taken_at_source: Mapped[str] = mapped_column(Text, nullable=False, server_default="upload")
+    client_mtime_ms: Mapped[int | None] = mapped_column(BigInteger)
+    relative_path: Mapped[str | None] = mapped_column(Text)
+    width: Mapped[int | None] = mapped_column(BigInteger)
+    height: Mapped[int | None] = mapped_column(BigInteger)
+    duration_ms: Mapped[int | None] = mapped_column(BigInteger)
+    orientation: Mapped[int | None] = mapped_column(SmallInteger)
+    lat: Mapped[float | None] = mapped_column(Double)
+    lon: Mapped[float | None] = mapped_column(Double)
+    place_id: Mapped[int | None] = mapped_column(BigInteger)
+    camera: Mapped[str | None] = mapped_column(Text)
+    video_codec: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    phash: Mapped[int | None] = mapped_column(BigInteger)
+    thumbhash: Mapped[str | None] = mapped_column(Text)
+    has_preview_video: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    review_state: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    is_favorite: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    description: Mapped[str | None] = mapped_column(Text)
+    processing_state: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    processing_error: Mapped[str | None] = mapped_column(Text)
+    trashed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    trashed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (
+        UniqueConstraint("space_id", "blob_id"),
+        CheckConstraint("kind IN ('photo', 'video')", name="kind_valid"),
+        CheckConstraint("review_state IN ('pending', 'kept', 'discarded')", name="review_state_valid"),
+        CheckConstraint("processing_state IN ('pending', 'ready', 'failed')", name="processing_state_valid"),
+        CheckConstraint("source IN ('camera', 'whatsapp', 'screenshot', 'other')", name="source_valid"),
+        Index(
+            "ix_assets_timeline",
+            "space_id",
+            "trashed_at",
+            "review_state",
+            text("taken_at_local DESC"),
+            text("id DESC"),
+        ),
+        Index("ix_assets_space_id_phash", "space_id", "phash"),
+    )
+
+
+class AssetContribution(Base):
+    """Quién más aportó el mismo original al mismo espacio."""
+
+    __tablename__ = "asset_contributions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    original_filename: Mapped[str | None] = mapped_column(Text)
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class Upload(TimestampMixin, Base):
+    """Subida reanudable en curso (protocolo tus). Las abandonadas se limpian a las 48 h."""
+
+    __tablename__ = "uploads"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False
+    )
+    album_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    filename: Mapped[str] = mapped_column(Text, nullable=False)
+    relative_path: Mapped[str | None] = mapped_column(Text)
+    declared_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    declared_sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    offset: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    client_mtime_ms: Mapped[int | None] = mapped_column(BigInteger)
+    uploaded_via: Mapped[str] = mapped_column(Text, nullable=False, server_default="web")
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    state: Mapped[str] = mapped_column(Text, nullable=False, server_default="receiving")
+    asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+
+    __table_args__ = (
+        CheckConstraint("state IN ('receiving', 'done', 'failed', 'cancelled')", name="state_valid"),
     )

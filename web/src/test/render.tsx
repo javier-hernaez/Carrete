@@ -79,6 +79,13 @@ export function mockApi(routes: Routes = {}) {
     );
     const key = `${init?.method ?? "GET"} ${url.pathname}`;
     const entry = table[key];
+    if (!(key in table) && key.startsWith("GET ")) {
+      // Por defecto, un espacio vacío.
+      if (url.pathname.endsWith("/assets")) return Promise.resolve(json({ items: [], next_cursor: null }));
+      if (url.pathname.endsWith("/timeline")) return Promise.resolve(json({ total: 0, months: [] }));
+      if (url.pathname.endsWith("/members") || url.pathname.endsWith("/albums"))
+        return Promise.resolve(json([]));
+    }
     if (!(key in table))
       return Promise.resolve(json({ title: "Not Found", detail: `Sin simular: ${key}` }, 404));
     try {

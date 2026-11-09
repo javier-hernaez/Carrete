@@ -56,6 +56,7 @@ def test_security_headers(offline_client: TestClient) -> None:
     assert "default-src 'self'" in csp
     assert "frame-ancestors 'none'" in csp
     assert "unsafe-inline" not in csp
+    assert "script-src 'self' 'wasm-unsafe-eval';" in csp  # WebAssembly sí, eval() de JavaScript no
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["referrer-policy"] == "same-origin"
     assert headers["strict-transport-security"].startswith("max-age=")

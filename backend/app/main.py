@@ -15,7 +15,7 @@ from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 
 from app import __version__
-from app.api import admin, auth, health, meta, spaces
+from app.api import admin, assets, auth, health, meta, spaces, uploads
 from app.api.errors import install_error_handlers, problem
 from app.config import Settings, get_settings
 from app.db import get_engine
@@ -55,6 +55,8 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(auth.router)
     app.include_router(spaces.router)
     app.include_router(admin.router)
+    app.include_router(uploads.router)
+    app.include_router(assets.router)
 
     @app.api_route(
         "/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False

@@ -78,7 +78,7 @@ def cmd_worker(_: argparse.Namespace) -> None:
     settings = _load_settings()
     _setup(settings)
     _migrate(settings)
-    worker = Worker(get_sessionmaker(), poll_seconds=settings.worker_poll_seconds)
+    worker = Worker(get_sessionmaker(), poll_seconds=settings.worker_poll_seconds, data_dir=settings.data_dir)
     worker.install_signal_handlers()
     worker.run_forever()
 
