@@ -12,6 +12,10 @@ export type AdminUser = S["UserOut"];
 export type AuditPage = S["AuditPage"];
 export type AdminNotice = S["NoticeOut"];
 export type Role = SpaceOut["role"];
+export type AssetItem = S["AssetOut"];
+export type AssetPage = S["AssetPage"];
+export type AssetDetail = S["AssetDetail"];
+export type Timeline = S["TimelineOut"];
 
 /** Error de la API en formato problem+json (RFC 9457). */
 export class ApiError extends Error {
@@ -148,6 +152,16 @@ export const api = {
     apiFetch<S["ResetPreview"]>(`/api/v1/password-resets/${encodeURIComponent(token)}`),
   useReset: (token: string, password: string) =>
     apiFetch<{ stage: Stage }>(`/api/v1/password-resets/${encodeURIComponent(token)}`, json({ password })),
+  // Elementos
+  assets: (space: string, params: URLSearchParams) =>
+    apiFetch<AssetPage>(`/api/v1/spaces/${space}/assets?${params.toString()}`),
+  timeline: (space: string, params: URLSearchParams) =>
+    apiFetch<Timeline>(`/api/v1/spaces/${space}/timeline?${params.toString()}`),
+  asset: (id: string) => apiFetch<AssetDetail>(`/api/v1/assets/${id}`),
+  checkHashes: (space: string, sha256: string[]) =>
+    apiFetch<{ present: string[] }>(`/api/v1/spaces/${space}/assets/check`, json({ sha256 })),
+  uploadSummary: (space: string, body: { uploaded: number; duplicates: number; failed: number }) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/uploads/summary`, json(body)),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),
   adminSetActive: (id: string, active: boolean) =>
