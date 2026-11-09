@@ -154,6 +154,17 @@ jobs:
           curl -fsS http://127.0.0.1:8010/ | grep -q '<div id="root">'
           docker logs humo-app
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Prueba de extremo a extremo (Playwright + axe) contra la imagen candidata
+        run: |
+          (cd web && npm ci --no-audit --no-fund)
+          CARRETE_IMAGE=carrete:candidata deploy/scripts/e2e.sh
+
       - name: Iniciar sesión en GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3

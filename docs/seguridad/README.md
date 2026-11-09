@@ -20,7 +20,7 @@ nivel 2 se hace **antes** de exponer la aplicación a internet.
 | Puerto solo en `127.0.0.1`; `db`, `worker` y `backup` sin salida a internet | `deploy/docker-compose.yml` |
 | Contenedores sin root, solo lectura, sin capacidades, `no-new-privileges`, límites | `deploy/docker-compose.yml` |
 | Configuración validada al arrancar; secretos solo por entorno, `.env` fuera de git | `backend/app/config.py` |
-| CSP estricta sin `unsafe-inline`, `frame-ancestors 'none'`, `nosniff`, HSTS, `Permissions-Policy` | `backend/app/security/headers.py` |
+| CSP estricta sin `unsafe-inline` ni `unsafe-eval` (solo `wasm-unsafe-eval`, para calcular el SHA-256 de ficheros grandes con WebAssembly), `frame-ancestors 'none'`, `nosniff`, HSTS, `Permissions-Policy` | `backend/app/security/headers.py` |
 | Errores sin detalles internos (`problem+json`); documentación de la API oculta en producción | `backend/app/api/errors.py`, `main.py` |
 | Registros sin datos personales ni secretos | `backend/app/observability.py` |
 | Auditoría de solo inserción (disparador en la base de datos) | migración `0001` |

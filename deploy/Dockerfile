@@ -12,9 +12,12 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PATH=/opt/venv/bin:$PATH
 # postgresql-client: volcado de la base de datos antes de cada migración.
+# libvips + libheif: imágenes (también HEIC y AVIF); ffmpeg: vídeo; exiftool: metadatos.
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends postgresql-client-17 \
+      libvips42t64 libheif1 libheif-plugin-libde265 libheif-plugin-dav1d libheif-plugin-aomdec \
+      ffmpeg libimage-exiftool-perl \
  && rm -rf /var/lib/apt/lists/*
 RUN python -m venv /opt/venv
 WORKDIR /app
@@ -34,6 +37,8 @@ CMD ["python", "-m", "pytest"]
 # --- 4) Web: compila la interfaz (React + Vite) a ficheros estáticos ---------------------------------
 FROM node:22-alpine AS web
 WORKDIR /web
+# Reintentos generosos: la red del mini PC a veces corta descargas largas.
+ENV npm_config_fetch_retries=6 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web/ ./
