@@ -33,7 +33,9 @@ def build_csp(settings: Settings) -> str:
         img.append(origin)
     directives = {
         "default-src": ["'self'"],
-        "script-src": ["'self'"],
+        # 'wasm-unsafe-eval' solo permite compilar WebAssembly (SHA-256 de ficheros grandes al subir);
+        # sigue prohibido eval() de JavaScript y cualquier script en línea.
+        "script-src": ["'self'", "'wasm-unsafe-eval'"],
         "style-src": ["'self'"],
         "img-src": img,
         "media-src": ["'self'", "blob:"],

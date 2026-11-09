@@ -19,6 +19,13 @@ log = logging.getLogger(__name__)
 PROBLEM_JSON = "application/problem+json"
 
 
+def _phrase(status: int) -> str:
+    try:
+        return HTTPStatus(status).phrase
+    except ValueError:  # códigos de extensiones, p. ej. 460 de tus
+        return {460: "Checksum Mismatch"}.get(status, "Error")
+
+
 def problem(
     status: int,
     detail: str | None = None,
@@ -29,7 +36,7 @@ def problem(
 ) -> JSONResponse:
     body: dict[str, Any] = {
         "type": "about:blank",
-        "title": title or HTTPStatus(status).phrase,
+        "title": title or _phrase(status),
         "status": status,
     }
     if detail:
