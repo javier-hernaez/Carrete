@@ -1,0 +1,23 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.word {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.ring {
+  fill: var(--color-accent);
+}
+
+.hub,
+.hole {
+  fill: var(--color-bg);
+}

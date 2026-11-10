@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+sqlalchemy
+psycopg[binary]
+alembic
+argon2-cffi
+pyotp
+cryptography
+pyvips
+segno
+webauthn

@@ -1,0 +1,12 @@
+{
+  "name": "Carrete",
+  "short_name": "Carrete",
+  "description": "Reunir, ordenar y conservar las fotos y vídeos del grupo",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f3ee",
+  "theme_color": "#a84b15",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

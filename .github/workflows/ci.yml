@@ -1,0 +1,190 @@
+name: CI
+
+# Cada push y cada pull request pasan todas las comprobaciones. Solo en main, y solo si todo pasa
+# (incluido el análisis de la imagen), se publica ghcr.io/<repositorio>:latest y :<sha>.
+# Watchtower, en el mini PC, despliega «latest» en menos de un minuto.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  backend:
+    name: Backend (lint, tipos, pruebas, OpenAPI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Mismo entorno que en local: la imagen «dev» (Python 3.13 + dependencias fijadas por hash)
+      # contra un PostgreSQL 17 desechable. Así pg_dump y el servidor coinciden de versión.
+      - name: Imagen de desarrollo
+        run: make dev-image
+
+      - name: Lint, formato, mypy --strict y bandit
+        run: make backend-lint
+
+      - name: Pruebas (cobertura mínima 85 %)
+        run: make backend-test
+
+      - name: Auditoría de dependencias de Python
+        run: >
+          docker run --rm -v "$PWD/backend:/src/backend" carrete:dev
+          pip-audit --strict --require-hashes --disable-pip -r requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: El cliente TypeScript está al día con la API
+        run: |
+          make web-install openapi
+          git diff --exit-code -- web/src/api/ || {
+            echo "::error::La API ha cambiado: ejecuta «make openapi» y añade web/src/api/ al commit"; exit 1; }
+
+  web:
+    name: Web (tipos, lint, pruebas, compilación)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - name: Pruebas (cobertura mínima 70 %)
+        run: npm run test:coverage
+      - run: npm run build
+      - name: Auditoría de dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
+
+  security:
+    name: Secretos y análisis estático
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.28.0
+          git /repo --redact --no-banner --exit-code 1
+      - name: Semgrep (OWASP, Python, React)
+        run: >
+          docker run --rm -v "$PWD:/src" semgrep/semgrep:1.140.0
+          semgrep scan --error --metrics=off --exclude=web/src/api/schema.d.ts
+          --config p/owasp-top-ten --config p/python --config p/react --config p/dockerfile
+
+  image:
+    name: Imagen (construcción, Trivy, SBOM, publicación)
+    needs: [backend, web, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Nombre de la imagen en minúsculas
+        run: echo "IMAGE=${IMAGE,,}" >> "$GITHUB_ENV"
+
+      - name: Construir
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          target: runtime
+          platforms: linux/amd64
+          build-args: CARRETE_VERSION=${{ github.sha }}
+          load: true
+          tags: carrete:candidata
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy (falla con vulnerabilidades críticas o altas que tengan parche)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: carrete:candidata
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: carrete:candidata
+          format: spdx-json
+          output-file: carrete-sbom.spdx.json
+          artifact-name: carrete-sbom.spdx.json
+
+      - name: Prueba de humo de la imagen
+        run: |
+          docker network create humo
+          docker run -d --name humo-db --network humo -e POSTGRES_USER=carrete -e POSTGRES_PASSWORD=humo \
+            -e POSTGRES_DB=carrete postgres:17-alpine
+          until docker exec humo-db pg_isready -U carrete -q; do sleep 1; done
+          docker run -d --name humo-app --network humo -p 127.0.0.1:8010:8000 --read-only --tmpfs /tmp \
+            --cap-drop ALL --security-opt no-new-privileges:true \
+            -e CARRETE_DATABASE_URL=postgresql+psycopg://carrete:humo@humo-db/carrete \
+            -e CARRETE_SECRET_KEY="$(openssl rand -hex 32)" -e CARRETE_PUBLIC_URL=http://127.0.0.1:8010 \
+            --tmpfs /data:uid=10001 carrete:candidata
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8010/readyz && break; sleep 2; done
+          curl -fsS http://127.0.0.1:8010/readyz
+          curl -fsS http://127.0.0.1:8010/ | grep -q '<div id="root">'
+          docker logs humo-app
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Prueba de extremo a extremo (Playwright + axe) contra la imagen candidata
+        run: |
+          (cd web && npm ci --no-audit --no-fund)
+          CARRETE_IMAGE=carrete:candidata deploy/scripts/e2e.sh
+
+      - name: Iniciar sesión en GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar :latest y :<sha>
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          target: runtime
+          platforms: linux/amd64
+          build-args: CARRETE_VERSION=${{ github.sha }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha

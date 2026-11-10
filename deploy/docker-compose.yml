@@ -1,0 +1,140 @@
+# Carrete — despliegue en el mini PC.
+#
+#   cd deploy
+#   cp .env.example .env            # y edítalo (ver comentarios)
+#   ./scripts/preparar-carpetas.sh  # crea las carpetas de datos y copias con el dueño correcto
+#   docker compose up -d            # usa la imagen publicada en GHCR
+#
+# Para construir la imagen en este equipo en lugar de descargarla: docker compose up -d --build
+# Detalles, actualización, vuelta atrás y restauración: docs/operacion.md
+name: carrete
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+x-watchtower: &watchtower
+  # Lo actualiza el Watchtower que ya corre en el equipo (market_watchtower, con --label-enable).
+  # No se añade otro Watchtower: se pisarían.
+  - com.centurylinklabs.watchtower.enable=true
+
+x-app-env: &app-env
+  TZ: ${TZ:-Europe/Madrid}
+  CARRETE_DATABASE_URL: postgresql+psycopg://carrete:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}@db:5432/carrete
+  CARRETE_SECRET_KEY: ${CARRETE_SECRET_KEY:?Define CARRETE_SECRET_KEY en .env}
+  CARRETE_PUBLIC_URL: ${CARRETE_PUBLIC_URL:?Define CARRETE_PUBLIC_URL en .env}
+  CARRETE_REQUIRE_2FA: ${CARRETE_REQUIRE_2FA:-true}
+  CARRETE_MAX_UPLOAD_BYTES: ${CARRETE_MAX_UPLOAD_BYTES:-10737418240}
+  CARRETE_MIN_FREE_BYTES: ${CARRETE_MIN_FREE_BYTES:-20000000000}
+  CARRETE_MAP_STYLE_URL: ${CARRETE_MAP_STYLE_URL:-}
+  CARRETE_TRUSTED_PROXIES: ${CARRETE_TRUSTED_PROXIES:-127.0.0.1/32,::1/128,172.16.0.0/12}
+  CARRETE_LOG_LEVEL: ${CARRETE_LOG_LEVEL:-INFO}
+  CARRETE_SETUP_TOKEN: ${CARRETE_SETUP_TOKEN:-}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Madrid}
+      POSTGRES_USER: carrete
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: carrete
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carrete -d carrete"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # El script de arranque de la imagen necesita cambiar de usuario y de dueño a sus ficheros.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+    shm_size: 128m
+    mem_limit: 512m
+    cpus: 1.0
+
+  app:
+    image: ${CARRETE_IMAGE:-ghcr.io/javier-hernaez/carrete:latest}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    # Mismo usuario que el dueño de las carpetas de datos en el equipo (javier = 1000).
+    user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
+    environment: *app-env
+    volumes:
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}/datos:/data
+    # Solo en 127.0.0.1: desde fuera se entra únicamente por Tailscale Funnel.
+    ports: ["127.0.0.1:${CARRETE_PORT:-8010}:8000"]
+    networks: [internal, edge]
+    <<: *hardening
+    stop_grace_period: 30s
+    mem_limit: 768m
+    cpus: 2.0
+    labels: *watchtower
+
+  worker:
+    image: ${CARRETE_IMAGE:-ghcr.io/javier-hernaez/carrete:latest}
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    command: ["carrete", "worker"]
+    user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
+    environment: *app-env
+    volumes:
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}/datos:/data
+    # Solo la red interna: trata ficheros no fiables y no tiene salida a internet.
+    networks: [internal]
+    <<: *hardening
+    healthcheck:
+      test: ["CMD-SHELL", "[ -n \"$$(find /tmp/carrete-worker-alive -mmin -2 2>/dev/null)\" ]"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    stop_grace_period: 60s
+    mem_limit: 1g
+    cpus: 2.0
+    labels: *watchtower
+
+  # Copias (ADR 0008). Ve datos y copias en un único montaje para poder usar enlaces
+  # duros; app y worker solo montan datos/ y no tienen acceso a copias/.
+  backup:
+    image: ${CARRETE_IMAGE:-ghcr.io/javier-hernaez/carrete:latest}
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    command: ["carrete", "backup-agent"]
+    user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
+    environment: *app-env
+    volumes:
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}:/storage
+      - ./docker-compose.yml:/config/docker-compose.yml:ro
+      - ${CARRETE_ENV_FILE:-./.env}:/config/.env:ro   # solo se copian los NOMBRES de las variables
+    networks: [internal]
+    <<: *hardening
+    healthcheck:
+      # Sano mientras el último volcado correcto tenga menos de dos horas y diez minutos.
+      test: ["CMD-SHELL", "[ -n \"$$(find /tmp/backup-ok -mmin -130 2>/dev/null)\" ]"]
+      interval: 60s
+      start_period: 180s
+      retries: 2
+    stop_grace_period: 60s
+    mem_limit: 512m
+    cpus: 1.0
+    labels: *watchtower
+
+networks:
+  # Sin salida a internet: db, worker y backup solo se ven entre sí y con app.
+  internal:
+    internal: true
+  # Solo para publicar el puerto de app en 127.0.0.1.
+  edge: {}
+
+volumes:
+  pgdata: {}

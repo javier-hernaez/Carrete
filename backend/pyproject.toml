@@ -1,0 +1,76 @@
+[project]
+name = "carrete"
+version = "0.1.0"
+description = "Carrete: reunir, ordenar y conservar las fotos y vídeos de un grupo de personas"
+requires-python = ">=3.13"
+
+[project.scripts]
+carrete = "app.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["data/*", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py", "alembic.ini"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "PTH", "N", "C4", "DTZ", "T20", "PL"]
+ignore = [
+  "PLR0913", "PLR2004", "PLR0911", "PLR0912", "PLR0915", "RUF001", "RUF002", "RUF003",
+  "S101",  # assert en pruebas
+  "B008",  # Depends() en argumentos por defecto es el estilo de FastAPI
+  "PLC0415",
+  "PLR0917",  # rutas de FastAPI: los parámetros son dependencias inyectadas
+  "N818",     # excepciones de dominio con nombres cortos (NotFound, Forbidden…)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "PLR", "DTZ", "PTH"]
+"app/migrations/**" = ["N", "E501"]
+# Horas «de pared» sin zona a propósito: la zona se guarda aparte, como desfase.
+"app/media/dates.py" = ["DTZ001"]
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+exclude = ["app/migrations/"]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["pyvips", "pyvips.*", "segno", "segno.*", "pyotp"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+  "error::pytest.PytestUnraisableExceptionWarning",
+  "ignore::DeprecationWarning",
+  "ignore:Using `httpx` with `starlette.testclient`",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/migrations/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "app/migrations"]
+# B101: los assert del código son estrechamientos de tipo, no controles de seguridad.
+# B404/B603: subprocess sin shell y con rutas resueltas (pg_dump, ffmpeg…); cada uso va comentado.
+skips = ["B101", "B404", "B603"]
