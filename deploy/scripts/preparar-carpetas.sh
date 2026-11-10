@@ -12,10 +12,11 @@ fi
 # shellcheck disable=SC1091
 . ./.env
 
-: "${CARRETE_DATA_DIR:?Define CARRETE_DATA_DIR en .env}"
-: "${CARRETE_BACKUP_DIR:?Define CARRETE_BACKUP_DIR en .env}"
+: "${CARRETE_ROOT:?Define CARRETE_ROOT en .env}"
+CARRETE_DATA_DIR="$CARRETE_ROOT/datos"
+CARRETE_BACKUP_DIR="$CARRETE_ROOT/copias"
 
-for dir in "$CARRETE_DATA_DIR" "$CARRETE_BACKUP_DIR"; do
+for dir in "$CARRETE_ROOT" "$CARRETE_DATA_DIR" "$CARRETE_BACKUP_DIR"; do
   mkdir -p "$dir"
   chmod 700 "$dir"
   echo "Lista: $dir ($(stat -c '%U:%G' "$dir"))"

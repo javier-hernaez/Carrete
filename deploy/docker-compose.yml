@@ -70,7 +70,7 @@ services:
     user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
     environment: *app-env
     volumes:
-      - ${CARRETE_DATA_DIR:?Define CARRETE_DATA_DIR en .env}:/data
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}/datos:/data
     # Solo en 127.0.0.1: desde fuera se entra únicamente por Tailscale Funnel.
     ports: ["127.0.0.1:${CARRETE_PORT:-8010}:8000"]
     networks: [internal, edge]
@@ -88,7 +88,7 @@ services:
     user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
     environment: *app-env
     volumes:
-      - ${CARRETE_DATA_DIR:?Define CARRETE_DATA_DIR en .env}:/data
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}/datos:/data
     # Solo la red interna: trata ficheros no fiables y no tiene salida a internet.
     networks: [internal]
     <<: *hardening
@@ -103,34 +103,31 @@ services:
     cpus: 2.0
     labels: *watchtower
 
-  # Copias a una carpeta normal del equipo, a la que app y worker no tienen acceso.
-  # De momento, volcados de la base de datos.
+  # Copias (ADR 0008). Ve datos y copias en un único montaje para poder usar enlaces
+  # duros; app y worker solo montan datos/ y no tienen acceso a copias/.
   backup:
-    image: postgres:17-alpine
+    image: ${CARRETE_IMAGE:-ghcr.io/javier-hernaez/carrete:latest}
     restart: unless-stopped
     depends_on: { db: { condition: service_healthy } }
+    command: ["carrete", "backup-agent"]
     user: "${CARRETE_UID:-1000}:${CARRETE_GID:-1000}"
-    entrypoint: ["/bin/sh", "/backup.sh"]
-    environment:
-      TZ: ${TZ:-Europe/Madrid}
-      PGHOST: db
-      PGUSER: carrete
-      PGDATABASE: carrete
-      PGPASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
-      BACKUP_DB_INTERVAL_SECONDS: ${BACKUP_DB_INTERVAL_SECONDS:-3600}
+    environment: *app-env
     volumes:
-      - ./scripts/backup.sh:/backup.sh:ro
-      - ${CARRETE_BACKUP_DIR:?Define CARRETE_BACKUP_DIR en .env}:/backups
+      - ${CARRETE_ROOT:?Define CARRETE_ROOT en .env}:/storage
+      - ./docker-compose.yml:/config/docker-compose.yml:ro
+      - ${CARRETE_ENV_FILE:-./.env}:/config/.env:ro   # solo se copian los NOMBRES de las variables
     networks: [internal]
     <<: *hardening
     healthcheck:
-      # Sano mientras el último volcado correcto tenga menos de dos intervalos.
+      # Sano mientras el último volcado correcto tenga menos de dos horas y diez minutos.
       test: ["CMD-SHELL", "[ -n \"$$(find /tmp/backup-ok -mmin -130 2>/dev/null)\" ]"]
       interval: 60s
-      start_period: 120s
+      start_period: 180s
       retries: 2
-    mem_limit: 256m
-    cpus: 0.5
+    stop_grace_period: 60s
+    mem_limit: 512m
+    cpus: 1.0
+    labels: *watchtower
 
 networks:
   # Sin salida a internet: db, worker y backup solo se ven entre sí y con app.

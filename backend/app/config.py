@@ -62,6 +62,11 @@ class Settings(BaseSettings):
 
     worker_poll_seconds: float = Field(default=2.0, gt=0)
 
+    # Contenedor «backup»: datos y copias dentro de un mismo montaje (enlaces duros, ADR 0008).
+    backup_source_dir: Path = Path("/storage/datos")
+    backup_target_dir: Path = Path("/storage/copias")
+    config_dir: Path | None = Path("/config")
+
     @field_validator("database_url")
     @classmethod
     def _check_database_url(cls, value: str) -> str:

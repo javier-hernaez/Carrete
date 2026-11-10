@@ -305,6 +305,11 @@ class Blob(TimestampMixin, Base):
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     purge_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    backed_up_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("ix_blobs_pending_backup", "created_at", postgresql_where=text("backed_up_at IS NULL")),
+    )
 
 
 class Asset(TimestampMixin, Base):
@@ -416,4 +421,48 @@ class Upload(TimestampMixin, Base):
 
     __table_args__ = (
         CheckConstraint("state IN ('receiving', 'done', 'failed', 'cancelled')", name="state_valid"),
+    )
+
+
+class BackupRun(Base):
+    """Resultado de cada copia (volcado de la base de datos, espejo de originales, manifiestos)."""
+
+    __tablename__ = "backup_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    kind: Mapped[str] = mapped_column(Text, nullable=False)  # database | originals | manifests | config
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ok: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    detail: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+
+    __table_args__ = (Index("ix_backup_runs_kind_started_at", "kind", "started_at"),)
+
+
+class IntegrityRun(Base):
+    """Verificación de integridad: SHA-256 de cada original y de su copia, huérfanos y ausentes."""
+
+    __tablename__ = "integrity_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ok: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    checked: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    problems: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+
+
+class AppState(Base):
+    """Pequeño almacén clave → JSON para estado calculado (uso de disco, últimas ejecuciones…)."""
+
+    __tablename__ = "app_state"
+
+    key: Mapped[str] = mapped_column(Text, primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
