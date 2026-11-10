@@ -39,3 +39,43 @@ def process_asset_failed(session: Session, payload: dict[str, Any], error: str) 
     from app.services.assets import mark_processing_failed
 
     mark_processing_failed(session, uuid.UUID(payload["asset_id"]), error)
+
+
+def _storage() -> object:
+    from app.config import get_settings
+    from app.storage.files import Storage
+
+    return Storage(get_settings().data_dir)
+
+
+@handler("purge_trash")
+def purge_trash(session: Session, payload: dict[str, Any]) -> None:
+    """Purga nocturna: elementos con más de 30 días en la papelera."""
+    from app.storage.files import Storage
+    from app.storage.purge import purge_expired_trash, purge_unreferenced_blobs
+
+    storage = _storage()
+    assert isinstance(storage, Storage)
+    while purge_expired_trash(session, storage):
+        session.flush()
+    purge_unreferenced_blobs(session, storage)
+
+
+@handler("storage_report")
+def storage_report(session: Session, payload: dict[str, Any]) -> None:
+    from app.services.status import storage_report as run
+    from app.storage.files import Storage
+
+    storage = _storage()
+    assert isinstance(storage, Storage)
+    run(session, storage)
+
+
+@handler("health_checks")
+def health_checks(session: Session, payload: dict[str, Any]) -> None:
+    from app.services.status import health_checks as run
+    from app.storage.files import Storage
+
+    storage = _storage()
+    assert isinstance(storage, Storage)
+    run(session, storage)

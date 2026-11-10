@@ -89,6 +89,84 @@ def cmd_migrate(_: argparse.Namespace) -> None:
     _migrate(settings)
 
 
+def _agent(settings: Settings):  # type: ignore[no-untyped-def]
+    from app.backup.agent import BackupAgent
+    from app.db import get_engine, get_sessionmaker
+
+    return BackupAgent(
+        get_engine(),
+        get_sessionmaker(),
+        source=settings.backup_source_dir,
+        target=settings.backup_target_dir,
+        config_dir=settings.config_dir,
+    )
+
+
+def cmd_backup_agent(_: argparse.Namespace) -> None:
+    """Bucle del contenedor «backup»: espera a que el esquema esté al día y copia según su calendario."""
+    from app.db import get_engine
+    from app.migrate import is_up_to_date
+
+    settings = _load_settings()
+    _setup(settings)
+    import time
+
+    while not is_up_to_date(get_engine()):
+        log.info("Esperando a que app aplique las migraciones")
+        time.sleep(5)
+    _agent(settings).run_forever()
+
+
+def cmd_backup(args: argparse.Namespace) -> None:
+    """Copia inmediata (todo, o solo una parte)."""
+    settings = _load_settings()
+    _setup(settings)
+    agent = _agent(settings)
+    if args.what in ("todo", "base"):
+        path = agent.dump_database()
+        print(f"Volcado: {path}" if path else "El volcado ha fallado; mira el registro")  # noqa: T201
+    if args.what in ("todo", "originales"):
+        print(f"Originales: {agent.mirror_originals()}")  # noqa: T201
+    if args.what in ("todo", "manifiestos"):
+        print(f"Manifiestos: {agent.write_manifests()} elementos")  # noqa: T201
+
+
+def cmd_verify(_: argparse.Namespace) -> None:
+    """Verificación de integridad inmediata."""
+    settings = _load_settings()
+    _setup(settings)
+    run = _agent(settings).verify_integrity()
+    result = "todo bien" if run.ok else f"{len(run.problems)} problemas"
+    print(f"Revisados {run.checked} originales: {result}")  # noqa: T201
+    for problem in run.problems[:50]:
+        print(f"  - {problem}")  # noqa: T201
+    if not run.ok:
+        raise SystemExit(1)
+
+
+def cmd_restore(args: argparse.Namespace) -> None:
+    """Restaura la base de datos de un volcado y los originales que falten (con app y worker parados)."""
+    from pathlib import Path
+
+    from app.backup.agent import restore
+    from app.db import get_engine, get_sessionmaker
+
+    settings = _load_settings()
+    _setup(settings)
+    dump = Path(args.dump)
+    if not dump.is_file():
+        print(f"No existe el volcado {dump}", file=sys.stderr)  # noqa: T201
+        raise SystemExit(2)
+    counts = restore(
+        get_engine(),
+        get_sessionmaker(),
+        dump=dump,
+        source=settings.backup_source_dir,
+        target=settings.backup_target_dir,
+    )
+    print(f"Restaurado: {counts}")  # noqa: T201
+
+
 def cmd_check_config(_: argparse.Namespace) -> None:
     settings = _load_settings()
     print(f"Configuración válida. Dirección pública: {settings.public_url}")  # noqa: T201
@@ -120,11 +198,21 @@ def build_parser() -> argparse.ArgumentParser:
         "serve": (cmd_serve, "Aplica migraciones y sirve la web y la API"),
         "worker": (cmd_worker, "Aplica migraciones y procesa la cola de tareas"),
         "migrate": (cmd_migrate, "Aplica las migraciones pendientes (con volcado previo)"),
+        "backup-agent": (cmd_backup_agent, "Bucle de copias (contenedor «backup»)"),
+        "verify": (cmd_verify, "Verifica la integridad de originales y copias"),
         "check-config": (cmd_check_config, "Valida la configuración y sale"),
         "openapi": (cmd_openapi, "Imprime la especificación OpenAPI"),
     }
     for name, (fn, help_text) in commands.items():
         sub.add_parser(name, help=help_text, description=help_text).set_defaults(func=fn)
+    backup = sub.add_parser("backup", help="Copia inmediata", description="Copia inmediata")
+    backup.add_argument(
+        "what", nargs="?", default="todo", choices=["todo", "base", "originales", "manifiestos"]
+    )
+    backup.set_defaults(func=cmd_backup)
+    restore = sub.add_parser("restore", help="Restaura un volcado y los originales que falten")
+    restore.add_argument("--dump", required=True, help="Ruta del volcado (.dump) dentro del contenedor")
+    restore.set_defaults(func=cmd_restore)
     return parser
 
 

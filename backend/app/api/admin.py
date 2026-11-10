@@ -219,3 +219,18 @@ def acknowledge(notice_id: uuid.UUID, current: AdminAuth, db: DB) -> None:
     notice.acknowledged_at = datetime.now(UTC)
     notice.acknowledged_by = current.user.id
     db.commit()
+
+
+# --- Estado --------------------------------------------------------------------------------------------
+
+
+@router.get("/status")
+def instance_status(current: AdminAuth, db: DB, settings: SettingsDep) -> dict[str, Any]:
+    from app import __version__
+    from app.services.status import status
+    from app.storage.files import Storage
+
+    data = status(db, Storage(settings.data_dir))
+    data["version"] = __version__
+    data["open_notices"] = len(list(db.scalars(select(Notice.id).where(Notice.acknowledged_at.is_(None)))))
+    return data

@@ -109,7 +109,6 @@ def test_worker_runs_noop_and_failures(sessions: sessionmaker[Session]) -> None:
         unknown = queue.enqueue(s, "tipo-desconocido")
         s.commit()
     worker = Worker(sessions, poll_seconds=0.01)
-    worker.maintenance()
     assert worker.run_once()
     assert worker.run_once()
     assert not worker.run_once()  # el tipo desconocido no se toma
