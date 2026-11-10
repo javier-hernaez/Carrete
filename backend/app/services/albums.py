@@ -23,3 +23,8 @@ def add_on_upload(db: object, space_id: object, album_id: object, asset_id: obje
 def albums_of(db: object, asset_id: object) -> list[dict[str, str]]:
     """Álbumes en los que está un elemento. Por completar."""
     return []
+
+
+def album_names_by_asset(db: object, space_id: object) -> dict[object, list[str]]:
+    """Nombres de los álbumes de cada elemento del espacio (manifiestos). Por completar."""
+    return {}

@@ -305,3 +305,53 @@ def original(asset_id: uuid.UUID, current: FullAuth, db: DB, storage: StorageDep
         media_type=blob.mime,
         headers={"Content-Disposition": disposition, "Cache-Control": "private, no-store"},
     )
+
+
+# --- Acciones masivas y papelera -----------------------------------------------------------------------
+
+BatchAction = Literal["trash", "restore"]
+
+
+class BatchIn(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=5000)
+    action: BatchAction
+
+
+class CountOut(BaseModel):
+    count: int
+
+
+@router.post("/spaces/{space_id}/assets/batch", response_model=CountOut)
+def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: ReqInfo) -> CountOut:
+    from app.services import batch as batch_service
+
+    count = batch_service.apply(
+        db, current.user, space_id, body.ids, body.action, body.model_dump(exclude={"ids", "action"}), info
+    )
+    db.commit()
+    return CountOut(count=count)
+
+
+class EmptyTrashIn(BaseModel):
+    confirm_name: str = Field(max_length=200)
+
+
+@router.get("/spaces/{space_id}/trash", response_model=CountOut)
+def trash_count(space_id: uuid.UUID, current: FullAuth, db: DB) -> CountOut:
+    from app.services import trash
+
+    spaces.access(db, current.user, space_id)
+    return CountOut(count=trash.trash_count(db, space_id))
+
+
+@router.post("/spaces/{space_id}/trash/empty", response_model=CountOut)
+def empty_trash(
+    space_id: uuid.UUID, body: EmptyTrashIn, current: FullAuth, db: DB, storage: StorageDep, info: ReqInfo
+) -> CountOut:
+    from app.services import auth, trash
+
+    acc = spaces.access(db, current.user, space_id, "owner")
+    auth.require_recent_auth(current.session)
+    count = trash.empty(db, storage, acc, current.user, body.confirm_name, info)
+    db.commit()
+    return CountOut(count=count)

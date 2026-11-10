@@ -71,8 +71,11 @@ def register(
     )
     blob = db.scalar(select(Blob).where(Blob.sha256 == sha256).with_for_update())
     assert blob is not None
-    # Si el original estaba esperando su purga, vuelve a estar en uso.
+    # Si el original estaba esperando su purga (o ya se purgó y se vuelve a subir), vuelve a estar en uso.
     blob.purge_after = None
+    if blob.purged_at is not None:
+        blob.purged_at = None
+        blob.backed_up_at = None
 
     existing = db.scalar(select(Asset).where(Asset.space_id == space_id, Asset.blob_id == blob.id))
     if existing is not None:
