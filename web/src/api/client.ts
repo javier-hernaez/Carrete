@@ -17,6 +17,43 @@ export type AssetPage = S["AssetPage"];
 export type AssetDetail = S["AssetDetail"];
 export type Timeline = S["TimelineOut"];
 
+interface Run {
+  started_at: string;
+  finished_at: string | null;
+  ok: boolean;
+  detail: Record<string, unknown>;
+}
+
+/** Estado de la instancia. La API lo devuelve como objeto libre: aquí su forma. */
+export interface AdminStatus {
+  version: string;
+  open_notices: number;
+  disk: { total: number; used: number; free: number };
+  storage: {
+    computed_at?: string;
+    originals?: number;
+    derivatives?: number;
+    exports?: number;
+    spaces?: { id: string; name: string; count: number; bytes: number }[];
+  };
+  backup: {
+    database: Run | null;
+    originals: Run | null;
+    manifests: Run | null;
+    pending_originals: number;
+    agent: { same_disk?: boolean };
+  };
+  integrity: {
+    started_at: string;
+    finished_at: string | null;
+    ok: boolean;
+    checked: number;
+    problems: Record<string, unknown>[];
+  } | null;
+  queue: Record<string, number>;
+  failed_jobs: { kind: string; error: string | null; at: string | null }[];
+}
+
 /** Error de la API en formato problem+json (RFC 9457). */
 export class ApiError extends Error {
   readonly status: number;
@@ -162,6 +199,12 @@ export const api = {
     apiFetch<{ present: string[] }>(`/api/v1/spaces/${space}/assets/check`, json({ sha256 })),
   uploadSummary: (space: string, body: { uploaded: number; duplicates: number; failed: number }) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/uploads/summary`, json(body)),
+  batch: (space: string, ids: string[], action: string, extra: Record<string, unknown> = {}) =>
+    apiFetch<{ count: number }>(`/api/v1/spaces/${space}/assets/batch`, json({ ids, action, ...extra })),
+  trashCount: (space: string) => apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash`),
+  emptyTrash: (space: string, confirm_name: string) =>
+    apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash/empty`, json({ confirm_name })),
+  adminStatus: () => apiFetch<AdminStatus>("/api/v1/admin/status"),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),
   adminSetActive: (id: string, active: boolean) =>

@@ -8,6 +8,7 @@ import { Logo } from "../design-system/components/Logo";
 import { cx } from "../design-system/cx";
 import { t, type MessageKey } from "../i18n";
 import styles from "./AppShell.module.css";
+import { Toaster } from "../features/toast/Toaster";
 import { useSession } from "./session";
 import { applyTheme } from "./theme";
 import { SpaceSwitcher } from "./SpaceSwitcher";
@@ -81,6 +82,7 @@ export function AppShell() {
         <Outlet />
       </main>
 
+      <Toaster />
       <NavLink to="/subir" className={cx(styles.fab)} aria-label={t("action.upload")}>
         <Icon name="upload" />
       </NavLink>

@@ -4,6 +4,7 @@ import { AdminPage } from "../features/admin/AdminPage";
 import { AuthGate } from "../features/auth/AuthGate";
 import { InviteScreen, ResetScreen } from "../features/auth/screens";
 import { SettingsPage } from "../features/settings/SettingsPage";
+import { TrashPage } from "../features/trash/TrashPage";
 import { SpaceSettingsPage } from "../features/space/SpaceSettingsPage";
 import { AppShell } from "./AppShell";
 import { PhotosPage } from "../features/photos/PhotosPage";
@@ -30,6 +31,7 @@ export const routes: RouteObject[] = [
       { path: "ajustes", element: <SettingsPage /> },
       { path: "espacio", element: <SpaceSettingsPage /> },
       { path: "admin", element: <AdminPage /> },
+      { path: "papelera", element: <TrashPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

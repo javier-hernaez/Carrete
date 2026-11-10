@@ -16,6 +16,7 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import Settings
+from app.jobs.worker import Worker
 from app.main import create_app
 from app.migrate import run_migrations
 
@@ -106,3 +107,26 @@ def new_client(settings: Settings, engine: Engine):  # type: ignore[no-untyped-d
     yield factory
     for c in clients:
         c.__exit__(None, None, None)
+
+
+# --- Medios ---
+
+
+@pytest.fixture
+def media_settings(make_settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Settings:  # type: ignore[no-untyped-def]
+    settings = make_settings(require_2fa=False)
+    monkeypatch.setattr("app.config.get_settings", lambda: settings)
+    return settings
+
+
+@pytest.fixture
+def owner(media_settings: Settings, engine: Engine):  # type: ignore[no-untyped-def]
+    with make_client(media_settings, engine) as client:
+        from tests.helpers import setup_admin
+
+        yield setup_admin(client, engine)
+
+
+@pytest.fixture
+def worker(sessions: sessionmaker[Session]) -> Worker:
+    return Worker(sessions, poll_seconds=0.01)

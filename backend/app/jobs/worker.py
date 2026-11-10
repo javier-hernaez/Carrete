@@ -100,6 +100,9 @@ class Worker:
             requeued = queue.requeue_stale(session, STALE_AFTER)
             ratelimit.purge_old(session)
             session.commit()
+            from app.jobs.schedule import enqueue_due
+
+            enqueue_due(session)
             if self.data_dir is not None:
                 from app.api.uploads import purge_expired
                 from app.storage.files import Storage

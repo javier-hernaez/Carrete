@@ -7,14 +7,15 @@ import { toApiParams, type PhotoFilters } from "./filters";
 const PAGE = 300;
 
 /** Elementos del espacio por páginas, con refresco mientras haya alguno «procesando». */
-export function useAssets(spaceId: string, filters: PhotoFilters, start?: string) {
+export function useAssets(spaceId: string, filters: PhotoFilters, start?: string, trashed = false) {
   const query = useInfiniteQuery({
-    queryKey: ["assets", spaceId, filters, start ?? ""],
+    queryKey: ["assets", spaceId, filters, start ?? "", trashed],
     queryFn: ({ pageParam }) =>
       api.assets(
         spaceId,
         toApiParams(filters, {
           limit: String(PAGE),
+          ...(trashed ? { trashed: "true" } : {}),
           ...(pageParam ? { cursor: pageParam } : start ? { start } : {}),
         }),
       ),

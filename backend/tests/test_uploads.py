@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import Settings
 from app.db.models import Asset, Blob
 from app.jobs.worker import Worker
-from tests.helpers import Person, invite, join, setup_admin
+from tests.helpers import Person, invite, join
 from tests.media_files import make_jpeg, make_video, sha256
 
 TUS = {"Tus-Resumable": "1.0.0"}
@@ -78,26 +78,6 @@ def upload(
         offset = int(response.headers["upload-offset"])
     assert response is not None
     return response.headers["carrete-asset-id"]
-
-
-@pytest.fixture
-def media_settings(make_settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Settings:  # type: ignore[no-untyped-def]
-    settings = make_settings(require_2fa=False)
-    monkeypatch.setattr("app.config.get_settings", lambda: settings)
-    return settings
-
-
-@pytest.fixture
-def owner(media_settings: Settings, engine: Engine):  # type: ignore[no-untyped-def]
-    from tests.conftest import make_client
-
-    with make_client(media_settings, engine) as client:
-        yield setup_admin(client, engine)
-
-
-@pytest.fixture
-def worker(sessions: sessionmaker[Session]) -> Worker:
-    return Worker(sessions, poll_seconds=0.01)
 
 
 def drain(worker: Worker) -> None:

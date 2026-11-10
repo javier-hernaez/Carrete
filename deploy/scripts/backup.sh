@@ -1,4 +1,5 @@
 #!/bin/sh
+# OBSOLETO: las copias las hace «carrete backup-agent». Se puede borrar.
 # Copia de seguridad de la base de datos (contenedor «backup»).
 #
 # Cada BACKUP_DB_INTERVAL_SECONDS: pg_dump comprimido → verificación con pg_restore --list → rotación.

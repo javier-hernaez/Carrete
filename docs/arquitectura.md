@@ -15,7 +15,7 @@ los ADR de [`adr/`](adr/).
   │   app      FastAPI + web estática. Migra al arrancar.     /data (rw)     │
   │   worker   cola de tareas; sin red exterior.              /data (rw)     │
   │   db       PostgreSQL 17 (volumen carrete_pgdata)                        │
-  │   backup   volcados horarios → CARRETE_BACKUP_DIR (solo él lo ve)        │
+  │   backup   copias: originales, volcados, manifiestos, integridad         │
   └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -74,11 +74,22 @@ no está al día.
 ## Datos en disco
 
 ```
-CARRETE_DATA_DIR/                    CARRETE_BACKUP_DIR/
-  db-premigracion/  antes de migrar    db/horarias/   48 volcados
-  originals/        originales         db/diarias/    30 (enlaces duros)
-  derivatives/      miniaturas         db/mensuales/  12 (enlaces duros)
-  uploads/          subidas a medias   originals/     espejo
-  exports/          exportaciones      manifests/     por espacio
-  library/          biblioteca en disco
+CARRETE_ROOT/
+  datos/            ← app y worker (/data)          copias/          ← solo backup (/storage/copias)
+    originals/        originales (0444)               originals/       espejo (enlaces duros)
+    derivatives/      miniaturas, vistas previas      db/horarias, diarias, mensuales
+    uploads/          subidas a medias (48 h)         manifests/<espacio>/AAAA-MM-DD.jsonl
+    exports/          ZIP (7 días)                    config/          compose y nombres de variables
+    library/          biblioteca en disco
+    db-premigracion/  volcados antes de migrar
 ```
+
+## Durabilidad
+
+| Invariante | Cómo se garantiza | Prueba |
+|---|---|---|
+| Un original no cambia nunca | Renombrado atómico de un fichero verificado; 0444; nadie lo abre para escribir | `test_only_purge_deletes_originals` |
+| Solo la purga borra originales | `app/storage/purge.py` es el único sitio | ídem |
+| «Hecho» solo tras guardar, verificar y registrar | `_finalize` en `app/api/uploads.py` | `test_full_upload_and_processing` |
+| Derivados, biblioteca y exportaciones se regeneran | Se reconstruyen desde originales y base de datos | `test_restore_from_scratch` |
+| Las migraciones no tocan originales | Solo cambian el esquema; volcado previo | `test_migrations.py` |

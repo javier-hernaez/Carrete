@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router";
 
-import { useSession } from "../../app/session";
+import { canEdit, useSession } from "../../app/session";
+import { Button } from "../../design-system/components/Button";
 import { Alert } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { errorMessage } from "../../app/errors";
@@ -11,6 +12,7 @@ import { formatMonth } from "./format";
 import { Grid } from "./Grid";
 import styles from "./photos.module.css";
 import { useAssets, useTimeline } from "./useAssets";
+import { useAssetActions } from "./actions";
 import { Viewer } from "./Viewer";
 
 /** Línea temporal del espacio con filtros y visor. */
@@ -22,10 +24,11 @@ export function PhotosPage() {
         Ve a «Más → Espacio y miembros» para crear uno.
       </EmptyState>
     );
-  return <SpaceTimeline spaceId={space.id} />;
+  return <SpaceTimeline spaceId={space.id} editor={canEdit(space)} />;
 }
 
-function SpaceTimeline({ spaceId }: { spaceId: string }) {
+function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }) {
+  const actions = useAssetActions(spaceId);
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
   const start = params.get("desde") ?? undefined;
@@ -119,7 +122,29 @@ function SpaceTimeline({ spaceId }: { spaceId: string }) {
           onOpen={open}
         />
       )}
-      {index >= 0 && <Viewer items={assets.items} index={index} onIndex={open} onClose={close} />}
+      {index >= 0 && (
+        <Viewer
+          items={assets.items}
+          index={index}
+          onIndex={open}
+          onClose={close}
+          actions={(asset) =>
+            editor ? (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const next = assets.items[index + 1] ?? assets.items[index - 1];
+                  if (next) open(assets.items.indexOf(next));
+                  else close();
+                  void actions.trash([asset.id]);
+                }}
+              >
+                Eliminar
+              </Button>
+            ) : null
+          }
+        />
+      )}
     </div>
   );
 }

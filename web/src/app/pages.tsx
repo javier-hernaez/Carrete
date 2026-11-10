@@ -31,7 +31,7 @@ interface MoreItem {
 const MORE: MoreItem[] = [
   { label: "more.duplicates", icon: "duplicates" },
   { label: "more.discarded", icon: "discarded" },
-  { label: "more.trash", icon: "trash" },
+  { label: "more.trash", icon: "trash", to: "/papelera" },
   { label: "more.export", icon: "export" },
   { label: "more.activity", icon: "activity" },
   { label: "more.space", icon: "albums", to: "/espacio" },

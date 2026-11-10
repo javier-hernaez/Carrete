@@ -15,7 +15,8 @@ Rellena en `.env`:
 - `POSTGRES_PASSWORD` y `CARRETE_SECRET_KEY`: cada uno con `openssl rand -hex 32`. **Guárdalos en tu
   gestor de contraseñas**: sin `CARRETE_SECRET_KEY` no se pueden leer los secretos de segundo factor.
 - `CARRETE_PUBLIC_URL`: mientras no se active el Funnel, `http://127.0.0.1:8010`.
-- `CARRETE_DATA_DIR` y `CARRETE_BACKUP_DIR`: por defecto `/home/javier/carrete/datos` y `…/copias`.
+- `CARRETE_ROOT`: carpeta raíz, por defecto `/home/javier/carrete`, con `datos/` (fotos) y `copias/`
+  (copias de seguridad) dentro. Van juntas para que la copia de originales use enlaces duros (ADR 0008).
 
 Después:
 
@@ -67,31 +68,62 @@ ls "$CARRETE_DATA_DIR/db-premigracion/"
 2. Abre una incidencia con el mensaje de error.
 3. Si la base de datos hubiera quedado dañada, restaura el volcado previo (apartado siguiente).
 
-## Restaurar la base de datos
-
-Volcados: `CARRETE_BACKUP_DIR/db/{horarias,diarias,mensuales}/` y, antes de cada migración,
-`CARRETE_DATA_DIR/db-premigracion/`.
-
-```sh
-docker compose stop app worker
-docker compose exec -T db dropdb -U carrete carrete
-docker compose exec -T db createdb -U carrete carrete
-docker compose exec -T db pg_restore -U carrete -d carrete --no-owner < /ruta/al/volcado.dump
-docker compose up -d app worker
-```
-
-Más adelante: `carrete restore` y la restauración de originales, con prueba automática en el CI.
-
 ## Copias de seguridad
 
-El contenedor `backup` hace un volcado cada hora (`BACKUP_DB_INTERVAL_SECONDS`), lo verifica y conserva
-48 horarios, 30 diarios y 12 mensuales. Está «unhealthy» si el último volcado correcto tiene más de dos
-horas: `docker compose ps backup`, `docker compose logs backup`.
+El contenedor `backup` (orden `carrete backup-agent`) trabaja solo:
 
-Volcado inmediato: `docker compose exec backup sh /backup.sh once`.
+| Qué | Cuándo | Dónde (`CARRETE_ROOT/copias/`) |
+|---|---|---|
+| Originales nuevos (enlace duro o copia verificada) | cada 2 minutos | `originals/` |
+| Volcado de la base de datos, verificado | cada hora | `db/horarias` (48), `db/diarias` (30), `db/mensuales` (12) |
+| Manifiestos legibles por espacio | cada noche | `manifests/<espacio>/AAAA-MM-DD.jsonl` (30) |
+| `docker-compose.yml` y nombres de las variables de `.env` | cada noche | `config/` |
+| Verificación de integridad (SHA-256 de originales y copias) | cada semana | resultado en Administración |
+
+Lo purgado de la papelera se conserva en `originals/` 30 días más (en total, 60 días para recuperar).
+
+Órdenes útiles:
+
+```sh
+docker compose exec backup carrete backup          # copia inmediata de todo
+docker compose exec backup carrete backup base     # solo la base de datos
+docker compose exec backup carrete verify          # verificación de integridad ahora
+docker compose ps backup                            # «unhealthy» si el último volcado tiene más de 2 h
+```
 
 **Las copias están en el mismo disco que las fotos**: protegen de errores y borrados, no de
-la rotura del disco, el robo o el incendio del mini PC.
+la rotura del disco, el robo o el incendio del mini PC. No borres las fotos de los móviles hasta tener
+una copia externa.
+
+## Restaurar
+
+```sh
+deploy/scripts/restore.sh                        # el volcado horario más reciente
+deploy/scripts/restore.sh carrete-20261110T1600Z.dump
+```
+
+Para `app` y `worker`, restaura la base de datos, devuelve a `datos/originals/` los originales que
+falten (desde `copias/originals/`, comprobando su SHA-256) y vuelve a arrancar. El `worker` regenera las
+miniaturas y vistas previas que falten. Después: `docker compose exec backup carrete verify`.
+
+La misma secuencia (crear → copiar → destruir → restaurar → comprobar) se prueba en cada cambio:
+`tests/test_conservation.py::test_restore_from_scratch`.
+
+Si PostgreSQL no se pudiera restaurar, los manifiestos (`copias/manifests/`) dicen qué original
+(`originals/ab/cd/<sha256>.<ext>`) es cada foto, con su fecha, álbumes y estado.
+
+## Papelera y purga
+
+Eliminar manda a la papelera; se recupera durante 30 días. Una tarea nocturna del `worker` purga lo que
+lleve más de 30 días; el original solo se borra del disco si ningún otro elemento lo usa. «Vaciar
+papelera» (solo el propietario, tecleando el nombre del espacio) purga en el momento. No existe ninguna
+otra forma de borrar originales.
+
+## Avisos
+
+El `worker` revisa cada 15 minutos y avisa en Administración si: el disco pasa del 80 % o del 90 %, la
+copia de la base de datos tiene más de 2 horas, hay originales sin copiar desde hace más de 15 minutos,
+la verificación de integridad encuentra problemas, o hay ráfagas de accesos fallidos.
 
 ## Exponer a internet
 
@@ -117,12 +149,12 @@ Alternativa más segura: no activar Funnel y entrar solo por la red privada de T
 
 ## Mover a otro equipo
 
-1. `docker compose exec backup sh /backup.sh once` (volcado reciente).
+1. `docker compose exec backup carrete backup` (copia reciente).
 2. `docker compose down`.
-3. Copia `CARRETE_DATA_DIR`, `CARRETE_BACKUP_DIR` y `deploy/.env` al equipo nuevo (con `cp -a` o
-   `rsync -aH`: **conserva los enlaces duros**).
-4. En el equipo nuevo: `docker compose up -d db`, restaura el último volcado (apartado anterior) y
-   `docker compose up -d`.
+3. Copia `CARRETE_ROOT` entera y `deploy/.env` al equipo nuevo con `rsync -aH` (**-H conserva los
+   enlaces duros**; sin él, las copias ocuparían lo mismo que las fotos).
+4. En el equipo nuevo: `./scripts/preparar-carpetas.sh` (comprueba permisos) y
+   `deploy/scripts/restore.sh`.
 
 ## Registros
 

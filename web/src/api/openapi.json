@@ -661,6 +661,34 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "BatchIn": {
+        "properties": {
+          "action": {
+            "enum": [
+              "trash",
+              "restore"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids",
+          "action"
+        ],
+        "title": "BatchIn",
+        "type": "object"
+      },
       "CheckIn": {
         "properties": {
           "sha256": {
@@ -733,6 +761,33 @@
           "uploaded_at"
         ],
         "title": "ContributorOut",
+        "type": "object"
+      },
+      "CountOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "CountOut",
+        "type": "object"
+      },
+      "EmptyTrashIn": {
+        "properties": {
+          "confirm_name": {
+            "maxLength": 200,
+            "title": "Confirm Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm_name"
+        ],
+        "title": "EmptyTrashIn",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -2044,6 +2099,29 @@
           }
         },
         "summary": "Acknowledge",
+        "tags": [
+          "administración"
+        ]
+      }
+    },
+    "/api/v1/admin/status": {
+      "get": {
+        "operationId": "instance_status_api_v1_admin_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Instance Status Api V1 Admin Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Instance Status",
         "tags": [
           "administración"
         ]
@@ -3568,6 +3646,59 @@
         ]
       }
     },
+    "/api/v1/spaces/{space_id}/assets/batch": {
+      "post": {
+        "operationId": "batch_api_v1_spaces__space_id__assets_batch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Batch",
+        "tags": [
+          "elementos"
+        ]
+      }
+    },
     "/api/v1/spaces/{space_id}/assets/check": {
       "post": {
         "operationId": "check_hashes_api_v1_spaces__space_id__assets_check_post",
@@ -4107,6 +4238,102 @@
           }
         },
         "summary": "Timeline",
+        "tags": [
+          "elementos"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/trash": {
+      "get": {
+        "operationId": "trash_count_api_v1_spaces__space_id__trash_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trash Count",
+        "tags": [
+          "elementos"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/trash/empty": {
+      "post": {
+        "operationId": "empty_trash_api_v1_spaces__space_id__trash_empty_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyTrashIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Empty Trash",
         "tags": [
           "elementos"
         ]
