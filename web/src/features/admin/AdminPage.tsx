@@ -7,6 +7,7 @@ import { useSession } from "../../app/session";
 import { Button } from "../../design-system/components/Button";
 import { Alert, Card, PageTitle } from "../../design-system/components/Card";
 import { TextField } from "../../design-system/components/Field";
+import { formatBytes } from "../photos/format";
 import styles from "../page.module.css";
 
 const dateTime = new Intl.DateTimeFormat("es", { dateStyle: "short", timeStyle: "short" });
@@ -17,6 +18,7 @@ export function AdminPage() {
   return (
     <div>
       <PageTitle>Administración</PageTitle>
+      <StatusCard />
       <NoticesCard />
       <PeopleCard />
       <AuditCard />
@@ -182,6 +184,101 @@ function AuditCard() {
           <Button onClick={() => setCursor(audit.data.next_cursor ?? undefined)}>Más antiguos</Button>
         )}
       </div>
+    </Card>
+  );
+}
+
+function age(iso: string | null | undefined): string {
+  if (!iso) return "nunca";
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "hace un momento";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  return hours < 48 ? `hace ${hours} h` : `hace ${Math.round(hours / 24)} días`;
+}
+
+function StatusCard() {
+  const status = useQuery({
+    queryKey: ["admin", "status"],
+    queryFn: api.adminStatus,
+    refetchInterval: 60_000,
+  });
+  const s = status.data;
+  if (!s)
+    return (
+      <Card title="Estado">
+        {status.isError ? <Alert tone="danger">{errorMessage(status.error)}</Alert> : <p>Cargando…</p>}
+      </Card>
+    );
+  const used = s.disk.total ? s.disk.used / s.disk.total : 0;
+  const db = s.backup.database;
+  return (
+    <Card title="Estado">
+      {s.backup.agent.same_disk !== false && (
+        <Alert tone="warning">
+          Las copias están en el mismo disco que las fotos: protegen de errores y borrados, no de la rotura
+          del disco, el robo o un incendio.
+        </Alert>
+      )}
+      <div>
+        <strong>Disco:</strong> {formatBytes(s.disk.used)} de {formatBytes(s.disk.total)} (
+        {Math.round(used * 100)} %) · libres {formatBytes(s.disk.free)}
+        <progress
+          className={styles.grow}
+          max={1}
+          value={used}
+          aria-label="Uso del disco"
+          style={{ width: "100%" }}
+        />
+      </div>
+      {s.storage.originals !== undefined && (
+        <p className={styles.muted}>
+          Originales {formatBytes(s.storage.originals)} · derivados {formatBytes(s.storage.derivatives ?? 0)}{" "}
+          · exportaciones {formatBytes(s.storage.exports ?? 0)}
+        </p>
+      )}
+      {(s.storage.spaces?.length ?? 0) > 0 && (
+        <ul className={styles.list} aria-label="Espacio por espacio">
+          {s.storage.spaces?.map((sp) => (
+            <li key={sp.id} className={styles.row}>
+              <span className={styles.grow}>{sp.name}</span>
+              <span className={styles.muted}>
+                {sp.count.toLocaleString("es")} elementos · {formatBytes(sp.bytes)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p>
+        <strong>Copia de la base de datos:</strong>{" "}
+        {db ? `${db.ok ? "correcta" : "FALLIDA"}, ${age(db.finished_at)}` : "aún ninguna"}
+        <br />
+        <strong>Originales sin copia:</strong> {s.backup.pending_originals}
+        <br />
+        <strong>Integridad:</strong>{" "}
+        {s.integrity
+          ? `${s.integrity.ok ? "todo bien" : `${s.integrity.problems.length} problemas`} (${s.integrity.checked} revisados, ${age(s.integrity.finished_at)})`
+          : "aún no verificada"}
+        <br />
+        <strong>Cola de tareas:</strong>{" "}
+        {Object.entries(s.queue)
+          .map(([k, v]) => `${k} ${v}`)
+          .join(" · ") || "vacía"}
+        <br />
+        <strong>Versión:</strong> {s.version}
+      </p>
+      {s.failed_jobs.length > 0 && (
+        <details>
+          <summary>Tareas fallidas ({s.failed_jobs.length})</summary>
+          <ul className={styles.list}>
+            {s.failed_jobs.map((j, i) => (
+              <li key={i} className={styles.muted}>
+                {j.kind}: {j.error}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </Card>
   );
 }
