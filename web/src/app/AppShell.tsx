@@ -11,6 +11,7 @@ import styles from "./AppShell.module.css";
 import { Toaster } from "../features/toast/Toaster";
 import { useSession } from "./session";
 import { applyTheme } from "./theme";
+import { SidebarAlbums } from "./SidebarAlbums";
 import { SpaceSwitcher } from "./SpaceSwitcher";
 
 interface NavItem {
@@ -33,7 +34,15 @@ const NAV: NavItem[] = [
  */
 export function AppShell() {
   const info = useQuery({ queryKey: ["info"], queryFn: api.info, staleTime: Infinity });
-  const { me } = useSession();
+  const { me, space } = useSession();
+  const counters = useQuery({
+    queryKey: ["counters", space?.id],
+    queryFn: () => api.counters(space?.id ?? ""),
+    enabled: !!space,
+    refetchInterval: 60_000,
+  });
+  const badge = (to: string) =>
+    to === "/revisar" ? counters.data?.pending_review : to === "/mas" ? counters.data?.duplicates : undefined;
   const theme = me.preferences.theme as string | undefined;
   useEffect(() => {
     applyTheme(theme);
@@ -70,12 +79,27 @@ export function AppShell() {
                   [styles.navLink, isActive && styles.active].filter(Boolean).join(" ")
                 }
               >
-                <Icon name={item.icon} />
+                <span className={styles.navIcon}>
+                  <Icon name={item.icon} />
+                  {(badge(item.to) ?? 0) > 0 && (
+                    <span
+                      className={styles.navBadge}
+                      aria-label={
+                        item.to === "/revisar"
+                          ? `${badge(item.to) ?? 0} sin revisar`
+                          : `${badge(item.to) ?? 0} grupos de repetidas`
+                      }
+                    >
+                      {(badge(item.to) ?? 0) > 999 ? "999+" : badge(item.to)}
+                    </span>
+                  )}
+                </span>
                 <span className={styles.navText}>{t(item.label)}</span>
               </NavLink>
             </li>
           ))}
         </ul>
+        {space && <SidebarAlbums spaceId={space.id} editor={space.role !== "viewer"} />}
       </nav>
 
       <main id="contenido" className={styles.main} tabIndex={-1}>

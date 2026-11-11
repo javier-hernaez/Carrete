@@ -1,7 +1,8 @@
 import { useSearchParams } from "react-router";
 
+import { useMemo } from "react";
+
 import { canEdit, useSession } from "../../app/session";
-import { Button } from "../../design-system/components/Button";
 import { Alert } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { errorMessage } from "../../app/errors";
@@ -12,8 +13,10 @@ import { formatMonth } from "./format";
 import { Grid } from "./Grid";
 import styles from "./photos.module.css";
 import { useAssets, useTimeline } from "./useAssets";
-import { useAssetActions } from "./actions";
+import { SelectionBar } from "../selection/SelectionBar";
+import { useSelection } from "../selection/useSelection";
 import { Viewer } from "./Viewer";
+import { ViewerActions } from "./ViewerActions";
 
 /** Línea temporal del espacio con filtros y visor. */
 export function PhotosPage() {
@@ -28,13 +31,14 @@ export function PhotosPage() {
 }
 
 function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }) {
-  const actions = useAssetActions(spaceId);
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
   const start = params.get("desde") ?? undefined;
   const assets = useAssets(spaceId, filters, start);
   const timeline = useTimeline(spaceId, filters);
   const viewing = params.get("ver");
+  const ids = useMemo(() => assets.items.map((a) => a.id), [assets.items]);
+  const selection = useSelection(ids);
   const index = viewing ? assets.items.findIndex((a) => a.id === viewing) : -1;
 
   const open = (i: number) => {
@@ -120,6 +124,19 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
             if (!assets.isFetchingNextPage) void assets.fetchNextPage();
           }}
           onOpen={open}
+          selected={editor ? selection.selected : undefined}
+          onToggle={editor ? selection.toggle : undefined}
+          onSelectDay={editor ? selection.toggleMany : undefined}
+          draggable={editor}
+        />
+      )}
+      {selection.selected.size > 0 && (
+        <SelectionBar
+          spaceId={spaceId}
+          ids={[...selection.selected]}
+          items={assets.items}
+          onClear={selection.clear}
+          onSelectAll={selection.selectAll}
         />
       )}
       {index >= 0 && (
@@ -130,17 +147,15 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
           onClose={close}
           actions={(asset) =>
             editor ? (
-              <Button
-                variant="ghost"
-                onClick={() => {
+              <ViewerActions
+                spaceId={spaceId}
+                asset={asset}
+                onRemoved={() => {
                   const next = assets.items[index + 1] ?? assets.items[index - 1];
                   if (next) open(assets.items.indexOf(next));
                   else close();
-                  void actions.trash([asset.id]);
                 }}
-              >
-                Eliminar
-              </Button>
+              />
             ) : null
           }
         />

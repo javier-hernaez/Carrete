@@ -5,34 +5,45 @@ import { totp } from "./totp";
 
 const PASSWORD = "una frase larga y segura de prueba";
 
-/** Genera JPEG sintéticos en el propio navegador (nunca fotos reales). */
-async function syntheticPhotos(page: Page, names: string[]) {
+interface PhotoSpec {
+  name: string;
+  seed: number;
+  width?: number;
+  height?: number;
+  quality?: number;
+}
+
+/** Genera JPEG sintéticos en el propio navegador (nunca fotos reales). Misma semilla = misma imagen. */
+async function syntheticPhotos(page: Page, specs: PhotoSpec[]) {
   const data = await page.evaluate(async (list) => {
     const out: { name: string; b64: string }[] = [];
-    for (const [i, name] of list.entries()) {
+    for (const spec of list) {
+      const w = spec.width ?? 640;
+      const h = spec.height ?? 480;
       const canvas = document.createElement("canvas");
-      canvas.width = 640;
-      canvas.height = 480;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("sin canvas");
-      const grad = ctx.createLinearGradient(0, 0, 640, 480);
-      grad.addColorStop(0, `hsl(${i * 70}, 70%, 55%)`);
-      grad.addColorStop(1, `hsl(${i * 70 + 140}, 60%, 35%)`);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, `hsl(${spec.seed * 70}, 70%, 55%)`);
+      grad.addColorStop(1, `hsl(${spec.seed * 70 + 140}, 60%, 35%)`);
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 640, 480);
+      ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = "#fff";
-      ctx.font = "64px sans-serif";
-      ctx.fillText(String(i + 1), 280, 260);
+      ctx.beginPath();
+      ctx.arc(w * (0.2 + 0.15 * (spec.seed % 4)), h * 0.5, h * 0.25, 0, Math.PI * 2);
+      ctx.fill();
       const blob = await new Promise<Blob>((ok) => {
-        canvas.toBlob((b) => ok(b as Blob), "image/jpeg", 0.85);
+        canvas.toBlob((b) => ok(b as Blob), "image/jpeg", spec.quality ?? 0.9);
       });
       const bytes = new Uint8Array(await blob.arrayBuffer());
       let bin = "";
       bytes.forEach((b) => (bin += String.fromCharCode(b)));
-      out.push({ name, b64: btoa(bin) });
+      out.push({ name: spec.name, b64: btoa(bin) });
     }
     return out;
-  }, names);
+  }, specs);
   return data.map((d) => ({ name: d.name, mimeType: "image/jpeg", buffer: Buffer.from(d.b64, "base64") }));
 }
 
@@ -40,10 +51,14 @@ async function expectAccessible(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
-  expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  expect(
+    results.violations.map(
+      (v) => `${v.id}: ${v.help} → ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`,
+    ),
+  ).toEqual([]);
 }
 
-test("de la instalación a ver las fotos subidas", async ({ page }) => {
+test("de la instalación a ordenar las fotos", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (m) => {
     if (m.type() === "error") consoleErrors.push(m.text());
@@ -74,9 +89,9 @@ test("de la instalación a ver las fotos subidas", async ({ page }) => {
   // Subir
   await page.getByRole("link", { name: "Subir" }).first().click();
   const files = await syntheticPhotos(page, [
-    "IMG-20230415-WA0001.jpg",
-    "IMG-20230416-WA0002.jpg",
-    "IMG-20230416-WA0003.jpg",
+    { name: "IMG-20230415-WA0001.jpg", seed: 1 },
+    { name: "IMG-20230416-WA0002.jpg", seed: 2 },
+    { name: "IMG-20230416-WA0003.jpg", seed: 3 },
   ]);
   await page.getByLabel("Elegir fotos y vídeos").setInputFiles(files);
   await expect(page.getByText("3 subidas, 0 ya estaban, 0 errores")).toBeVisible({ timeout: 90_000 });
@@ -105,6 +120,54 @@ test("de la instalación a ver las fotos subidas", async ({ page }) => {
   await expect(viewer.getByText("WhatsApp")).toBeVisible();
   await page.goBack();
   await expect(viewer).toBeHidden();
+
+  // Repetidas: la misma foto reenviada «por WhatsApp», más pequeña y peor comprimida
+  await page.getByRole("link", { name: "Subir" }).first().click();
+  await page.getByRole("button", { name: "Limpiar la lista" }).click();
+  const copy = await syntheticPhotos(page, [
+    { name: "IMG-20230415-WA0004.jpg", seed: 1, width: 320, height: 240, quality: 0.4 },
+  ]);
+  await page.getByLabel("Elegir fotos y vídeos").setInputFiles(copy);
+  await expect(page.getByText(/^1 subidas, 0 ya estaban, 0 errores$/)).toBeVisible({ timeout: 60_000 });
+  const groups = page.getByRole("list", { name: "Grupos de repetidas" });
+  // El worker tiene que procesar la copia antes de poder compararla.
+  await expect(async () => {
+    await page.goto("/repetidas");
+    await expect(groups.getByRole("listitem")).toHaveCount(1, { timeout: 3_000 });
+  }).toPass({ timeout: 90_000 });
+  await expect(groups.getByText("640×480")).toBeVisible();
+  await expectAccessible(page);
+  await groups.getByRole("button", { name: "Quedarme con la mejor" }).click();
+  await expect(page.getByText("Una a la papelera")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No hay repetidas" })).toBeVisible();
+
+  // Revisar con el teclado: vale, vale, no vale
+  await page.goto("/revisar");
+  await expect(page.getByText("1 de 3")).toBeVisible();
+  await expectAccessible(page);
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByText("2 de 3")).toBeVisible();
+  await page.keyboard.press("v");
+  await page.keyboard.press("x");
+  await expect(page.getByRole("heading", { name: "¡Listo!" })).toBeVisible();
+  await expect(page.getByText(/2 valen y 1 descartados/)).toBeVisible();
+
+  // Crear un álbum arrastrando la selección a la barra lateral
+  await page.goto("/");
+  await expect(page.getByText("2 elementos")).toBeVisible();
+  const boxes = page.getByRole("button", { name: /^Seleccionar: / });
+  await boxes.nth(0).click({ force: true });
+  await boxes.nth(1).click({ force: true });
+  await expect(page.getByText("2 seleccionadas")).toBeVisible();
+  page.once("dialog", (dialog) => void dialog.accept("Asturias 2025"));
+  await page
+    .getByRole("button", { name: /^Foto del/ })
+    .first()
+    .dragTo(page.getByText("+ Suelta aquí para un álbum nuevo"));
+  await expect(page.getByText("Álbum «Asturias 2025» creado con 2 fotos")).toBeVisible();
+  await page.getByRole("link", { name: "Álbumes" }).first().click();
+  await expect(page.getByRole("link", { name: /Asturias 2025\s*2 elementos/ })).toBeVisible();
+  await expectAccessible(page);
 
   expect(consoleErrors.filter((e) => /Content Security Policy|Refused/.test(e))).toEqual([]);
 });

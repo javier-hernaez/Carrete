@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     map_style_url: str | None = None
 
     premigration_dump: bool = True
+    # Distancia de Hamming máxima entre huellas para proponer dos fotos como repetidas.
+    duplicate_distance: int = Field(default=6, ge=0, le=20)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "text"] = "json"
 

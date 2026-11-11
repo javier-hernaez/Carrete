@@ -466,3 +466,100 @@ class AppState(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class Album(TimestampMixin, Base):
+    """Agrupación manual dentro de un espacio. Un solo nivel. Borrarlo no borra elementos."""
+
+    __tablename__ = "albums"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    cover_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="SET NULL")
+    )
+    sort_mode: Mapped[str] = mapped_column(Text, nullable=False, server_default="date")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (CheckConstraint("sort_mode IN ('date', 'manual')", name="sort_mode_valid"),)
+
+
+class AlbumAsset(Base):
+    """Pertenencia a un álbum. ``position`` es un índice fraccionario para el orden manual."""
+
+    __tablename__ = "album_assets"
+
+    album_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("albums.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    position: Mapped[float] = mapped_column(Double, nullable=False)
+    added_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    added_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (Index("ix_album_assets_album_id_position", "album_id", "position"),)
+
+
+class DuplicateGroup(Base):
+    """Elementos casi idénticos pendientes de resolver."""
+
+    __tablename__ = "duplicate_groups"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False
+    )
+    kind: Mapped[str] = mapped_column(Text, nullable=False, server_default="similar")
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    distance: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('exact', 'similar')", name="kind_valid"),
+        CheckConstraint("status IN ('pending', 'resolved', 'dismissed')", name="status_valid"),
+        Index("ix_duplicate_groups_space_id_status", "space_id", "status"),
+    )
+
+
+class DuplicateMember(Base):
+    __tablename__ = "duplicate_members"
+
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("duplicate_groups.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+
+class DuplicateDismissal(Base):
+    """Pareja marcada como «No son repetidas»: no se vuelve a proponer."""
+
+    __tablename__ = "duplicate_dismissals"
+
+    asset_a: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_b: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    __table_args__ = (CheckConstraint("asset_a < asset_b", name="ordered"),)

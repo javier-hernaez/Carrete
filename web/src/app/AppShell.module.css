@@ -172,6 +172,8 @@
 
   .nav {
     grid-area: nav;
+    display: flex;
+    flex-direction: column;
     position: sticky;
     top: var(--header-height);
     inset: auto;
@@ -211,5 +213,96 @@
 
   .fab {
     display: none;
+  }
+}
+
+.navIcon {
+  position: relative;
+  display: inline-grid;
+}
+
+.navBadge {
+  position: absolute;
+  top: -6px;
+  left: 14px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Álbumes de la barra lateral: solo en escritorio, donde se arrastra. */
+.albums {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .albums {
+    display: block;
+    margin-top: var(--space-6);
+    overflow-y: auto;
+  }
+
+  .albumsTitle {
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-2);
+    color: var(--color-text-subtle);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .albumsList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .albumLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 36px;
+    padding: 0 var(--space-3);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    text-decoration: none;
+  }
+
+  .albumLink:hover {
+    background: var(--color-surface-2);
+  }
+
+  .albumName {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .albumCount {
+    color: var(--color-text-subtle);
+    font-size: var(--text-xs);
+  }
+
+  .newAlbum {
+    color: var(--color-text-subtle);
+    border-style: dashed;
+    border-color: var(--color-border);
+  }
+
+  .dropOver {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-text);
   }
 }

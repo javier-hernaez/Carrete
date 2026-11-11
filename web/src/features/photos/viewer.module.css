@@ -150,3 +150,35 @@
 .warn {
   color: #e7b85a;
 }
+
+.action {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.action:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+.action[aria-pressed="true"] {
+  border-color: #f0954f;
+  background: rgb(240 149 79 / 25%);
+}
+
+.description {
+  width: 100%;
+  min-height: 4rem;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 6%);
+  color: inherit;
+  font: inherit;
+}
