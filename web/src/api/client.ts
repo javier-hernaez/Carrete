@@ -16,6 +16,11 @@ export type AssetItem = S["AssetOut"];
 export type AssetPage = S["AssetPage"];
 export type AssetDetail = S["AssetDetail"];
 export type Timeline = S["TimelineOut"];
+export type Album = S["AlbumOut"];
+export type DuplicateGroup = S["GroupOut"];
+export type Counters = S["CountersOut"];
+export type Activity = S["ActivityOut"];
+export type BatchResult = S["BatchOut"];
 
 interface Run {
   started_at: string;
@@ -200,7 +205,34 @@ export const api = {
   uploadSummary: (space: string, body: { uploaded: number; duplicates: number; failed: number }) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/uploads/summary`, json(body)),
   batch: (space: string, ids: string[], action: string, extra: Record<string, unknown> = {}) =>
-    apiFetch<{ count: number }>(`/api/v1/spaces/${space}/assets/batch`, json({ ids, action, ...extra })),
+    apiFetch<BatchResult>(`/api/v1/spaces/${space}/assets/batch`, json({ ids, action, ...extra })),
+  updateAsset: (id: string, body: S["AssetPatch"]) =>
+    apiFetch<undefined>(`/api/v1/assets/${id}`, patch(body)),
+  counters: (space: string) => apiFetch<Counters>(`/api/v1/spaces/${space}/counters`),
+  activity: (space: string, before?: string) =>
+    apiFetch<Activity[]>(`/api/v1/spaces/${space}/activity${before ? `?before=${before}` : ""}`),
+  albums: (space: string) => apiFetch<Album[]>(`/api/v1/spaces/${space}/albums`),
+  album: (space: string, id: string) => apiFetch<Album>(`/api/v1/spaces/${space}/albums/${id}`),
+  createAlbum: (space: string, name: string, asset_ids: string[] = []) =>
+    apiFetch<Album>(`/api/v1/spaces/${space}/albums`, json({ name, asset_ids })),
+  updateAlbum: (space: string, id: string, body: S["AlbumPatch"]) =>
+    apiFetch<Album>(`/api/v1/spaces/${space}/albums/${id}`, patch(body)),
+  deleteAlbum: (space: string, id: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}`, del),
+  reorderAlbum: (space: string, id: string, body: S["ReorderIn"]) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}/reorder`, json(body)),
+  duplicates: (space: string) => apiFetch<DuplicateGroup[]>(`/api/v1/spaces/${space}/duplicates`),
+  resolveDuplicates: (space: string, group: string, keep: string[]) =>
+    apiFetch<{ trashed: string[] }>(`/api/v1/spaces/${space}/duplicates/${group}/resolve`, json({ keep })),
+  reopenDuplicates: (space: string, group: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/duplicates/${group}/reopen`, post),
+  dismissDuplicates: (space: string, group: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/duplicates/${group}/dismiss`, post),
+  resolveObvious: (space: string, apply: boolean) =>
+    apiFetch<S["ObviousOut"]>(
+      `/api/v1/spaces/${space}/duplicates/resolve-obvious${apply ? "?apply=true" : ""}`,
+      post,
+    ),
   trashCount: (space: string) => apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash`),
   emptyTrash: (space: string, confirm_name: string) =>
     apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash/empty`, json({ confirm_name })),

@@ -1,5 +1,5 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import type { AssetItem } from "../../api/client";
 import { dayKey, formatDay } from "./format";
@@ -15,10 +15,10 @@ interface GridProps {
   hasMore: boolean;
   loadMore: () => void;
   onOpen: (index: number) => void;
-  selected?: ReadonlySet<string>;
-  onToggle?: (index: number, event: { shiftKey: boolean }) => void;
-  onSelectDay?: (ids: string[]) => void;
-  dayAction?: (ids: string[]) => ReactNode;
+  selected?: ReadonlySet<string> | undefined;
+  onToggle?: ((index: number, event: { shiftKey: boolean }) => void) | undefined;
+  onSelectDay?: ((ids: string[]) => void) | undefined;
+  draggable?: boolean | undefined;
 }
 
 function useWidth() {
@@ -49,7 +49,21 @@ function useWidth() {
  * Cuadrícula agrupada por días y virtualizada: solo existen en el DOM las filas visibles,
  * así que se mueve con fluidez aunque el espacio tenga decenas de miles de elementos.
  */
-export function Grid({ items, hasMore, loadMore, onOpen, selected, onToggle, dayAction }: GridProps) {
+export function Grid({
+  items,
+  hasMore,
+  loadMore,
+  onOpen,
+  selected,
+  onToggle,
+  onSelectDay,
+  draggable,
+}: GridProps) {
+  const selecting = (selected?.size ?? 0) > 0;
+  const selectedRef = useRef(selected);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   const { ref, width, top: offsetTop } = useWidth();
   const target = width < 600 ? 104 : 168;
   const columns = Math.max(3, Math.floor(width / target));
@@ -100,7 +114,12 @@ export function Grid({ items, hasMore, loadMore, onOpen, selected, onToggle, day
   }, [last, hasMore, rows.length, loadMore]);
 
   return (
-    <div ref={ref} className={styles.grid} style={{ height: virtualizer.getTotalSize() }}>
+    <div
+      ref={ref}
+      className={styles.grid}
+      style={{ height: virtualizer.getTotalSize() }}
+      data-selecting={selecting ? "" : undefined}
+    >
       {virtualRows.map((v) => {
         const row = rows[v.index];
         if (!row) return null;
@@ -113,7 +132,11 @@ export function Grid({ items, hasMore, loadMore, onOpen, selected, onToggle, day
               style={{ transform: `translateY(${top}px)`, height: 48 }}
             >
               <h2 className={styles.dayTitle}>{row.label}</h2>
-              {dayAction?.(row.ids)}
+              {onSelectDay && (
+                <button type="button" className={styles.dayAction} onClick={() => onSelectDay(row.ids)}>
+                  {row.ids.every((id) => selected?.has(id)) ? "Quitar el día" : "Seleccionar el día"}
+                </button>
+              )}
             </div>
           );
         }
@@ -134,10 +157,16 @@ export function Grid({ items, hasMore, loadMore, onOpen, selected, onToggle, day
                 asset={asset}
                 label={`${asset.kind === "video" ? "Vídeo" : "Foto"} del ${formatDay(dayKey(asset.taken_at))}, ${asset.taken_at.slice(11, 16)}`}
                 selected={selected?.has(asset.id)}
-                onOpen={() =>
-                  onToggle && selected && selected.size > 0
-                    ? onToggle(index, { shiftKey: false })
-                    : onOpen(index)
+                selecting={selecting}
+                onActivate={() => onOpen(index)}
+                onSelect={onToggle ? (e) => onToggle(index, e) : undefined}
+                dragIds={
+                  draggable
+                    ? () => {
+                        const current = selectedRef.current;
+                        return current?.has(asset.id) ? [...current] : [asset.id];
+                      }
+                    : undefined
                 }
               />
             ))}

@@ -171,7 +171,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Asset
+         * @description Descripción de texto libre.
+         */
+        patch: operations["update_asset_api_v1_assets__asset_id__patch"];
         trace?: never;
     };
     "/api/v1/assets/{asset_id}/original": {
@@ -610,6 +614,80 @@ export interface paths {
         patch: operations["update_space_api_v1_spaces__space_id__patch"];
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Activity */
+        get: operations["activity_api_v1_spaces__space_id__activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Albums */
+        get: operations["list_albums_api_v1_spaces__space_id__albums_get"];
+        put?: never;
+        /** Create Album */
+        post: operations["create_album_api_v1_spaces__space_id__albums_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums/{album_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Album */
+        get: operations["get_album_api_v1_spaces__space_id__albums__album_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Album
+         * @description Eliminar un álbum nunca elimina sus fotos.
+         */
+        delete: operations["delete_album_api_v1_spaces__space_id__albums__album_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Album */
+        patch: operations["update_album_api_v1_spaces__space_id__albums__album_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums/{album_id}/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reorder */
+        post: operations["reorder_api_v1_spaces__space_id__albums__album_id__reorder_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/assets": {
         parameters: {
             query?: never;
@@ -655,6 +733,117 @@ export interface paths {
         put?: never;
         /** Check Hashes */
         post: operations["check_hashes_api_v1_spaces__space_id__assets_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/counters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Counters
+         * @description Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas».
+         */
+        get: operations["counters_api_v1_spaces__space_id__counters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Groups */
+        get: operations["list_groups_api_v1_spaces__space_id__duplicates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/resolve-obvious": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Obvious
+         * @description Resolver de una vez los grupos evidentes. Sin ``apply`` solo devuelve el resumen previo.
+         */
+        post: operations["resolve_obvious_api_v1_spaces__space_id__duplicates_resolve_obvious_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss */
+        post: operations["dismiss_api_v1_spaces__space_id__duplicates__group_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reopen
+         * @description Deshacer una resolución: vuelve a proponer el grupo (las fotos se recuperan aparte).
+         */
+        post: operations["reopen_api_v1_spaces__space_id__duplicates__group_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve */
+        post: operations["resolve_api_v1_spaces__space_id__duplicates__group_id__resolve_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -883,6 +1072,80 @@ export interface components {
             /** Active */
             active: boolean;
         };
+        /** ActivityOut */
+        ActivityOut: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string | null;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** AdminResetIn */
+        AdminResetIn: {
+            /**
+             * Reset Totp
+             * @default false
+             */
+            reset_totp: boolean;
+        };
+        /** AlbumIn */
+        AlbumIn: {
+            /** Asset Ids */
+            asset_ids?: string[];
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** AlbumOut */
+        AlbumOut: {
+            /** Count */
+            count: number;
+            /** Cover Asset Id */
+            cover_asset_id: string | null;
+            /** Description */
+            description: string | null;
+            /** First */
+            first: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last */
+            last: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Sort Mode
+             * @enum {string}
+             */
+            sort_mode: "date" | "manual";
+        };
+        /** AlbumPatch */
+        AlbumPatch: {
+            /** Cover Asset Id */
+            cover_asset_id?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Sort Mode */
+            sort_mode?: ("date" | "manual") | null;
+        };
         /** AssetDetail */
         AssetDetail: {
             /** Albums */
@@ -1024,6 +1287,11 @@ export interface components {
             /** Next Cursor */
             next_cursor: string | null;
         };
+        /** AssetPatch */
+        AssetPatch: {
+            /** Description */
+            description?: string | null;
+        };
         /** AuditOut */
         AuditOut: {
             /** Action */
@@ -1068,9 +1336,36 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "trash" | "restore";
+            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "set_date" | "shift_date" | "revert";
+            /** Album Id */
+            album_id?: string | null;
             /** Ids */
             ids: string[];
+            /** Minutes */
+            minutes?: number | null;
+            /** Offset Minutes */
+            offset_minutes?: number | null;
+            /** Snapshot */
+            snapshot?: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            } | null;
+            /** State */
+            state?: ("pending" | "kept" | "discarded") | null;
+            /** Taken At */
+            taken_at?: string | null;
+            /** Value */
+            value?: boolean | null;
+        };
+        /** BatchOut */
+        BatchOut: {
+            /** Count */
+            count: number;
+            /** Undo */
+            undo?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CheckIn */
         CheckIn: {
@@ -1102,10 +1397,85 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** CountersOut */
+        CountersOut: {
+            /** Discarded */
+            discarded: number;
+            /** Duplicates */
+            duplicates: number;
+            /** Pending Review */
+            pending_review: number;
+            /** Trash */
+            trash: number;
+        };
+        /** DuplicateMemberOut */
+        DuplicateMemberOut: {
+            /** Best */
+            best: boolean;
+            /** Date Doubtful */
+            date_doubtful: boolean;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Has Exif Date */
+            has_exif_date: boolean;
+            /** Height */
+            height: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Favorite */
+            is_favorite: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "photo" | "video";
+            /** Original Filename */
+            original_filename: string;
+            /** Processing State */
+            processing_state: string;
+            /**
+             * Review State
+             * @enum {string}
+             */
+            review_state: "pending" | "kept" | "discarded";
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "camera" | "whatsapp" | "screenshot" | "other";
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Taken At Offset */
+            taken_at_offset: number | null;
+            /** Thumbhash */
+            thumbhash: string | null;
+            /** Width */
+            width: number | null;
+        };
         /** EmptyTrashIn */
         EmptyTrashIn: {
             /** Confirm Name */
             confirm_name: string;
+        };
+        /** GroupOut */
+        GroupOut: {
+            /** Distance */
+            distance: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Members */
+            members: components["schemas"]["DuplicateMemberOut"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1293,6 +1663,25 @@ export interface components {
             /** Severity */
             severity: string;
         };
+        /** ObviousOut */
+        ObviousOut: {
+            /**
+             * Group Ids
+             * @default []
+             */
+            group_ids: string[];
+            /** Groups */
+            groups: number;
+            /** Keep */
+            keep: number;
+            /** Trash */
+            trash: number;
+            /**
+             * Trashed
+             * @default []
+             */
+            trashed: string[];
+        };
         /** PasswordIn */
         PasswordIn: {
             /** Current Password */
@@ -1331,12 +1720,39 @@ export interface components {
             /** Recovery Codes */
             recovery_codes: string[];
         };
+        /** ReorderIn */
+        ReorderIn: {
+            /** After Id */
+            after_id?: string | null;
+            /**
+             * Asset Id
+             * Format: uuid
+             */
+            asset_id: string;
+            /** Before Id */
+            before_id?: string | null;
+        };
+        /** ResetIn */
+        ResetIn: {
+            /** Password */
+            password: string;
+        };
         /** ResetPreview */
         ResetPreview: {
             /** Reset Totp */
             reset_totp: boolean;
             /** Username */
             username: string | null;
+        };
+        /** ResolveIn */
+        ResolveIn: {
+            /** Keep */
+            keep: string[];
+        };
+        /** ResolveOut */
+        ResolveOut: {
+            /** Trashed */
+            trashed: string[];
         };
         /** RoleIn */
         RoleIn: {
@@ -1512,19 +1928,6 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
-        };
-        /** ResetIn */
-        app__api__admin__ResetIn: {
-            /**
-             * Reset Totp
-             * @default false
-             */
-            reset_totp: boolean;
-        };
-        /** ResetIn */
-        app__api__spaces__ResetIn: {
-            /** Password */
-            password: string;
         };
     };
     responses: never;
@@ -1737,7 +2140,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__api__admin__ResetIn"];
+                "application/json": components["schemas"]["AdminResetIn"];
             };
         };
         responses: {
@@ -1809,6 +2212,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AssetDetail"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_asset_api_v1_assets__asset_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2453,7 +2889,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__api__spaces__ResetIn"];
+                "application/json": components["schemas"]["ResetIn"];
             };
         };
         responses: {
@@ -2649,12 +3085,244 @@ export interface operations {
             };
         };
     };
+    activity_api_v1_spaces__space_id__activity_get: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_albums_api_v1_spaces__space_id__albums_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_album_api_v1_spaces__space_id__albums_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlbumIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_album_api_v1_spaces__space_id__albums__album_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_album_api_v1_spaces__space_id__albums__album_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_album_api_v1_spaces__space_id__albums__album_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlbumPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reorder_api_v1_spaces__space_id__albums__album_id__reorder_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_assets_api_v1_spaces__space_id__assets_get: {
         parameters: {
             query?: {
                 cursor?: string | null;
                 limit?: number;
-                order?: "desc" | "asc";
+                order?: "desc" | "asc" | "album";
                 start?: string | null;
                 review?: ("pending" | "kept" | "discarded")[] | null;
                 favorite?: boolean | null;
@@ -2718,7 +3386,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CountOut"];
+                    "application/json": components["schemas"]["BatchOut"];
                 };
             };
             /** @description Validation Error */
@@ -2754,6 +3422,197 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    counters_api_v1_spaces__space_id__counters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountersOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_groups_api_v1_spaces__space_id__duplicates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_obvious_api_v1_spaces__space_id__duplicates_resolve_obvious_post: {
+        parameters: {
+            query?: {
+                apply?: boolean;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObviousOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_api_v1_spaces__space_id__duplicates__group_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_api_v1_spaces__space_id__duplicates__group_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_api_v1_spaces__space_id__duplicates__group_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolveOut"];
                 };
             };
             /** @description Validation Error */
