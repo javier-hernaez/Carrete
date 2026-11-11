@@ -26,7 +26,8 @@ cleanup() {
   compose down -v --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$WORK" 2>/dev/null || true
 }
-trap cleanup EXIT INT TERM
+# KEEP=1 deja la instancia en marcha para investigar un fallo (se borra luego con «docker compose -p carrete-e2e down -v»).
+[ "${KEEP:-0}" = "1" ] || trap cleanup EXIT INT TERM
 compose up -d --no-build --pull never
 for _ in $(seq 1 60); do curl -fsS http://127.0.0.1:8011/readyz >/dev/null 2>&1 && break; sleep 2; done
 docker run --rm --network host -u "$(id -u):$(id -g)" -e HOME=/tmp -e CI=1 \
