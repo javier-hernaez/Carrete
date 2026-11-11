@@ -149,7 +149,7 @@ def list_assets(
     filters: FiltersDep,
     cursor: Annotated[str | None, Query(max_length=200)] = None,
     limit: Annotated[int, Query(ge=1, le=1000)] = 300,
-    order: Literal["desc", "asc"] = "desc",
+    order: Literal["desc", "asc", "album"] = "desc",
     start: date | None = None,
 ) -> AssetPage:
     spaces.access(db, current.user, space_id)
@@ -309,27 +309,92 @@ def original(asset_id: uuid.UUID, current: FullAuth, db: DB, storage: StorageDep
 
 # --- Acciones masivas y papelera -----------------------------------------------------------------------
 
-BatchAction = Literal["trash", "restore"]
+BatchAction = Literal[
+    "trash", "restore", "review", "favorite", "add_album", "remove_album", "set_date", "shift_date", "revert"
+]
 
 
 class BatchIn(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=5000)
     action: BatchAction
+    state: Review | None = None
+    value: bool | None = None
+    album_id: uuid.UUID | None = None
+    taken_at: str | None = Field(default=None, max_length=40)
+    offset_minutes: int | None = None
+    minutes: int | None = None
+    snapshot: dict[str, dict[str, object]] | None = None
 
 
 class CountOut(BaseModel):
     count: int
 
 
-@router.post("/spaces/{space_id}/assets/batch", response_model=CountOut)
-def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: ReqInfo) -> CountOut:
+class BatchOut(CountOut):
+    undo: dict[str, object] | None = None
+
+
+@router.post("/spaces/{space_id}/assets/batch", response_model=BatchOut)
+def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: ReqInfo) -> BatchOut:
     from app.services import batch as batch_service
 
-    count = batch_service.apply(
-        db, current.user, space_id, body.ids, body.action, body.model_dump(exclude={"ids", "action"}), info
-    )
+    params = body.model_dump(exclude={"ids", "action"}, exclude_unset=True, mode="json")
+    count, undo = batch_service.apply(db, current.user, space_id, body.ids, body.action, params, info)
     db.commit()
-    return CountOut(count=count)
+    return BatchOut(count=count, undo=undo)
+
+
+class AssetPatch(BaseModel):
+    description: str | None = Field(default=None, max_length=2000)
+
+
+@router.patch("/assets/{asset_id}", status_code=204)
+def update_asset(asset_id: uuid.UUID, body: AssetPatch, current: FullAuth, db: DB) -> None:
+    """Descripción de texto libre."""
+    asset, _, _ = service.access_asset(db, current.user, asset_id, "collaborator")
+    if body.description is not None:
+        asset.description = body.description.strip() or None
+    db.commit()
+
+
+class CountersOut(BaseModel):
+    pending_review: int
+    duplicates: int
+    discarded: int
+    trash: int
+
+
+@router.get("/spaces/{space_id}/counters", response_model=CountersOut)
+def counters(space_id: uuid.UUID, current: FullAuth, db: DB) -> CountersOut:
+    """Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas»."""
+    from sqlalchemy import func
+
+    from app.db.models import Asset, DuplicateGroup
+
+    spaces.access(db, current.user, space_id)
+    alive = (Asset.space_id == space_id) & Asset.trashed_at.is_(None)
+    by_state = dict(
+        db.execute(select(Asset.review_state, func.count()).where(alive).group_by(Asset.review_state))
+        .tuples()
+        .all()
+    )
+    groups = (
+        db.scalar(
+            select(func.count()).where(
+                DuplicateGroup.space_id == space_id, DuplicateGroup.status == "pending"
+            )
+        )
+        or 0
+    )
+    trashed = (
+        db.scalar(select(func.count()).where(Asset.space_id == space_id, Asset.trashed_at.is_not(None))) or 0
+    )
+    return CountersOut(
+        pending_review=int(by_state.get("pending", 0)),
+        duplicates=int(groups),
+        discarded=int(by_state.get("discarded", 0)),
+        trash=int(trashed),
+    )
 
 
 class EmptyTrashIn(BaseModel):
