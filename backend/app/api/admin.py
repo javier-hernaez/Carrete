@@ -100,7 +100,7 @@ def revoke_sessions(user_id: uuid.UUID, current: AdminAuth, db: DB, info: ReqInf
     db.commit()
 
 
-class ResetIn(BaseModel):
+class AdminResetIn(BaseModel):
     reset_totp: bool = False
 
 
@@ -111,7 +111,7 @@ class LinkOut(BaseModel):
 
 @router.post("/users/{user_id}/reset", response_model=LinkOut)
 def reset_access(
-    user_id: uuid.UUID, body: ResetIn, current: AdminAuth, db: DB, settings: SettingsDep, info: ReqInfo
+    user_id: uuid.UUID, body: AdminResetIn, current: AdminAuth, db: DB, settings: SettingsDep, info: ReqInfo
 ) -> LinkOut:
     auth.require_recent_auth(current.session)
     link = invitations.create_reset(

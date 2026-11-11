@@ -406,6 +406,11 @@ def process_asset(db: Session, storage: Storage, asset_id: uuid.UUID) -> None:
     }
     asset.processing_state = "ready"
     asset.processing_error = None
+    db.flush()
+    from app.config import get_settings
+    from app.services.duplicates import detect_for
+
+    detect_for(db, asset, get_settings().duplicate_distance)
 
 
 def environment_ready() -> list[str]:

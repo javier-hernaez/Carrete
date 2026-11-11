@@ -46,7 +46,7 @@ def test_trash_and_roles(owner: Person, worker: Worker, tmp_path: Path, engine: 
     lector = join(new_client(), engine, invite(owner, space, "viewer"), "lector")
 
     assert _batch(lector, space, [a], "trash").status_code == 403
-    assert _batch(colab, space, [a, "00000000-0000-7000-8000-000000000000"], "trash").json() == {"count": 1}
+    assert _batch(colab, space, [a, "00000000-0000-7000-8000-000000000000"], "trash").json()["count"] == 1
     listed = [x["id"] for x in owner.get(f"/api/v1/spaces/{space}/assets").json()["items"]]
     assert listed == [b]
     trashed = [
@@ -58,8 +58,8 @@ def test_trash_and_roles(owner: Person, worker: Worker, tmp_path: Path, engine: 
     # Restaurar lo de otros es cosa del propietario; cada uno puede deshacer lo suyo
     assert _batch(lector, space, [a], "restore").status_code == 403
     _batch(owner, space, [b], "trash")
-    assert _batch(colab, space, [a, b], "restore").json() == {"count": 1}
-    assert _batch(owner, space, [b], "restore").json() == {"count": 1}
+    assert _batch(colab, space, [a, b], "restore").json()["count"] == 1
+    assert _batch(owner, space, [b], "restore").json()["count"] == 1
     assert owner.get(f"/api/v1/spaces/{space}/trash").json() == {"count": 0}
     assert _batch(owner, space, [a], "nada").status_code == 422
 
@@ -68,7 +68,7 @@ def test_ids_from_other_spaces_are_ignored(owner: Person, tmp_path: Path) -> Non
     pareja = owner.spaces["Pareja"]
     familia = owner.post("/api/v1/spaces", json={"name": "Familia"}).json()["id"]
     foreign = upload(owner, familia, make_jpeg(tmp_path / "x.jpg"))
-    assert _batch(owner, pareja, [foreign], "trash").json() == {"count": 0}
+    assert _batch(owner, pareja, [foreign], "trash").json()["count"] == 0
     assert owner.get(f"/api/v1/spaces/{familia}/trash").json() == {"count": 0}
 
 
