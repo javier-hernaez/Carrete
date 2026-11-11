@@ -9,14 +9,6 @@ import { t, type MessageKey } from "../i18n";
 import styles from "./pages.module.css";
 import { useSession } from "./session";
 
-export function ReviewPage() {
-  return <EmptyState title={t("review.empty.title")}>{t("review.empty.text")}</EmptyState>;
-}
-
-export function AlbumsPage() {
-  return <EmptyState title={t("albums.empty.title")}>{t("albums.empty.text")}</EmptyState>;
-}
-
 export function MapPage() {
   return <EmptyState title={t("map.empty.title")}>{t("map.empty.text")}</EmptyState>;
 }
@@ -29,11 +21,11 @@ interface MoreItem {
 }
 
 const MORE: MoreItem[] = [
-  { label: "more.duplicates", icon: "duplicates" },
-  { label: "more.discarded", icon: "discarded" },
+  { label: "more.duplicates", icon: "duplicates", to: "/repetidas" },
+  { label: "more.discarded", icon: "discarded", to: "/descartadas" },
   { label: "more.trash", icon: "trash", to: "/papelera" },
   { label: "more.export", icon: "export" },
-  { label: "more.activity", icon: "activity" },
+  { label: "more.activity", icon: "activity", to: "/actividad" },
   { label: "more.space", icon: "albums", to: "/espacio" },
   { label: "more.settings", icon: "settings", to: "/ajustes" },
   { label: "more.admin", icon: "admin", to: "/admin", adminOnly: true },

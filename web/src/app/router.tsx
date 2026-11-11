@@ -9,7 +9,13 @@ import { SpaceSettingsPage } from "../features/space/SpaceSettingsPage";
 import { AppShell } from "./AppShell";
 import { PhotosPage } from "../features/photos/PhotosPage";
 import { UploadPage } from "../features/upload/UploadPage";
-import { AlbumsPage, MapPage, MorePage, NotFoundPage, ReviewPage } from "./pages";
+import { ActivityPage } from "../features/activity/ActivityPage";
+import { AlbumPage } from "../features/albums/AlbumPage";
+import { AlbumsPage } from "../features/albums/AlbumsPage";
+import { DuplicatesPage } from "../features/duplicates/DuplicatesPage";
+import { DiscardedPage } from "../features/review/DiscardedPage";
+import { ReviewPage } from "../features/review/ReviewPage";
+import { MapPage, MorePage, NotFoundPage } from "./pages";
 
 export const routes: RouteObject[] = [
   // Públicas: se abren desde un enlace, con o sin sesión.
@@ -32,6 +38,10 @@ export const routes: RouteObject[] = [
       { path: "espacio", element: <SpaceSettingsPage /> },
       { path: "admin", element: <AdminPage /> },
       { path: "papelera", element: <TrashPage /> },
+      { path: "albumes/:albumId", element: <AlbumPage /> },
+      { path: "repetidas", element: <DuplicatesPage /> },
+      { path: "descartadas", element: <DiscardedPage /> },
+      { path: "actividad", element: <ActivityPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
