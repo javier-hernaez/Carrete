@@ -64,6 +64,14 @@ class Settings(BaseSettings):
 
     worker_poll_seconds: float = Field(default=2.0, gt=0)
 
+    # Exportaciones
+    export_volume_bytes: int = Field(default=4 * GIB, gt=0)
+    export_ttl_days: int = Field(default=7, ge=1)
+    # Carpetas del servidor a las que el administrador puede exportar (separadas por comas).
+    export_roots: Annotated[list[Path], NoDecode] = Field(default_factory=list)
+    # Biblioteca en disco: datos/library por defecto.
+    library_enabled: bool = True
+
     # Contenedor «backup»: datos y copias dentro de un mismo montaje (enlaces duros, ADR 0008).
     backup_source_dir: Path = Path("/storage/datos")
     backup_target_dir: Path = Path("/storage/copias")
@@ -96,6 +104,13 @@ class Settings(BaseSettings):
         if parts.scheme not in {"http", "https"} or not parts.hostname:
             raise ValueError("debe ser una dirección http:// o https:// completa")
         return value.rstrip("/")
+
+    @field_validator("export_roots", mode="before")
+    @classmethod
+    def _split_paths(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [Path(p.strip()) for p in value.split(",") if p.strip()]
+        return value
 
     @field_validator("trusted_proxies", mode="before")
     @classmethod

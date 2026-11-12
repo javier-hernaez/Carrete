@@ -563,3 +563,64 @@ class DuplicateDismissal(Base):
     )
 
     __table_args__ = (CheckConstraint("asset_a < asset_b", name="ordered"),)
+
+
+class Export(Base):
+    """Exportación en segundo plano: ZIP por volúmenes o copia a una carpeta del servidor."""
+
+    __tablename__ = "exports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    params: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    state: Mapped[str] = mapped_column(Text, nullable=False, server_default="queued")
+    progress: Mapped[float] = mapped_column(Double, nullable=False, server_default="0")
+    total_items: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    total_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    files: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("state IN ('queued', 'running', 'ready', 'failed', 'expired')", name="state_valid"),
+    )
+
+
+class Import(Base):
+    """Importación de un ZIP (WhatsApp, Google Takeout) o de una carpeta del servidor."""
+
+    __tablename__ = "imports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    album_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("albums.id", ondelete="SET NULL")
+    )
+    source: Mapped[str] = mapped_column(Text, nullable=False)  # zip | folder
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    state: Mapped[str] = mapped_column(Text, nullable=False, server_default="queued")
+    counts: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("state IN ('queued', 'running', 'done', 'failed')", name="state_valid"),
+        CheckConstraint("source IN ('zip', 'folder')", name="source_valid"),
+    )
