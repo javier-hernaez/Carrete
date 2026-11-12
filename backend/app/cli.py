@@ -167,6 +167,72 @@ def cmd_restore(args: argparse.Namespace) -> None:
     print(f"Restaurado: {counts}")  # noqa: T201
 
 
+def cmd_import(args: argparse.Namespace) -> None:
+    """Importa una carpeta del servidor, p. ej. un disco antiguo montado en el contenedor."""
+    from pathlib import Path
+
+    from app.db import get_sessionmaker
+    from app.services import imports
+    from app.storage.files import Storage
+
+    settings = _load_settings()
+    _setup(settings)
+    folder = Path(args.folder)
+    if not folder.is_dir():
+        print(f"No existe la carpeta {folder}", file=sys.stderr)  # noqa: T201
+        raise SystemExit(2)
+    with get_sessionmaker()() as db:
+        try:
+            space = imports.resolve_space(db, args.space)
+            if args.user:
+                from sqlalchemy import select
+
+                from app.db.models import User
+
+                user_id = db.scalar(select(User.id).where(User.username == args.user.lower()))
+                if user_id is None:
+                    raise ValueError(f"No existe el usuario «{args.user}»")
+            else:
+                user_id = imports.default_owner(db, space.id)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)  # noqa: T201
+            raise SystemExit(2) from None
+
+        def progress(counts: imports.Counts) -> None:
+            done = counts.imported + counts.duplicates + counts.unsupported + counts.skipped
+            if done % 100 == 0:
+                print(f"  … {done} ficheros", flush=True)  # noqa: T201
+
+        counts = imports.import_folder(
+            db,
+            Storage(settings.data_dir),
+            folder,
+            space_id=space.id,
+            user_id=user_id,
+            max_entry_bytes=settings.max_upload_bytes,
+            albums_from_folders=args.albums,
+            progress=progress,
+        )
+    print(  # noqa: T201
+        f"Importados {counts.imported}, ya estaban {counts.duplicates}, no admitidos {counts.unsupported}, "
+        f"demasiado grandes {counts.skipped}. Se procesarán en segundo plano."
+    )
+
+
+def cmd_library(_: argparse.Namespace) -> None:
+    """Reconstruye ahora la biblioteca en disco."""
+    from app.db import get_sessionmaker
+    from app.storage.files import Storage
+    from app.storage.library import build
+
+    settings = _load_settings()
+    _setup(settings)
+    with get_sessionmaker()() as db:
+        result = build(db, Storage(settings.data_dir))
+    summary = f"{result.files} ficheros en {result.spaces} espacios ({result.missing} originales ausentes)"
+    print(f"Biblioteca: {summary}")  # noqa: T201
+
+
 def cmd_check_config(_: argparse.Namespace) -> None:
     settings = _load_settings()
     print(f"Configuración válida. Dirección pública: {settings.public_url}")  # noqa: T201
@@ -200,6 +266,7 @@ def build_parser() -> argparse.ArgumentParser:
         "migrate": (cmd_migrate, "Aplica las migraciones pendientes (con volcado previo)"),
         "backup-agent": (cmd_backup_agent, "Bucle de copias (contenedor «backup»)"),
         "verify": (cmd_verify, "Verifica la integridad de originales y copias"),
+        "library": (cmd_library, "Reconstruye la biblioteca en disco"),
         "check-config": (cmd_check_config, "Valida la configuración y sale"),
         "openapi": (cmd_openapi, "Imprime la especificación OpenAPI"),
     }
@@ -210,6 +277,12 @@ def build_parser() -> argparse.ArgumentParser:
         "what", nargs="?", default="todo", choices=["todo", "base", "originales", "manifiestos"]
     )
     backup.set_defaults(func=cmd_backup)
+    imp = sub.add_parser("import", help="Importa una carpeta del servidor a un espacio")
+    imp.add_argument("folder", help="Carpeta dentro del contenedor (móntala con -v)")
+    imp.add_argument("--space", required=True, help="Nombre o identificador del espacio")
+    imp.add_argument("--user", help="Usuario al que se atribuye la subida (por defecto, el propietario)")
+    imp.add_argument("--albums", action="store_true", help="Crea un álbum por cada carpeta de primer nivel")
+    imp.set_defaults(func=cmd_import)
     restore = sub.add_parser("restore", help="Restaura un volcado y los originales que falten")
     restore.add_argument("--dump", required=True, help="Ruta del volcado (.dump) dentro del contenedor")
     restore.set_defaults(func=cmd_restore)

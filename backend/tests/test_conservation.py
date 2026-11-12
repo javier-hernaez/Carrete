@@ -359,7 +359,13 @@ def test_scheduler_enqueues_periodic_tasks(sessions: sessionmaker[Session]) -> N
     from app.jobs.schedule import enqueue_due
 
     with sessions() as s:
-        assert set(enqueue_due(s)) == {"purge_trash", "storage_report", "health_checks"}
+        assert set(enqueue_due(s)) == {
+            "purge_trash",
+            "storage_report",
+            "health_checks",
+            "expire_exports",
+            "build_library",
+        }
         assert enqueue_due(s) == []  # no se repiten hasta que toque
 
 

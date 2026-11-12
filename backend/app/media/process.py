@@ -374,6 +374,13 @@ def process_asset(db: Session, storage: Storage, asset_id: uuid.UUID) -> None:
     asset.thumbhash = thash
     asset.phash = dhash
     asset.camera = camera[:200] if camera else None
+    takeout = asset.metadata_json.get("takeout") if isinstance(asset.metadata_json, dict) else None
+    takeout = takeout if isinstance(takeout, dict) else {}
+    if (
+        not (isinstance(lat, (int, float)) and isinstance(lon, (int, float)))
+        and takeout.get("lat") is not None
+    ):
+        lat, lon = takeout.get("lat"), takeout.get("lon")
     if (
         isinstance(lat, (int, float))
         and isinstance(lon, (int, float))
@@ -389,6 +396,7 @@ def process_asset(db: Session, storage: Storage, asset_id: uuid.UUID) -> None:
             exif_original=exif_original,
             exif_offset=exif_offset,
             video_created_utc=video_created,
+            takeout_timestamp=takeout.get("timestamp") if isinstance(takeout.get("timestamp"), int) else None,
             filename=asset.original_filename,
             client_mtime_ms=asset.client_mtime_ms,
             uploaded_at=asset.created_at,
