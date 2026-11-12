@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { AssetItem } from "../../api/client";
 import { Button } from "../../design-system/components/Button";
+import { downloadSelection } from "../export/download";
 import { useAssetActions } from "../photos/actions";
 import { AlbumPicker } from "./AlbumPicker";
 import { DateDialog } from "./DateDialog";
@@ -55,6 +56,9 @@ export function SelectionBar({
           </Button>
           <Button variant="ghost" onClick={() => setDialog("date")}>
             Fecha…
+          </Button>
+          <Button variant="ghost" onClick={() => done(downloadSelection(spaceId, ids))}>
+            Descargar
           </Button>
           <Button variant="ghost" onClick={() => done(actions.trash(ids))}>
             Eliminar

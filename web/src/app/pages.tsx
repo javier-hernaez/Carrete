@@ -24,7 +24,7 @@ const MORE: MoreItem[] = [
   { label: "more.duplicates", icon: "duplicates", to: "/repetidas" },
   { label: "more.discarded", icon: "discarded", to: "/descartadas" },
   { label: "more.trash", icon: "trash", to: "/papelera" },
-  { label: "more.export", icon: "export" },
+  { label: "more.export", icon: "export", to: "/exportar" },
   { label: "more.activity", icon: "activity", to: "/actividad" },
   { label: "more.space", icon: "albums", to: "/espacio" },
   { label: "more.settings", icon: "settings", to: "/ajustes" },
