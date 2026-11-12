@@ -3,6 +3,7 @@
 Cómo instalar, actualizar, volver atrás y recuperar Carrete en el mini PC. Todas las órdenes se lanzan
 desde `deploy/` y no necesitan `sudo`.
 
+
 ## Instalar
 
 ```sh
@@ -124,6 +125,32 @@ otra forma de borrar originales.
 El `worker` revisa cada 15 minutos y avisa en Administración si: el disco pasa del 80 % o del 90 %, la
 copia de la base de datos tiene más de 2 horas, hay originales sin copiar desde hace más de 15 minutos,
 la verificación de integridad encuentra problemas, o hay ráfagas de accesos fallidos.
+
+## Importar fotos antiguas
+
+**Desde la web**: arrastra carpetas enteras o un `.zip` exportado de WhatsApp o de Google Fotos
+(Takeout). El ZIP se importa en segundo plano con sus fechas y ubicaciones (`.json` de Takeout).
+
+**Desde un disco del mini PC** (sin pasar por la red):
+
+```sh
+docker compose run --rm -v /media/disco/Fotos:/importar:ro app \
+  carrete import /importar --space "Familia" --albums
+```
+
+`--albums` crea un álbum por cada carpeta de primer nivel; `--user lucia` atribuye la subida a otra
+persona (por defecto, al propietario del espacio). Lo que ya estaba no se duplica.
+
+## Exportar
+
+- **Desde la web** (Más → Exportar): ZIP de un álbum, varios o el espacio entero (solo propietario), en
+  partes de 4 GB que se descargan de forma reanudable. Incluye `carrete-manifest.json` y `.csv`.
+  Caducan a los 7 días.
+- **A una carpeta del servidor** (solo administrador): define `CARRETE_EXPORT_ROOTS` (p. ej.
+  `/exportar`) y monta ese disco en `app` y `worker` (`- /media/usb:/exportar` en `volumes`).
+- **Biblioteca en disco**: `CARRETE_ROOT/datos/library/<Espacio>/<Álbum>/…`, enlaces duros que se
+  regeneran cada noche (o con «Regenerar ahora» en Administración, o `docker compose exec app carrete
+  library`). Se puede abrir y copiar con cualquier explorador aunque Carrete esté parado.
 
 ## Exponer a internet
 
