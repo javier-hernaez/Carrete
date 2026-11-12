@@ -39,3 +39,22 @@ compose exec -T backup carrete backup
 compose exec -T backup carrete verify
 test -n "$(find "$WORK/copias/originals" -type f -name '*.jpg' 2>/dev/null)"
 echo "Copias e integridad: correctas"
+
+# Exportación: el ZIP preparado por la prueba coincide con su manifiesto.
+compose exec -T app python - <<'PY'
+import glob, hashlib, json, zipfile
+volumes = sorted(glob.glob("/data/exports/*/0*.zip"))
+assert volumes, "no hay ninguna exportación"
+with zipfile.ZipFile(volumes[0]) as zf:
+    manifest = json.loads(zf.read("carrete-manifest.json"))
+    checked = 0
+    for item in manifest["items"]:
+        for path in item["paths"]:
+            assert hashlib.sha256(zf.read(path)).hexdigest() == item["sha256"], path
+            checked += 1
+print(f"Exportación: {checked} ficheros coinciden con el manifiesto")
+PY
+# Biblioteca en disco: carpetas normales con enlaces duros
+compose exec -T app carrete library
+test -n "$(find "$WORK/datos/library" -type f -name '*.jpg' -links +1 2>/dev/null)"
+echo "Biblioteca en disco: correcta"

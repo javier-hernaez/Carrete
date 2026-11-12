@@ -169,5 +169,26 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Asturias 2025\s*2 elementos/ })).toBeVisible();
   await expectAccessible(page);
 
+  // Exportar el espacio entero y descargarlo
+  await page.goto("/exportar");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Preparar la exportación" }).click();
+  const zipLink = page.getByRole("link", { name: /\.zip$/ }).first();
+  await expect(zipLink).toBeVisible({ timeout: 90_000 });
+  const [download] = await Promise.all([page.waitForEvent("download"), zipLink.click()]);
+  expect(await download.failure()).toBeNull();
+  expect(download.suggestedFilename()).toBe("Pareja.zip");
+
+  // PWA instalable: manifiesto e iconos, y el service worker registrado
+  const manifest = (await (await page.request.get("/manifest.webmanifest")).json()) as {
+    icons: { sizes: string }[];
+  };
+  expect(manifest.icons.map((i) => i.sizes)).toContain("512x512");
+  const registered = await page.evaluate(async () => {
+    const ready = navigator.serviceWorker.ready.then(() => true);
+    return Promise.race([ready, new Promise((r) => setTimeout(() => r(false), 10_000))]);
+  });
+  expect(registered).toBe(true);
+
   expect(consoleErrors.filter((e) => /Content Security Policy|Refused/.test(e))).toEqual([]);
 });

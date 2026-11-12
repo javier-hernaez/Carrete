@@ -18,3 +18,10 @@ createRoot(root).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+// PWA: solo en producción, para no interferir con la recarga en caliente de Vite.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  });
+}
