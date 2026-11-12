@@ -175,5 +175,6 @@ def status(db: Session, storage: Storage) -> dict[str, Any]:
             "problems": integrity.problems[:50],
         },
         "queue": counts_by_state(db),
+        "library": get_state(db, "library"),
         "failed_jobs": [{"kind": k, "error": e, "at": t} for k, e, t in failed_jobs],
     }

@@ -74,8 +74,11 @@ class Worker:
         try:
             if fn is None:  # pragma: no cover  # claim filtra por tipos registrados
                 raise LookupError(f"Sin manejador para «{job.kind}»")
-            with self.sessions() as session, session.begin():
+            # Las tareas largas (exportar, importar) confirman por el camino para guardar su progreso;
+            # al terminar se confirma lo que quede. Si fallan, lo no confirmado se deshace.
+            with self.sessions() as session:
                 fn(session, job.payload)
+                session.commit()
         except Exception as exc:
             error = "".join(traceback.format_exception_only(exc)).strip()
             with self.sessions() as session:

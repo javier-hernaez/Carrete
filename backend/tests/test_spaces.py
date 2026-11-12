@@ -224,3 +224,21 @@ def test_audit_and_notices(world, engine: Engine) -> None:  # type: ignore[no-un
     assert javier.post(f"/api/v1/admin/notices/{notices[0]['id']}/ack").status_code == 204
     assert len(javier.get("/api/v1/admin/notices").json()) == len(notices) - 1
     assert totp_code  # importado para otras pruebas
+
+
+def test_admin_deletes_account(world, engine: Engine) -> None:  # type: ignore[no-untyped-def]
+    javier, lucia = world
+    lucia_id = _id(lucia)
+    # Lucía es la única propietaria de «Familia»: primero hay que nombrar a otra persona
+    assert javier.delete(f"/api/v1/admin/users/{lucia_id}").json()["code"] == "last_owner"
+    token = invite(lucia, lucia.spaces["Familia"], "owner")
+    javier.post(f"/api/v1/invitations/by-token/{token}/accept", json={})
+    assert javier.delete(f"/api/v1/admin/users/{_id(javier)}").json()["code"] == "self"
+    assert javier.delete(f"/api/v1/admin/users/{lucia_id}").status_code == 204
+    assert lucia.get("/api/v1/me").status_code == 401
+    assert "lucia" not in {u["username"] for u in javier.get("/api/v1/admin/users").json()}
+    with engine.connect() as conn:
+        assert (
+            conn.execute(text("SELECT count(*) FROM audit_log WHERE action = 'user.deleted'")).scalar_one()
+            == 1
+        )

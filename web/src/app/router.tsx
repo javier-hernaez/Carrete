@@ -13,6 +13,7 @@ import { ActivityPage } from "../features/activity/ActivityPage";
 import { AlbumPage } from "../features/albums/AlbumPage";
 import { AlbumsPage } from "../features/albums/AlbumsPage";
 import { DuplicatesPage } from "../features/duplicates/DuplicatesPage";
+import { ExportPage } from "../features/export/ExportPage";
 import { DiscardedPage } from "../features/review/DiscardedPage";
 import { ReviewPage } from "../features/review/ReviewPage";
 import { MapPage, MorePage, NotFoundPage } from "./pages";
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
       { path: "repetidas", element: <DuplicatesPage /> },
       { path: "descartadas", element: <DiscardedPage /> },
       { path: "actividad", element: <ActivityPage /> },
+      { path: "exportar", element: <ExportPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

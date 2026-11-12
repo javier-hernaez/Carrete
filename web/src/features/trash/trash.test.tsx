@@ -124,6 +124,7 @@ describe("estado de la instancia", () => {
           problems: [{ type: "corrupt_original" }],
         },
         queue: { done: 10, failed: 1 },
+        library: { built_at: NOW, files: 1200 },
         failed_jobs: [{ kind: "process_asset", error: "MediaError", at: NOW }],
       },
     });

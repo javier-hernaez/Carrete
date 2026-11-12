@@ -16,6 +16,7 @@ export interface QueueItem {
   progress: number;
   sha256?: string | undefined;
   assetId?: string | undefined;
+  importId?: string | undefined;
   error?: string | undefined;
 }
 
@@ -25,7 +26,7 @@ export interface QueueSnapshot {
 }
 
 const ACCEPTED = /^(image|video)\//;
-const EXTENSIONS = /\.(jpe?g|png|webp|gif|heic|heif|avif|mp4|mov|3gp|3g2|webm|mkv|m4v)$/i;
+const EXTENSIONS = /\.(jpe?g|png|webp|gif|heic|heif|avif|mp4|mov|3gp|3g2|webm|mkv|m4v|zip)$/i;
 const CHUNK = 16 * 1024 * 1024;
 const PARALLEL_HASH = 2;
 const PARALLEL_UPLOAD = 2;
@@ -193,6 +194,7 @@ class UploadQueue {
             status: duplicate ? "duplicate" : "done",
             progress: 1,
             assetId: lastResponse.getHeader("Carrete-Asset-Id") ?? undefined,
+            importId: lastResponse.getHeader("Carrete-Import-Id") ?? undefined,
           });
           resolve();
         },

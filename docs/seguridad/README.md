@@ -5,13 +5,13 @@ nivel 2 se hace **antes** de exponer la aplicación a internet.
 
 | Documento | Contenido |
 |---|---|
-| `riesgos.md` | Análisis de riesgos y riesgos aceptados |
-| `aplicabilidad.md` | Declaración de aplicabilidad (Anexo A de ISO/IEC 27001:2022) |
-| `amenazas.md` | Modelo de amenazas STRIDE |
-| `politicas.md` | Acceso, copias, cambios, vulnerabilidades |
-| `activos.md` | Inventario: datos, contenedores, secretos, dependencias |
-| `incidentes.md` | Detectar, contener, recuperar, aprender |
-| `asvs.md` | Revisión ASVS nivel 2 |
+| [`riesgos.md`](riesgos.md) | Análisis de riesgos y riesgos aceptados |
+| [`amenazas.md`](amenazas.md) | Modelo de amenazas STRIDE |
+| [`aplicabilidad.md`](aplicabilidad.md) | Declaración de aplicabilidad (Anexo A de ISO/IEC 27001:2022) |
+| [`politicas.md`](politicas.md) | Acceso, copias, cambios, vulnerabilidades, secretos |
+| [`activos.md`](activos.md) | Inventario: datos, contenedores, secretos, servicios externos |
+| [`incidentes.md`](incidentes.md) | Detectar, contener, evaluar, recuperar, aprender |
+| [`asvs.md`](asvs.md) | Revisión ASVS 4.0.3 nivel 2 (sin hallazgos altos abiertos) |
 
 ## Controles implantados
 

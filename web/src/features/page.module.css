@@ -80,3 +80,13 @@
 .tableWrap {
   overflow-x: auto;
 }
+
+.inlineButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

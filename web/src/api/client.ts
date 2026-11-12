@@ -21,6 +21,8 @@ export type DuplicateGroup = S["GroupOut"];
 export type Counters = S["CountersOut"];
 export type Activity = S["ActivityOut"];
 export type BatchResult = S["BatchOut"];
+export type ExportJob = S["ExportOut"];
+export type ImportJob = S["ImportOut"];
 
 interface Run {
   started_at: string;
@@ -56,6 +58,7 @@ export interface AdminStatus {
     problems: Record<string, unknown>[];
   } | null;
   queue: Record<string, number>;
+  library: { built_at?: string; files?: number; spaces?: number; missing?: number };
   failed_jobs: { kind: string; error: string | null; at: string | null }[];
 }
 
@@ -237,6 +240,14 @@ export const api = {
   emptyTrash: (space: string, confirm_name: string) =>
     apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash/empty`, json({ confirm_name })),
   adminStatus: () => apiFetch<AdminStatus>("/api/v1/admin/status"),
+  exports: (space: string) => apiFetch<ExportJob[]>(`/api/v1/spaces/${space}/exports`),
+  exportJob: (space: string, id: string) => apiFetch<ExportJob>(`/api/v1/spaces/${space}/exports/${id}`),
+  createExport: (space: string, body: S["ExportIn"]) =>
+    apiFetch<ExportJob>(`/api/v1/spaces/${space}/exports`, json(body)),
+  deleteExport: (space: string, id: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/exports/${id}`, del),
+  imports: (space: string) => apiFetch<ImportJob[]>(`/api/v1/spaces/${space}/imports`),
+  rebuildLibrary: () => apiFetch<{ status: string }>("/api/v1/admin/library/rebuild", post),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),
   adminSetActive: (id: string, active: boolean) =>
@@ -244,6 +255,7 @@ export const api = {
   adminRevokeSessions: (id: string) => apiFetch<undefined>(`/api/v1/admin/users/${id}/revoke-sessions`, post),
   adminReset: (id: string, reset_totp: boolean) =>
     apiFetch<S["LinkOut"]>(`/api/v1/admin/users/${id}/reset`, json({ reset_totp })),
+  adminDeleteUser: (id: string) => apiFetch<undefined>(`/api/v1/admin/users/${id}`, del),
   adminInvite: () => apiFetch<S["LinkOut"]>("/api/v1/admin/invitations", post),
   adminAudit: (params: Record<string, string>) =>
     apiFetch<AuditPage>(`/api/v1/admin/audit?${new URLSearchParams(params).toString()}`),

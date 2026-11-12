@@ -11,9 +11,9 @@ intactos, con copia de seguridad, papelera y verificación de integridad.
 
 ## Estado
 
-En desarrollo. Ya están la estructura, la configuración validada, PostgreSQL + Alembic con
-migraciones al arrancar, cola de tareas y `worker`, comprobaciones de salud, cabeceras de seguridad,
-armazón de la web con su sistema de diseño, `docker-compose.yml` endurecido y CI completo.
+Funciona: acceso con 2FA y espacios; subida reanudable
+con procesado de fotos y vídeos; copias, integridad y restauración; revisar, álbumes y repetidas;
+exportar, importar y biblioteca en disco. Pendientes: la app Android y el mapa.
 
 ## Puesta en marcha en 5 minutos
 
