@@ -317,6 +317,52 @@
         "title": "AlbumPatch",
         "type": "object"
       },
+      "AndroidApp": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "version_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Code"
+          },
+          "version_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Name"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "AndroidApp",
+        "type": "object"
+      },
       "AssetDetail": {
         "properties": {
           "albums": {
@@ -1105,6 +1151,19 @@
         "title": "CodeIn",
         "type": "object"
       },
+      "CodeOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CodeOut",
+        "type": "object"
+      },
       "ContributorOut": {
         "properties": {
           "display_name": {
@@ -1170,6 +1229,56 @@
           "trash"
         ],
         "title": "CountersOut",
+        "type": "object"
+      },
+      "DeviceLoginIn": {
+        "properties": {
+          "device_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Device Name",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 512,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 64,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "device_name"
+        ],
+        "title": "DeviceLoginIn",
+        "type": "object"
+      },
+      "DeviceLoginOut": {
+        "properties": {
+          "stage": {
+            "enum": [
+              "full",
+              "totp",
+              "enroll"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "token"
+        ],
+        "title": "DeviceLoginOut",
         "type": "object"
       },
       "DuplicateMemberOut": {
@@ -3234,6 +3343,62 @@
         ]
       }
     },
+    "/api/v1/app/android": {
+      "get": {
+        "description": "Versión disponible (la app la consulta para avisar de actualizaciones).",
+        "operationId": "latest_api_v1_app_android_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AndroidApp"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Latest",
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/app/android/apk": {
+      "get": {
+        "operationId": "download_api_v1_app_android_apk_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Download",
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/app/android/setup-qr": {
+      "get": {
+        "description": "Código QR con la dirección del servidor, para configurar la app sin teclearla.",
+        "operationId": "setup_qr_api_v1_app_android_setup_qr_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Setup Qr",
+        "tags": [
+          "app"
+        ]
+      }
+    },
     "/api/v1/assets/{asset_id}": {
       "get": {
         "operationId": "get_asset_api_v1_assets__asset_id__get",
@@ -3465,6 +3630,69 @@
         "summary": "Video",
         "tags": [
           "elementos"
+        ]
+      }
+    },
+    "/api/v1/auth/device/login": {
+      "post": {
+        "description": "Inicio de sesión de la app: devuelve un *token* de dispositivo revocable (nunca se guarda la\ncontraseña). Si falta el segundo factor, se completa con POST /auth/totp y el mismo *token*.",
+        "operationId": "device_login_api_v1_auth_device_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Device Login",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/device/web-code": {
+      "post": {
+        "operationId": "device_web_code_api_v1_auth_device_web_code_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Device Web Code",
+        "tags": [
+          "acceso"
         ]
       }
     },

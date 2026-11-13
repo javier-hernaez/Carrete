@@ -190,5 +190,11 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   });
   expect(registered).toBe(true);
 
+  // App Android: se descarga con sesión
+  const android = (await (await page.request.get("/api/v1/app/android")).json()) as { available: boolean };
+  expect(android.available).toBe(true);
+  const apk = await page.request.get("/api/v1/app/android/apk");
+  expect(apk.headers()["content-type"]).toBe("application/vnd.android.package-archive");
+
   expect(consoleErrors.filter((e) => /Content Security Policy|Refused/.test(e))).toEqual([]);
 });

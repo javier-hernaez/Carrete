@@ -8,6 +8,7 @@ import { Alert, PageTitle } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { Icon } from "../../design-system/components/Icon";
 import { cx } from "../../design-system/cx";
+import { androidBridge } from "./android";
 import { filesFromDataTransfer, filesFromInput } from "./folders";
 import { uploadQueue, type QueueItem } from "./queue";
 import { FolderAlbums, Imports } from "./FolderAlbums";
@@ -78,7 +79,12 @@ export function UploadPage() {
         <p className={styles.dropText}>Arrastra aquí fotos, vídeos o carpetas enteras</p>
         <p>También un .zip exportado de WhatsApp o de Google Fotos (Takeout): se importa con sus fechas.</p>
         <div className={styles.buttons}>
-          <Button variant="primary" onClick={() => files.current?.click()}>
+          {androidBridge() && (
+            <Button variant="primary" onClick={() => androidBridge()?.pickPhotos(space.id)}>
+              Elegir del móvil (sube en segundo plano)
+            </Button>
+          )}
+          <Button variant={androidBridge() ? "secondary" : "primary"} onClick={() => files.current?.click()}>
             Elegir fotos y vídeos
           </Button>
           <Button onClick={() => folder.current?.click()}>Elegir una carpeta</Button>

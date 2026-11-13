@@ -191,3 +191,18 @@ describe("administración", () => {
     expect(await screen.findByText("Solo el administrador puede ver esta página.")).toBeInTheDocument();
   });
 });
+
+describe("app Android en Ajustes", () => {
+  it("enseña la descarga y el QR cuando hay APK", async () => {
+    mockApi({
+      "/api/v1/auth/sessions": [],
+      "/api/v1/app/android": { available: true, version_name: "1.0.0", version_code: 5, size_bytes: 6e6 },
+    });
+    renderAt("/ajustes");
+    expect(await screen.findByRole("link", { name: "Descargar la app (APK)" })).toHaveAttribute(
+      "href",
+      "/api/v1/app/android/apk",
+    );
+    expect(screen.getByAltText("Código QR con la dirección del servidor de Carrete")).toBeInTheDocument();
+  });
+});
