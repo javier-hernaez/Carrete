@@ -195,6 +195,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/android": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Latest
+         * @description Versión disponible (la app la consulta para avisar de actualizaciones).
+         */
+        get: operations["latest_api_v1_app_android_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/android/apk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download */
+        get: operations["download_api_v1_app_android_apk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/android/setup-qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Setup Qr
+         * @description Código QR con la dirección del servidor, para configurar la app sin teclearla.
+         */
+        get: operations["setup_qr_api_v1_app_android_setup_qr_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assets/{asset_id}": {
         parameters: {
             query?: never;
@@ -284,6 +341,44 @@ export interface paths {
         get: operations["video_api_v1_assets__asset_id__video_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/device/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Device Login
+         * @description Inicio de sesión de la app: devuelve un *token* de dispositivo revocable (nunca se guarda la
+         *     contraseña). Si falta el segundo factor, se completa con POST /auth/totp y el mismo *token*.
+         */
+        post: operations["device_login_api_v1_auth_device_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/device/web-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Device Web Code */
+        post: operations["device_web_code_api_v1_auth_device_web_code_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1257,6 +1352,17 @@ export interface components {
             /** Sort Mode */
             sort_mode?: ("date" | "manual") | null;
         };
+        /** AndroidApp */
+        AndroidApp: {
+            /** Available */
+            available: boolean;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Version Code */
+            version_code?: number | null;
+            /** Version Name */
+            version_name?: string | null;
+        };
         /** AssetDetail */
         AssetDetail: {
             /** Albums */
@@ -1493,6 +1599,11 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** CodeOut */
+        CodeOut: {
+            /** Code */
+            code: string;
+        };
         /** ContributorOut */
         ContributorOut: {
             /** Display Name */
@@ -1518,6 +1629,25 @@ export interface components {
             pending_review: number;
             /** Trash */
             trash: number;
+        };
+        /** DeviceLoginIn */
+        DeviceLoginIn: {
+            /** Device Name */
+            device_name: string;
+            /** Password */
+            password: string;
+            /** Username */
+            username: string;
+        };
+        /** DeviceLoginOut */
+        DeviceLoginOut: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "full" | "totp" | "enroll";
+            /** Token */
+            token: string;
         };
         /** DuplicateMemberOut */
         DuplicateMemberOut: {
@@ -2451,6 +2581,64 @@ export interface operations {
             };
         };
     };
+    latest_api_v1_app_android_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AndroidApp"];
+                };
+            };
+        };
+    };
+    download_api_v1_app_android_apk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setup_qr_api_v1_app_android_setup_qr_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     get_asset_api_v1_assets__asset_id__get: {
         parameters: {
             query?: never;
@@ -2627,6 +2815,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    device_login_api_v1_auth_device_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    device_web_code_api_v1_auth_device_web_code_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeOut"];
                 };
             };
         };

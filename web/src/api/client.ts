@@ -23,6 +23,7 @@ export type Activity = S["ActivityOut"];
 export type BatchResult = S["BatchOut"];
 export type ExportJob = S["ExportOut"];
 export type ImportJob = S["ImportOut"];
+export type AndroidApp = S["AndroidApp"];
 
 interface Run {
   started_at: string;
@@ -247,6 +248,7 @@ export const api = {
   deleteExport: (space: string, id: string) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/exports/${id}`, del),
   imports: (space: string) => apiFetch<ImportJob[]>(`/api/v1/spaces/${space}/imports`),
+  androidApp: () => apiFetch<AndroidApp>("/api/v1/app/android"),
   rebuildLibrary: () => apiFetch<{ status: string }>("/api/v1/admin/library/rebuild", post),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),
