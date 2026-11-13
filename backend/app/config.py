@@ -44,6 +44,8 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path("/data")
     static_dir: Path | None = None
+    # APK de la app Android (fuera de static_dir: solo se descarga con sesión).
+    apk_dir: Path | None = None
 
     trusted_proxies: Annotated[list[IPNetwork], NoDecode] = Field(
         default_factory=lambda: _parse_networks(DEFAULT_TRUSTED_PROXIES)

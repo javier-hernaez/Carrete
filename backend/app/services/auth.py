@@ -125,6 +125,7 @@ def active_sessions(db: Session, user_id: uuid.UUID) -> list[AuthSession]:
                 AuthSession.revoked_at.is_(None),
                 AuthSession.expires_at > current,
                 AuthSession.stage == "full",
+                AuthSession.kind != "exchange",
             )
             .order_by(AuthSession.last_seen_at.desc())
         )
@@ -168,7 +169,14 @@ def _fail(db: Session, *, username: str | None, user: User | None, request: Requ
 
 
 def login(
-    db: Session, settings: Settings, username: str, password: str, request: RequestInfo
+    db: Session,
+    settings: Settings,
+    username: str,
+    password: str,
+    request: RequestInfo,
+    *,
+    kind: str = "web",
+    device_name: str | None = None,
 ) -> IssuedSession:
     username = normalize_username(username)
     _guard(db, username, request.ip)
@@ -186,7 +194,7 @@ def login(
         stage = "enroll"
     else:
         stage = "full"
-    issued = issue_session(db, user, stage=stage, request=request)
+    issued = issue_session(db, user, stage=stage, request=request, kind=kind, device_name=device_name)
     if stage == "full":
         _logged_in(db, user, request)
     return issued
@@ -351,3 +359,27 @@ def change_password(
         db, "auth.password_changed", actor_id=user.id, request=request, detail={"sessions_closed": closed}
     )
     return closed
+
+
+# --- App Android ---------------------------------------------------------------------------------------
+
+EXCHANGE_TTL = timedelta(seconds=60)
+
+
+def issue_exchange_code(db: Session, device: AuthSession, user: User, request: RequestInfo) -> str:
+    """Código de un solo uso (60 s) con el que la WebView de la app obtiene su propia sesión web."""
+    issued = issue_session(
+        db, user, stage="full", request=request, kind="exchange", device_name=device.device_name
+    )
+    issued.session.expires_at = now() + EXCHANGE_TTL
+    return issued.token
+
+
+def exchange_for_web_session(db: Session, code: str, request: RequestInfo) -> IssuedSession | None:
+    resolved = resolve_session(db, code)
+    if resolved is None or resolved[0].kind != "exchange":
+        return None
+    exchange, user = resolved
+    revoke(db, exchange)
+    name = f"{exchange.device_name} (app)" if exchange.device_name else "App Android"
+    return issue_session(db, user, stage="full", request=request, kind="web", device_name=name)

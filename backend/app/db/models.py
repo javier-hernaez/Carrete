@@ -179,7 +179,7 @@ class AuthSession(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
-        CheckConstraint("kind IN ('web', 'device')", name="kind_valid"),
+        CheckConstraint("kind IN ('web', 'device', 'exchange')", name="kind_valid"),
         CheckConstraint("stage IN ('full', 'totp', 'enroll')", name="stage_valid"),
     )
 
