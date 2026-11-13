@@ -152,6 +152,32 @@ persona (por defecto, al propietario del espacio). Lo que ya estaba no se duplic
   regeneran cada noche (o con «Regenerar ahora» en Administración, o `docker compose exec app carrete
   library`). Se puede abrir y copiar con cualquier explorador aunque Carrete esté parado.
 
+## App Android
+
+**Compilar** (dentro de Docker, sin instalar nada):
+
+```sh
+CARRETE_PUBLIC_URL=https://javier-default-string.taila9c233.ts.net:10000 android/build.sh
+cp android/build/carrete.apk android/build/carrete-apk.json deploy/apk/
+make image && cd deploy && docker compose up -d
+```
+
+La primera vez crea la **clave de firma** `android/keystore.jks` y su contraseña en
+`android/.keystore-password`. **Guarda las dos con tus copias de seguridad y en el gestor de
+contraseñas**: Android solo deja actualizar una app instalada si la nueva versión va firmada con la misma
+clave. Para que el CI firme igual, súbelas a GitHub (Settings → Secrets → Actions):
+`ANDROID_KEYSTORE_B64` (`base64 -w0 android/keystore.jks`) y `ANDROID_KEYSTORE_PASSWORD`; y la variable
+`CARRETE_PUBLIC_URL`.
+
+**Instalar**: Ajustes → App para el móvil → «Descargar la app», abrirla en el móvil y escanear el QR.
+
+**Prueba guiada en un móvil real**:
+1. Instalar, escanear el QR, entrar con usuario, contraseña y código.
+2. En WhatsApp, elegir 50 fotos de un chat → Compartir → Carrete → espacio → Subir.
+3. Apagar la pantalla a mitad de la subida; esperar a la notificación «Subida terminada».
+4. Comprobar en la web que están las 50, una sola vez, con su fecha. Repetir el paso 2: «ya estaban».
+5. Con «solo con wifi» (por defecto, para vídeos), compartir un vídeo con datos móviles: debe esperar.
+
 ## Exponer a internet
 
 Solo con la revisión ASVS sin hallazgos altos y con confirmación expresa:
