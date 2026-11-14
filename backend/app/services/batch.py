@@ -29,6 +29,7 @@ MINIMUM_ROLE = {
     "set_date": "collaborator",
     "shift_date": "collaborator",
     "revert": "collaborator",
+    "set_location": "collaborator",
 }
 
 REVERTIBLE = {
@@ -38,7 +39,14 @@ REVERTIBLE = {
     "taken_at_offset",
     "taken_at_source",
     "in_album",
+    "lat",
+    "lon",
+    "place_id",
+    "place_name",
+    "place_region",
+    "place_country",
 }
+LOCATION_FIELDS = ["lat", "lon", "place_id", "place_name", "place_region", "place_country"]
 REVIEW_STATES = {"pending", "kept", "discarded"}
 
 
@@ -152,6 +160,23 @@ def apply(
             request=request,
             detail={"count": count, "action": action},
         )
+        return count, {"action": "revert", "snapshot": before}
+
+    if action == "set_location":
+        # Asignar o corregir la ubicación a mano; sin lat/lon, se quita.
+        before = _snapshot(db, valid, LOCATION_FIELDS)
+        lat, lon = params.get("lat"), params.get("lon")
+        if (lat is None) != (lon is None):
+            raise Invalid("Hacen falta latitud y longitud", code="invalid_location")
+        from app.services.geo import assign_place
+
+        count = 0
+        for asset in db.scalars(select(Asset).where(in_space)):
+            asset.lat, asset.lon = (
+                (float(lat), float(lon)) if lat is not None and lon is not None else (None, None)
+            )
+            assign_place(asset)
+            count += 1
         return count, {"action": "revert", "snapshot": before}
 
     # revert: vuelve a dejar cada elemento como estaba según la instantánea de una acción anterior.

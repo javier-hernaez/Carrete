@@ -138,6 +138,8 @@ class Filters:
     doubtful: bool | None = None
     trashed: bool = False
     query: str | None = None
+    bounds: tuple[float, float, float, float] | None = None  # sur, oeste, norte, este
+    located: bool | None = None
 
 
 DOUBTFUL_SOURCES = ("mtime", "upload")
@@ -166,8 +168,32 @@ def apply_filters(stmt: AnySelect, space_id: uuid.UUID, f: Filters) -> AnySelect
         cond = Asset.taken_at_source.in_(DOUBTFUL_SOURCES)
         stmt = stmt.where(cond if f.doubtful else ~cond)
     if f.query:
+        # Búsqueda: nombre de fichero, descripción, lugar y álbum.
+        from app.db.models import Album, AlbumAsset
+
         like = f"%{f.query.replace('%', '').replace('_', '')}%"
-        stmt = stmt.where(or_(Asset.original_filename.ilike(like), Asset.description.ilike(like)))
+        in_album = Asset.id.in_(
+            select(AlbumAsset.asset_id)
+            .join(Album, Album.id == AlbumAsset.album_id)
+            .where(Album.space_id == space_id, Album.name.ilike(like))
+        )
+        stmt = stmt.where(
+            or_(
+                Asset.original_filename.ilike(like),
+                Asset.description.ilike(like),
+                Asset.place_name.ilike(like),
+                Asset.place_region.ilike(like),
+                in_album,
+            )
+        )
+    if f.located is not None:
+        stmt = stmt.where(Asset.lat.is_not(None) if f.located else Asset.lat.is_(None))
+    if f.bounds is not None:
+        south, west, north, east = f.bounds
+        stmt = stmt.where(Asset.lat.between(south, north))
+        stmt = stmt.where(
+            Asset.lon.between(west, east) if west <= east else or_(Asset.lon >= west, Asset.lon <= east)
+        )
     from app.services import albums as album_service
 
     return album_service.apply_album_filter(stmt, f)

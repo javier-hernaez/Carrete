@@ -121,6 +121,11 @@ def filters_dep(
     doubtful: bool | None = None,
     trashed: bool = False,
     q: Annotated[str | None, Query(max_length=100)] = None,
+    south: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    west: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    north: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    east: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    located: bool | None = None,
 ) -> service.Filters:
     return service.Filters(
         review=list(review) if review else None,
@@ -135,6 +140,10 @@ def filters_dep(
         doubtful=doubtful,
         trashed=trashed,
         query=q.strip() if q else None,
+        bounds=(south, west, north, east)
+        if south is not None and west is not None and north is not None and east is not None
+        else None,
+        located=located,
     )
 
 
@@ -195,6 +204,9 @@ class AssetDetail(AssetOut):
     camera: str | None
     lat: float | None
     lon: float | None
+    place_name: str | None
+    place_region: str | None
+    place_country: str | None
     description: str | None
     video_codec: str | None
     has_preview_video: bool
@@ -234,6 +246,9 @@ def get_asset(asset_id: uuid.UUID, current: FullAuth, db: DB) -> AssetDetail:
         camera=asset.camera,
         lat=asset.lat,
         lon=asset.lon,
+        place_name=asset.place_name,
+        place_region=asset.place_region,
+        place_country=asset.place_country,
         description=asset.description,
         video_codec=asset.video_codec,
         has_preview_video=asset.has_preview_video,
@@ -310,7 +325,16 @@ def original(asset_id: uuid.UUID, current: FullAuth, db: DB, storage: StorageDep
 # --- Acciones masivas y papelera -----------------------------------------------------------------------
 
 BatchAction = Literal[
-    "trash", "restore", "review", "favorite", "add_album", "remove_album", "set_date", "shift_date", "revert"
+    "trash",
+    "restore",
+    "review",
+    "favorite",
+    "add_album",
+    "remove_album",
+    "set_date",
+    "shift_date",
+    "revert",
+    "set_location",
 ]
 
 
@@ -323,6 +347,8 @@ class BatchIn(BaseModel):
     taken_at: str | None = Field(default=None, max_length=40)
     offset_minutes: int | None = None
     minutes: int | None = None
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
     snapshot: dict[str, dict[str, object]] | None = None
 
 

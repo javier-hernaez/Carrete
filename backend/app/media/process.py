@@ -389,6 +389,9 @@ def process_asset(db: Session, storage: Storage, asset_id: uuid.UUID) -> None:
         and -180 <= lon <= 180
     ):
         asset.lat, asset.lon = float(lat), float(lon)
+    from app.services.geo import assign_place
+
+    assign_place(asset)
 
     # La fecha solo se recalcula si nadie la ha corregido a mano.
     if asset.taken_at_source != "manual":

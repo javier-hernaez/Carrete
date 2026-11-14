@@ -343,6 +343,9 @@ class Asset(TimestampMixin, Base):
     lat: Mapped[float | None] = mapped_column(Double)
     lon: Mapped[float | None] = mapped_column(Double)
     place_id: Mapped[int | None] = mapped_column(BigInteger)
+    place_name: Mapped[str | None] = mapped_column(Text)
+    place_region: Mapped[str | None] = mapped_column(Text)
+    place_country: Mapped[str | None] = mapped_column(Text)
     camera: Mapped[str | None] = mapped_column(Text)
     video_codec: Mapped[str | None] = mapped_column(Text)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
@@ -374,6 +377,17 @@ class Asset(TimestampMixin, Base):
             text("id DESC"),
         ),
         Index("ix_assets_space_id_phash", "space_id", "phash"),
+        Index(
+            "ix_assets_space_id_lat_lon", "space_id", "lat", "lon", postgresql_where=text("lat IS NOT NULL")
+        ),
+        # La vista por defecto de la línea temporal (todo menos descartadas y papelera), ya ordenada.
+        Index(
+            "ix_assets_visible_timeline",
+            "space_id",
+            text("taken_at_local DESC"),
+            text("id DESC"),
+            postgresql_where=text("trashed_at IS NULL AND review_state <> 'discarded'"),
+        ),
     )
 
 
@@ -624,3 +638,39 @@ class Import(Base):
         CheckConstraint("state IN ('queued', 'running', 'done', 'failed')", name="state_valid"),
         CheckConstraint("source IN ('zip', 'folder')", name="source_valid"),
     )
+
+
+class WebauthnCredential(Base):
+    """Llave de acceso (passkey): alternativa a contraseña + TOTP."""
+
+    __tablename__ = "webauthn_credentials"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    credential_id: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, unique=True)
+    public_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    sign_count: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    transports: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WebauthnChallenge(Base):
+    """Reto de un solo uso para registrar o usar una llave de acceso (caduca en 5 minutos)."""
+
+    __tablename__ = "webauthn_challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
+    )
+    purpose: Mapped[str] = mapped_column(Text, nullable=False)
+    challenge: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (CheckConstraint("purpose IN ('register', 'login')", name="purpose_valid"),)
