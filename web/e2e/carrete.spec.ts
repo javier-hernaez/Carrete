@@ -152,10 +152,28 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "¡Listo!" })).toBeVisible();
   await expect(page.getByText(/2 valen y 1 descartados/)).toBeVisible();
 
-  // Crear un álbum arrastrando la selección a la barra lateral
+  // Poner la ubicación a mano y ver el lugar en el visor (geocodificación sin conexión)
   await page.goto("/");
   await expect(page.getByText("2 elementos")).toBeVisible();
   const boxes = page.getByRole("button", { name: /^Seleccionar: / });
+  await boxes.nth(0).click({ force: true });
+  await page.getByRole("button", { name: "Lugar…" }).click();
+  await page.getByLabel("Coordenadas").fill("37.3886, -5.9823");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByText("Ubicación puesta")).toBeVisible();
+  await page
+    .getByRole("button", { name: /^Foto del/ })
+    .first()
+    .click();
+  await page.keyboard.press("i");
+  await expect(
+    page.getByRole("dialog", { name: "Visor de fotos" }).getByText(/Sevilla.*España/),
+  ).toBeVisible();
+  await page.goBack();
+
+  // Crear un álbum arrastrando la selección a la barra lateral
+  await expect(page.getByText("2 elementos")).toBeVisible();
   await boxes.nth(0).click({ force: true });
   await boxes.nth(1).click({ force: true });
   await expect(page.getByText("2 seleccionadas")).toBeVisible();
@@ -168,6 +186,30 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   await page.getByRole("link", { name: "Álbumes" }).first().click();
   await expect(page.getByRole("link", { name: /Asturias 2025\s*2 elementos/ })).toBeVisible();
   await expectAccessible(page);
+
+  // Mapa: la foto de Sevilla aparece como una zona; al proveedor solo se le pide el estilo
+  await page.context().route("https://teselas.example/**", (route) =>
+    route.request().url().endsWith("/estilo.json")
+      ? route.fulfill({
+          json: {
+            version: 8,
+            glyphs: "https://teselas.example/fuentes/{fontstack}/{range}.pbf",
+            sources: {},
+            layers: [{ id: "fondo", type: "background", paint: { "background-color": "#e8e4dc" } }],
+          },
+        })
+      : route.fulfill({ status: 404 }),
+  );
+  const clusters = page.waitForResponse(
+    (r) => /\/map\?/.test(r.url()) && r.url().includes("south=") && r.ok(),
+  );
+  await page.getByRole("link", { name: "Mapa" }).first().click();
+  await expect(page.getByRole("region", { name: "Mapa de las fotos" }).locator("canvas")).toBeVisible();
+  const zones = (await (await clusters).json()) as { count: number; bounds: number[] }[];
+  expect(zones.map((z) => z.count)).toEqual([1]);
+  await page.goto(`/?zona=${zones[0]?.bounds.join(",") ?? ""}`);
+  await expect(page.getByRole("button", { name: /^Foto del/ })).toHaveCount(1);
+  await expect(page.getByLabel("Solo la zona elegida en el mapa")).toBeChecked();
 
   // Exportar el espacio entero y descargarlo
   await page.goto("/exportar");

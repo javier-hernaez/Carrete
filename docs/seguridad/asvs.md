@@ -34,5 +34,4 @@ son de prioridad media o baja y están anotados abajo.
    del equipo, el límite por IP actuaría como límite global (el límite por cuenta sigue protegiendo).
 2. **CI nunca ejecutado en GitHub** (medio). Las mismas comprobaciones pasan en local
    (`make check`, `deploy/scripts/e2e.sh`); gitleaks, Semgrep y Trivy se ejecutarán en el primer push.
-3. **Llaves de acceso (passkeys)** (bajo): pendientes.
-4. **Cifrado en reposo** (bajo): riesgo R12 aceptado; LUKS opcional.
+3. **Cifrado en reposo** (bajo): riesgo R12 aceptado; LUKS opcional.

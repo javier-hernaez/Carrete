@@ -13,6 +13,7 @@ import { t } from "../../i18n";
 import { useAlbums } from "../selection/albums";
 import styles from "./albums.module.css";
 import { albumRange } from "./range";
+import { Suggestions } from "./Suggestions";
 
 export function AlbumsPage() {
   const { space } = useSession();
@@ -52,6 +53,7 @@ export function AlbumsPage() {
         </form>
       )}
       {create.isError && <Alert tone="danger">{errorMessage(create.error)}</Alert>}
+      {canEdit(space) && <Suggestions spaceId={space.id} />}
       {albums.isSuccess && list.length === 0 ? (
         <EmptyState title={t("albums.empty.title")}>{t("albums.empty.text")}</EmptyState>
       ) : (

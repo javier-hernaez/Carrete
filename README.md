@@ -11,9 +11,10 @@ intactos, con copia de seguridad, papelera y verificación de integridad.
 
 ## Estado
 
-Funciona: acceso con 2FA y espacios; subida reanudable
-con procesado de fotos y vídeos; copias, integridad y restauración; revisar, álbumes y repetidas;
-exportar, importar y biblioteca en disco. Pendientes: la app Android y el mapa.
+Funciona: acceso con 2FA, llaves de acceso y espacios;
+subida reanudable con procesado de fotos y vídeos; copias, integridad y restauración; revisar, álbumes y
+repetidas; exportar, importar y biblioteca en disco; app Android; mapa y lugares. Pendiente de tu
+confirmación: abrirlo a internet con Tailscale Funnel.
 
 ## Puesta en marcha en 5 minutos
 
@@ -55,7 +56,7 @@ make dev           # web con recarga en http://127.0.0.1:5173 (con el backend de
 ```
 backend/   app/ (api, db, jobs, security, migrations)  tests/
 web/       src/ (app, design-system, api, i18n)
-android/   app Android
+android/   app Android (Kotlin)
 deploy/    Dockerfile  docker-compose.yml  .env.example  scripts/
 docs/      adr/  seguridad/  arquitectura.md  diseno.md  operacion.md
 ```

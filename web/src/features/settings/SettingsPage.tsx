@@ -9,6 +9,7 @@ import { Button } from "../../design-system/components/Button";
 import { Alert, Card, PageTitle } from "../../design-system/components/Card";
 import { SelectField, TextField } from "../../design-system/components/Field";
 import { RecoveryCodes } from "../auth/RecoveryCodes";
+import { PasskeysCard } from "../passkeys/PasskeysCard";
 import styles from "../page.module.css";
 
 export function SettingsPage() {
@@ -18,6 +19,7 @@ export function SettingsPage() {
       <ProfileCard />
       <PasswordCard />
       <TwoFactorCard />
+      <PasskeysCard />
       <AndroidCard />
       <SessionsCard />
       <LogoutCard />
