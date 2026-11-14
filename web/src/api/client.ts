@@ -24,6 +24,9 @@ export type BatchResult = S["BatchOut"];
 export type ExportJob = S["ExportOut"];
 export type ImportJob = S["ImportOut"];
 export type AndroidApp = S["AndroidApp"];
+export type MapCluster = S["Cluster"];
+export type Suggestion = S["SuggestionOut"];
+export type Passkey = S["PasskeyOut"];
 
 interface Run {
   started_at: string;
@@ -249,6 +252,25 @@ export const api = {
     apiFetch<undefined>(`/api/v1/spaces/${space}/exports/${id}`, del),
   imports: (space: string) => apiFetch<ImportJob[]>(`/api/v1/spaces/${space}/imports`),
   androidApp: () => apiFetch<AndroidApp>("/api/v1/app/android"),
+  mapClusters: (space: string, params: Record<string, string>) =>
+    apiFetch<MapCluster[]>(`/api/v1/spaces/${space}/map?${new URLSearchParams(params).toString()}`),
+  suggestions: (space: string) => apiFetch<Suggestion[]>(`/api/v1/spaces/${space}/suggestions`),
+  passkeys: () => apiFetch<Passkey[]>("/api/v1/auth/passkeys"),
+  passkeyRegisterOptions: () =>
+    apiFetch<{ challenge_id: string; options: Record<string, unknown> }>(
+      "/api/v1/auth/passkeys/register/options",
+      post,
+    ),
+  passkeyRegister: (challenge_id: string, credential: unknown, name: string) =>
+    apiFetch<Passkey>("/api/v1/auth/passkeys", json({ challenge_id, credential, name })),
+  passkeyDelete: (id: string) => apiFetch<undefined>(`/api/v1/auth/passkeys/${id}`, del),
+  passkeyLoginOptions: () =>
+    apiFetch<{ challenge_id: string; options: Record<string, unknown> }>(
+      "/api/v1/auth/passkeys/login/options",
+      post,
+    ),
+  passkeyLogin: (challenge_id: string, credential: unknown) =>
+    apiFetch<{ stage: Stage }>("/api/v1/auth/passkeys/login", json({ challenge_id, credential })),
   rebuildLibrary: () => apiFetch<{ status: string }>("/api/v1/admin/library/rebuild", post),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),

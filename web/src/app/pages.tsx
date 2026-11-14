@@ -9,10 +9,6 @@ import { t, type MessageKey } from "../i18n";
 import styles from "./pages.module.css";
 import { useSession } from "./session";
 
-export function MapPage() {
-  return <EmptyState title={t("map.empty.title")}>{t("map.empty.text")}</EmptyState>;
-}
-
 interface MoreItem {
   label: MessageKey;
   icon: IconName;
@@ -59,6 +55,9 @@ export function MorePage() {
         )}
       </ul>
       {info.data && <p className={styles.version}>{t("more.version", { version: info.data.version })}</p>}
+      <p className={styles.version}>
+        Nombres de lugares: <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).
+      </p>
     </section>
   );
 }

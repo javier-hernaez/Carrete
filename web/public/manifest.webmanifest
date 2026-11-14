@@ -35,7 +35,5 @@
     }
   ],
   "id": "/",
-  "categories": [
-    "photo"
-  ]
+  "categories": ["photo"]
 }

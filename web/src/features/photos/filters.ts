@@ -12,6 +12,7 @@ export interface PhotoFilters {
   album: string;
   sinAlbum: boolean;
   q: string;
+  zona: string; // «sur,oeste,norte,este», desde el mapa
 }
 
 export function readFilters(params: URLSearchParams): PhotoFilters {
@@ -27,6 +28,7 @@ export function readFilters(params: URLSearchParams): PhotoFilters {
     album: params.get("album") ?? "",
     sinAlbum: params.get("sin-album") === "1",
     q: params.get("q") ?? "",
+    zona: params.get("zona") ?? "",
   };
 }
 
@@ -51,6 +53,14 @@ export function toApiParams(f: PhotoFilters, extra: Record<string, string> = {})
   if (f.album) p.set("album_id", f.album);
   if (f.sinAlbum) p.set("no_album", "true");
   if (f.q) p.set("q", f.q);
+  const zone = f.zona.split(",").map(Number);
+  if (zone.length === 4 && zone.every((n) => Number.isFinite(n))) {
+    const [south, west, north, east] = zone as [number, number, number, number];
+    p.set("south", String(south));
+    p.set("west", String(west));
+    p.set("north", String(north));
+    p.set("east", String(east));
+  }
   return p;
 }
 
@@ -66,5 +76,6 @@ export function activeCount(f: PhotoFilters): number {
     f.album,
     f.sinAlbum,
     f.q,
+    f.zona,
   ].filter(Boolean).length;
 }
