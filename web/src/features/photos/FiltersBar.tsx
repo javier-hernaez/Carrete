@@ -8,7 +8,7 @@ import { SelectField, TextField } from "../../design-system/components/Field";
 import { activeCount, readFilters } from "./filters";
 import styles from "./photos.module.css";
 
-const KEYS = ["estado", "fav", "tipo", "origen", "persona", "de", "a", "dudosa", "sin-album", "q"];
+const KEYS = ["estado", "fav", "tipo", "origen", "persona", "de", "a", "dudosa", "sin-album", "q", "zona"];
 
 export function FiltersBar({ hideState = false }: { hideState?: boolean }) {
   const { space } = useSession();
@@ -110,6 +110,11 @@ export function FiltersBar({ hideState = false }: { hideState?: boolean }) {
           />{" "}
           Sin álbum
         </label>
+        {filters.zona && (
+          <label className={styles.check}>
+            <input type="checkbox" checked onChange={() => set("zona", "")} /> Solo la zona elegida en el mapa
+          </label>
+        )}
         {count > 0 && (
           <Button
             variant="ghost"

@@ -178,6 +178,25 @@ clave. Para que el CI firme igual, súbelas a GitHub (Settings → Secrets → A
 4. Comprobar en la web que están las 50, una sola vez, con su fecha. Repetir el paso 2: «ya estaban».
 5. Con «solo con wifi» (por defecto, para vídeos), compartir un vídeo con datos móviles: debe esperar.
 
+## Mapa y lugares
+
+- El nombre del lugar (ciudad y país) se calcula en el mini PC con datos de GeoNames incluidos en la
+  imagen: ninguna coordenada sale de aquí.
+- El mapa usa **OpenFreeMap** si `CARRETE_MAP_STYLE_URL` no está definida. Para otro proveedor, pon la
+  dirección de su estilo; para quitar el mapa, déjala vacía (`CARRETE_MAP_STYLE_URL=`). Después,
+  `docker compose up -d`. Si el proveedor sirve teselas o fuentes desde otro dominio, la CSP las
+  bloqueará (ADR 0010).
+- El lugar se calcula al procesar cada foto. Las que ya estaban antes de tener mapa lo reciben solas:
+  el worker rellena 5 000 por hora.
+- Las fotos de WhatsApp no traen ubicación, y Android la quita al compartir salvo con la app de Carrete
+  (permiso `ACCESS_MEDIA_LOCATION`). Se pone a mano con «Lugar…» en la selección.
+
+## Llaves de acceso
+
+Ajustes → Llaves de acceso → «Añadir». Solo funcionan en la dirección de `CARRETE_PUBLIC_URL` (con
+HTTPS, o `localhost`): una llave creada en `http://127.0.0.1:8010` no vale en el Funnel. Créalas cuando
+esté activo. La contraseña y la 2FA siguen valiendo; quitar una llave pide volver a identificarse.
+
 ## Exponer a internet
 
 Solo con la revisión ASVS sin hallazgos altos y con confirmación expresa:

@@ -15,6 +15,8 @@ CARRETE_SECRET_KEY=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')
 CARRETE_SETUP_TOKEN=$TOKEN
 # Carpeta temporal pequeña: la reserva de disco de producción (20 GB) no aplica aquí.
 CARRETE_MIN_FREE_BYTES=50000000
+# Proveedor de teselas ficticio: el navegador de la prueba sirve el estilo (sin salir a internet).
+CARRETE_MAP_STYLE_URL=https://teselas.example/estilo.json
 CARRETE_ROOT=$WORK
 CARRETE_ENV_FILE=$WORK/.env
 CARRETE_UID=$(id -u)

@@ -419,6 +419,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/passkeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Passkey List */
+        get: operations["passkey_list_api_v1_auth_passkeys_get"];
+        put?: never;
+        /** Passkey Register */
+        post: operations["passkey_register_api_v1_auth_passkeys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Login */
+        post: operations["passkey_login_api_v1_auth_passkeys_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/login/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Login Options */
+        post: operations["passkey_login_options_api_v1_auth_passkeys_login_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/register/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Register Options */
+        post: operations["passkey_register_options_api_v1_auth_passkeys_register_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/{passkey_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Passkey Delete */
+        delete: operations["passkey_delete_api_v1_auth_passkeys__passkey_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/password": {
         parameters: {
             query?: never;
@@ -1074,6 +1160,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Space Map */
+        get: operations["space_map_api_v1_spaces__space_id__map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/members": {
         parameters: {
             query?: never;
@@ -1107,6 +1210,26 @@ export interface paths {
         head?: never;
         /** Change Member Role */
         patch: operations["change_member_role_api_v1_spaces__space_id__members__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggestions
+         * @description Propuestas de álbum a partir de la bandeja de entrada.
+         */
+        get: operations["suggestions_api_v1_spaces__space_id__suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/spaces/{space_id}/timeline": {
@@ -1403,6 +1526,12 @@ export interface components {
             mime: string;
             /** Original Filename */
             original_filename: string;
+            /** Place Country */
+            place_country: string | null;
+            /** Place Name */
+            place_name: string | null;
+            /** Place Region */
+            place_region: string | null;
             /** Processing Error */
             processing_error: string | null;
             /** Processing State */
@@ -1553,11 +1682,15 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "set_date" | "shift_date" | "revert";
+            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "set_date" | "shift_date" | "revert" | "set_location";
             /** Album Id */
             album_id?: string | null;
             /** Ids */
             ids: string[];
+            /** Lat */
+            lat?: number | null;
+            /** Lon */
+            lon?: number | null;
             /** Minutes */
             minutes?: number | null;
             /** Offset Minutes */
@@ -1593,6 +1726,19 @@ export interface components {
         CheckOut: {
             /** Present */
             present: string[];
+        };
+        /** Cluster */
+        Cluster: {
+            /** Bounds */
+            bounds: number[];
+            /** Count */
+            count: number;
+            /** Cover Id */
+            cover_id: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
         };
         /** CodeIn */
         CodeIn: {
@@ -1833,6 +1979,8 @@ export interface components {
         InstanceInfo: {
             /** Map Enabled */
             map_enabled: boolean;
+            /** Map Style Url */
+            map_style_url?: string | null;
             /** Name */
             name: string;
             /** Version */
@@ -2019,6 +2167,64 @@ export interface components {
              */
             trashed: string[];
         };
+        /** PasskeyLoginIn */
+        PasskeyLoginIn: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
+        };
+        /** PasskeyOptionsOut */
+        PasskeyOptionsOut: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Options */
+            options: {
+                [key: string]: unknown;
+            };
+        };
+        /** PasskeyOut */
+        PasskeyOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+        };
+        /** PasskeyRegisterIn */
+        PasskeyRegisterIn: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+        };
         /** PasswordIn */
         PasswordIn: {
             /** Current Password */
@@ -2200,6 +2406,25 @@ export interface components {
              * @enum {string}
              */
             stage: "full" | "totp" | "enroll";
+        };
+        /** SuggestionOut */
+        SuggestionOut: {
+            /** Asset Ids */
+            asset_ids: string[];
+            /** Count */
+            count: number;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Place */
+            place: string | null;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
         };
         /** TimelineOut */
         TimelineOut: {
@@ -2920,6 +3145,161 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    passkey_list_api_v1_auth_passkeys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOut"][];
+                };
+            };
+        };
+    };
+    passkey_register_api_v1_auth_passkeys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRegisterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passkey_login_api_v1_auth_passkeys_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passkey_login_options_api_v1_auth_passkeys_login_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptionsOut"];
+                };
+            };
+        };
+    };
+    passkey_register_options_api_v1_auth_passkeys_register_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptionsOut"];
+                };
+            };
+        };
+    };
+    passkey_delete_api_v1_auth_passkeys__passkey_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                passkey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
@@ -3835,6 +4215,11 @@ export interface operations {
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+                located?: boolean | null;
             };
             header?: never;
             path: {
@@ -4381,6 +4766,43 @@ export interface operations {
             };
         };
     };
+    space_map_api_v1_spaces__space_id__map_get: {
+        parameters: {
+            query?: {
+                zoom?: number;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cluster"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_members_api_v1_spaces__space_id__members_get: {
         parameters: {
             query?: never;
@@ -4476,6 +4898,37 @@ export interface operations {
             };
         };
     };
+    suggestions_api_v1_spaces__space_id__suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     timeline_api_v1_spaces__space_id__timeline_get: {
         parameters: {
             query?: {
@@ -4491,6 +4944,11 @@ export interface operations {
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+                located?: boolean | null;
             };
             header?: never;
             path: {

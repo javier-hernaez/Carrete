@@ -16,7 +16,8 @@ import { DuplicatesPage } from "../features/duplicates/DuplicatesPage";
 import { ExportPage } from "../features/export/ExportPage";
 import { DiscardedPage } from "../features/review/DiscardedPage";
 import { ReviewPage } from "../features/review/ReviewPage";
-import { MapPage, MorePage, NotFoundPage } from "./pages";
+import { MapPage } from "../features/map/MapPage";
+import { MorePage, NotFoundPage } from "./pages";
 
 export const routes: RouteObject[] = [
   // Públicas: se abren desde un enlace, con o sin sesión.

@@ -70,3 +70,23 @@ export const SOURCE_LABEL: Record<string, string> = {
   screenshot: "Captura de pantalla",
   other: "Otro",
 };
+
+const countries = new Intl.DisplayNames(["es"], { type: "region" });
+
+/** Nombre del país en español a partir de su código ISO («ES» → «España»). */
+export function countryName(code: string | null | undefined): string | null {
+  if (!code) return null;
+  try {
+    return countries.of(code.toUpperCase()) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/**
+ * «Sevilla, España». La región no se enseña: GeoNames la da en inglés («Andalusia»); sirve para buscar.
+ */
+export function placeLabel(d: { place_name?: string | null; place_country?: string | null }): string | null {
+  const parts = [d.place_name, countryName(d.place_country)].filter((p): p is string => Boolean(p));
+  return parts.length ? parts.join(", ") : null;
+}

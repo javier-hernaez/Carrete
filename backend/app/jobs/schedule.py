@@ -16,6 +16,7 @@ PERIODIC: dict[str, timedelta] = {
     "health_checks": timedelta(minutes=15),
     "expire_exports": timedelta(hours=6),
     "build_library": timedelta(hours=24),
+    "backfill_places": timedelta(hours=1),
 }
 
 

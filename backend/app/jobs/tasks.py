@@ -115,6 +115,15 @@ def expire_exports(session: Session, payload: dict[str, Any]) -> None:
     expire(session, storage)
 
 
+@handler("backfill_places")
+def backfill_places(session: Session, payload: dict[str, Any]) -> None:
+    """Lugar de las fotos con GPS procesadas antes de tener mapa, por tandas."""
+    from app.services.geo import backfill_places as backfill
+
+    if done := backfill(session):
+        log.info("Lugares asignados", extra={"assets": done})
+
+
 @handler("build_library")
 def build_library(session: Session, payload: dict[str, Any]) -> None:
     """Biblioteca en disco: cada noche y con el botón de Administración."""

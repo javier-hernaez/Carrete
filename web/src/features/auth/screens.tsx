@@ -3,13 +3,14 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { api } from "../../api/client";
-import { errorMessage } from "../../app/errors";
+import { errorMessage, UserError } from "../../app/errors";
 import { Button } from "../../design-system/components/Button";
 import { Alert } from "../../design-system/components/Card";
 import { TextField } from "../../design-system/components/Field";
 import { AuthLayout } from "./AuthLayout";
 import styles from "./auth.module.css";
 import { EnrollTotp } from "./EnrollTotp";
+import { credentialToJson, passkeyError, passkeysSupported, requestOptions } from "../passkeys/webauthn";
 
 const ROLE_LABEL: Record<string, string> = {
   owner: "propietario",
@@ -29,6 +30,20 @@ export function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const login = useMutation({ mutationFn: () => api.login(username, password), onSuccess: refresh });
+  const passkey = useMutation({
+    mutationFn: async () => {
+      const { challenge_id, options } = await api.passkeyLoginOptions();
+      let credential: Credential | null;
+      try {
+        credential = await navigator.credentials.get({ publicKey: requestOptions(options) });
+      } catch (e) {
+        throw new UserError(passkeyError(e));
+      }
+      if (!(credential instanceof PublicKeyCredential)) throw new UserError("No se eligió ninguna llave");
+      return api.passkeyLogin(challenge_id, credentialToJson(credential));
+    },
+    onSuccess: refresh,
+  });
   const submit = (e: FormEvent) => {
     e.preventDefault();
     login.mutate();
@@ -37,6 +52,7 @@ export function LoginScreen() {
     <AuthLayout title="Entrar">
       <form className={styles.form} onSubmit={submit}>
         {login.isError && <Alert tone="danger">{errorMessage(login.error)}</Alert>}
+        {passkey.isError && <Alert tone="danger">{errorMessage(passkey.error)}</Alert>}
         <TextField
           label="Usuario"
           autoComplete="username"
@@ -56,6 +72,11 @@ export function LoginScreen() {
         <Button type="submit" variant="primary" disabled={login.isPending}>
           Entrar
         </Button>
+        {passkeysSupported() && (
+          <Button type="button" disabled={passkey.isPending} onClick={() => passkey.mutate()}>
+            Entrar con una llave de acceso
+          </Button>
+        )}
       </form>
       <p className={styles.links}>
         ¿Has olvidado la contraseña? Pide al administrador un enlace para restablecerla.

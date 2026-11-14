@@ -6,6 +6,7 @@ import { downloadSelection } from "../export/download";
 import { useAssetActions } from "../photos/actions";
 import { AlbumPicker } from "./AlbumPicker";
 import { DateDialog } from "./DateDialog";
+import { LocationDialog } from "./LocationDialog";
 import styles from "./selection.module.css";
 
 interface SelectionBarProps {
@@ -30,7 +31,7 @@ export function SelectionBar({
   hideStandard,
 }: SelectionBarProps) {
   const actions = useAssetActions(spaceId);
-  const [dialog, setDialog] = useState<"album" | "date" | null>(null);
+  const [dialog, setDialog] = useState<"album" | "date" | "place" | null>(null);
   const done = (promise: Promise<unknown>) => {
     void promise.then(onClear);
   };
@@ -56,6 +57,9 @@ export function SelectionBar({
           </Button>
           <Button variant="ghost" onClick={() => setDialog("date")}>
             Fecha…
+          </Button>
+          <Button variant="ghost" onClick={() => setDialog("place")}>
+            Lugar…
           </Button>
           <Button variant="ghost" onClick={() => done(downloadSelection(spaceId, ids))}>
             Descargar
@@ -96,6 +100,16 @@ export function SelectionBar({
           onShift={(minutes) => {
             setDialog(null);
             done(actions.shiftDate(ids, minutes));
+          }}
+        />
+      )}
+      {dialog === "place" && (
+        <LocationDialog
+          count={ids.length}
+          onClose={() => setDialog(null)}
+          onSet={(coords) => {
+            setDialog(null);
+            done(actions.setLocation(ids, coords));
           }}
         />
       )}

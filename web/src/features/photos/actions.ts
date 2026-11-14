@@ -129,6 +129,15 @@ export function useAssetActions(spaceId: string) {
           { minutes },
           plural("Fecha movida", (n) => `Fecha movida en ${n}`),
         ),
+      setLocation: (ids: string[], coords: { lat: number; lon: number } | null) =>
+        run(
+          ids,
+          "set_location",
+          coords ?? {},
+          coords
+            ? plural("Ubicación puesta", (n) => `Ubicación puesta en ${n}`)
+            : plural("Ubicación quitada", (n) => `Ubicación quitada en ${n}`),
+        ),
     }),
     [refresh, run],
   );

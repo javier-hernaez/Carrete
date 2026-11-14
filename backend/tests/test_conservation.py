@@ -365,6 +365,7 @@ def test_scheduler_enqueues_periodic_tasks(sessions: sessionmaker[Session]) -> N
             "health_checks",
             "expire_exports",
             "build_library",
+            "backfill_places",
         }
         assert enqueue_due(s) == []  # no se repiten hasta que toque
 

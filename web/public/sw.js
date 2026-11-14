@@ -5,7 +5,9 @@
 const CACHE = "carrete-armazon-v1";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/favicon.svg"])));
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/favicon.svg"])),
+  );
   self.skipWaiting();
 });
 
