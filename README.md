@@ -13,8 +13,7 @@ intactos, con copia de seguridad, papelera y verificación de integridad.
 
 Funciona: acceso con 2FA, llaves de acceso y espacios;
 subida reanudable con procesado de fotos y vídeos; copias, integridad y restauración; revisar, álbumes y
-repetidas; exportar, importar y biblioteca en disco; app Android; mapa y lugares. Pendiente de tu
-confirmación: abrirlo a internet con Tailscale Funnel.
+repetidas; exportar, importar y biblioteca en disco; app Android; mapa y lugares. Abierto a internet con Tailscale Funnel en el puerto 10000.
 
 ## Puesta en marcha en 5 minutos
 

@@ -29,9 +29,11 @@ son de prioridad media o baja y están anotados abajo.
 
 ## Pendientes (ninguno alto)
 
-1. **V9 / IP real tras Funnel** (medio). Al activar Funnel, comprobar con `docker compose logs app` que
-   la IP que se registra en un acceso fallido es la del visitante y no la del propio equipo. Si fuera la
-   del equipo, el límite por IP actuaría como límite global (el límite por cuenta sigue protegiendo).
+1. **V9 / IP real tras Funnel** (medio). Funnel activo desde el 2026-11-14: una prueba desde el propio
+   equipo registra su IP de Tailscale (no la de Docker ni 127.0.0.1), así que `X-Forwarded-For` se
+   respeta. Falta comprobarlo desde fuera: un acceso fallido desde datos móviles debe registrar la IP
+   del visitante (Administración → Registro de auditoría), no la del propio equipo. Si fuera la del
+   equipo, el límite por IP actuaría como límite global (el límite por cuenta sigue protegiendo).
 2. **CI nunca ejecutado en GitHub** (medio). Las mismas comprobaciones pasan en local
    (`make check`, `deploy/scripts/e2e.sh`); gitleaks, Semgrep y Trivy se ejecutarán en el primer push.
 3. **Cifrado en reposo** (bajo): riesgo R12 aceptado; LUKS opcional.
