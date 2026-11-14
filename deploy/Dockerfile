@@ -49,10 +49,13 @@ FROM base AS runtime
 ARG CARRETE_VERSION=dev
 ENV CARRETE_VERSION=${CARRETE_VERSION} \
     CARRETE_STATIC_DIR=/app/static \
+    CARRETE_APK_DIR=/app/apk \
     CARRETE_DATA_DIR=/data
 COPY --from=deps /opt/venv /opt/venv
 COPY backend/app ./app
 COPY --from=web /web/dist ./static
+# APK de la app Android si se ha compilado antes (android/build.sh o el CI). Fuera de la web pública.
+COPY deploy/apk/ ./apk/
 COPY deploy/carrete.sh /usr/local/bin/carrete
 # El usuario real lo fija docker-compose.yml (el dueño de las carpetas de datos en el equipo); este es
 # solo el valor por defecto, sin privilegios.

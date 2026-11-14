@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Carrete</string>
+    <string name="share_label">Subir a Carrete</string>
+    <string name="setup_title">Carrete</string>
+    <string name="setup_intro">Entra con tu usuario. La contraseña no se guarda en el móvil.</string>
+    <string name="setup_server">Dirección del servidor</string>
+    <string name="setup_user">Usuario</string>
+    <string name="setup_password">Contraseña</string>
+    <string name="setup_code">Código de verificación</string>
+    <string name="setup_enter">Entrar</string>
+    <string name="setup_connecting">Conectando…</string>
+    <string name="setup_bad_server">La dirección no es válida. Debe empezar por https://</string>
+    <string name="setup_need_code">Escribe el código de tu app de autenticación.</string>
+    <string name="setup_enroll_first">Primero activa la verificación en dos pasos desde la web de Carrete y vuelve a intentarlo.</string>
+    <string name="error_network">No hay conexión con el servidor.</string>
+    <plurals name="share_title">
+        <item quantity="one">Subir %d elemento</item>
+        <item quantity="other">Subir %d elementos</item>
+    </plurals>
+    <string name="share_space">Espacio</string>
+    <string name="share_album">Álbum (opcional)</string>
+    <string name="share_no_album">Sin álbum</string>
+    <string name="share_upload">Subir</string>
+    <string name="share_setup_first">Primero entra en Carrete.</string>
+    <string name="share_no_space">No tienes ningún espacio donde puedas subir.</string>
+    <string name="preparing">Preparando %d…</string>
+    <string name="queued">En cola: se subirán aunque apagues la pantalla.</string>
+    <string name="channel_uploads">Subidas</string>
+    <string name="uploading_title">Subiendo %1$d de %2$d</string>
+    <string name="upload_done_title">Subida terminada</string>
+    <string name="upload_summary" tools:ignore="PluralsCandidate">%1$d subidas, %2$d ya estaban, %3$d errores</string>
+    <string name="downloading">Descargando %s en Imágenes/Carrete</string>
+    <string name="update_available">Hay una versión nueva de la app: descárgala en Ajustes → App para el móvil.</string>
+</resources>

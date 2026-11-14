@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 
 import { api, type AssetItem } from "../../api/client";
-import { formatBytes, formatDateTime, SOURCE_LABEL } from "./format";
+import { formatBytes, formatDateTime, placeLabel, SOURCE_LABEL } from "./format";
 import styles from "./viewer.module.css";
 
 interface ViewerProps {
@@ -299,7 +299,15 @@ function InfoPanel({ id }: { id: string }) {
             <>
               <dt>Ubicación</dt>
               <dd>
-                {d.lat.toFixed(5)}, {d.lon.toFixed(5)}
+                {placeLabel(d) && (
+                  <>
+                    {placeLabel(d)}
+                    <br />
+                  </>
+                )}
+                <span className={styles.coords}>
+                  {d.lat.toFixed(5)}, {d.lon.toFixed(5)}
+                </span>
               </dd>
             </>
           )}

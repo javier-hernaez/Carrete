@@ -98,3 +98,24 @@ describe("subir", () => {
     expect(await screen.findByRole("heading", { name: "Solo puedes ver este espacio" })).toBeInTheDocument();
   });
 });
+
+describe("dentro de la app Android", () => {
+  it("ofrece el selector nativo con subida en segundo plano", async () => {
+    const picked: string[] = [];
+    (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid = {
+      pickPhotos: (id: string) => picked.push(id),
+      version: () => 1,
+    };
+    try {
+      mockApi();
+      const user = userEvent.setup();
+      renderAt("/subir");
+      await user.click(
+        await screen.findByRole("button", { name: "Elegir del móvil (sube en segundo plano)" }),
+      );
+      expect(picked).toEqual([SPACE_A]);
+    } finally {
+      delete (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid;
+    }
+  });
+});

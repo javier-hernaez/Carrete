@@ -8,6 +8,7 @@ import { Button } from "../../design-system/components/Button";
 import { Alert, Card, PageTitle } from "../../design-system/components/Card";
 import { TextField } from "../../design-system/components/Field";
 import { formatBytes } from "../photos/format";
+import { showToast } from "../toast/toast";
 import styles from "../page.module.css";
 
 const dateTime = new Intl.DateTimeFormat("es", { dateStyle: "short", timeStyle: "short" });
@@ -122,6 +123,21 @@ function PeopleCard() {
                     onClick={() => void run(() => api.adminSetActive(u.id, !u.is_active))}
                   >
                     {u.is_active ? "Desactivar cuenta" : "Reactivar cuenta"}
+                  </Button>
+                )}
+                {u.id !== me.id && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `¿Borrar la cuenta de ${u.display_name}? Sus fotos seguirán en los espacios, sin su nombre.`,
+                        )
+                      )
+                        void run(() => api.adminDeleteUser(u.id));
+                    }}
+                  >
+                    Borrar la cuenta
                   </Button>
                 )}
               </div>
@@ -264,6 +280,20 @@ function StatusCard() {
         {Object.entries(s.queue)
           .map(([k, v]) => `${k} ${v}`)
           .join(" · ") || "vacía"}
+        <br />
+        <strong>Biblioteca en disco:</strong>{" "}
+        {s.library.built_at
+          ? `${s.library.files ?? 0} ficheros, ${age(s.library.built_at)}`
+          : "aún no generada"}{" "}
+        <button
+          type="button"
+          className={styles.inlineButton}
+          onClick={() =>
+            void api.rebuildLibrary().then(() => showToast("Se está regenerando la biblioteca en disco"))
+          }
+        >
+          Regenerar ahora
+        </button>
         <br />
         <strong>Versión:</strong> {s.version}
       </p>

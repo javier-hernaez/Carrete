@@ -1,0 +1,87 @@
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.members {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.member {
+  flex: 0 0 min(15rem, 70vw);
+  margin: 0;
+}
+
+.pick {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.kept .pick {
+  border-color: var(--color-accent);
+  opacity: 1;
+}
+
+.pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.best,
+.mark {
+  position: absolute;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 60%);
+  color: #fff;
+  font-size: var(--text-xs);
+}
+
+.best {
+  top: var(--space-1);
+  left: var(--space-1);
+  background: var(--color-accent);
+}
+
+.mark {
+  right: var(--space-1);
+  bottom: var(--space-1);
+}
+
+.caption {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}

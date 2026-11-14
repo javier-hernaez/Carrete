@@ -324,3 +324,146 @@ def update_me(body: MeIn, current: FullAuth, db: DB) -> None:
     if body.theme is not None:
         user.preferences = {**user.preferences, "theme": body.theme}
     db.commit()
+
+
+# --- App Android ---------------------------------------------------------------------------------------
+
+
+class DeviceLoginIn(BaseModel):
+    username: str = Field(max_length=64)
+    password: str = Field(max_length=512)
+    device_name: str = Field(min_length=1, max_length=80)
+
+
+class DeviceLoginOut(BaseModel):
+    stage: Stage
+    token: str
+
+
+@router.post("/auth/device/login", response_model=DeviceLoginOut)
+def device_login(body: DeviceLoginIn, db: DB, settings: SettingsDep, info: ReqInfo) -> DeviceLoginOut:
+    """Inicio de sesión de la app: devuelve un *token* de dispositivo revocable (nunca se guarda la
+    contraseña). Si falta el segundo factor, se completa con POST /auth/totp y el mismo *token*."""
+    issued = auth.login(
+        db, settings, body.username, body.password, info, kind="device", device_name=body.device_name.strip()
+    )
+    db.commit()
+    return DeviceLoginOut(stage=issued.session.stage, token=issued.token)  # type: ignore[arg-type]
+
+
+class CodeOut(BaseModel):
+    code: str
+
+
+@router.post("/auth/device/web-code", response_model=CodeOut)
+def device_web_code(current: FullAuth, db: DB, info: ReqInfo) -> CodeOut:
+    if current.session.kind != "device":
+        raise NotFound("No disponible")
+    code = auth.issue_exchange_code(db, current.session, current.user, info)
+    db.commit()
+    return CodeOut(code=code)
+
+
+@router.get("/auth/device/web", include_in_schema=False)
+def device_web_session(code: str, db: DB, settings: SettingsDep, info: ReqInfo) -> Response:
+    """La WebView abre esta dirección con el código: recibe su cookie de sesión y va a la portada."""
+    from fastapi.responses import RedirectResponse
+
+    issued = auth.exchange_for_web_session(db, code[:200], info)
+    if issued is None:
+        return RedirectResponse("/", status_code=303)
+    db.commit()
+    response = RedirectResponse("/", status_code=303)
+    set_session_cookie(response, settings, issued.token)
+    return response
+
+
+# --- Llaves de acceso ----------------------------------------------------------------------------------
+
+
+class PasskeyOptionsOut(BaseModel):
+    challenge_id: uuid.UUID
+    options: dict[str, object]
+
+
+class PasskeyRegisterIn(BaseModel):
+    challenge_id: uuid.UUID
+    credential: dict[str, object]
+    name: str = Field(default="", max_length=80)
+
+
+class PasskeyLoginIn(BaseModel):
+    challenge_id: uuid.UUID
+    credential: dict[str, object]
+
+
+class PasskeyOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    created_at: datetime
+    last_used_at: datetime | None
+
+
+@router.post("/auth/passkeys/register/options", response_model=PasskeyOptionsOut)
+def passkey_register_options(current: FullAuth, db: DB, settings: SettingsDep) -> PasskeyOptionsOut:
+    from app.services import passkeys
+
+    auth.require_recent_auth(current.session)
+    data = passkeys.registration_options(db, settings, current.user)
+    db.commit()
+    return PasskeyOptionsOut(**data)  # type: ignore[arg-type]
+
+
+@router.post("/auth/passkeys", response_model=PasskeyOut, status_code=201)
+def passkey_register(
+    body: PasskeyRegisterIn, current: FullAuth, db: DB, settings: SettingsDep, info: ReqInfo
+) -> PasskeyOut:
+    from app.services import passkeys
+
+    record = passkeys.register(
+        db, settings, current.user, body.challenge_id, dict(body.credential), body.name, info
+    )
+    db.commit()
+    return PasskeyOut(
+        id=record.id, name=record.name, created_at=record.created_at, last_used_at=record.last_used_at
+    )
+
+
+@router.get("/auth/passkeys", response_model=list[PasskeyOut])
+def passkey_list(current: FullAuth, db: DB) -> list[PasskeyOut]:
+    from app.services import passkeys
+
+    return [
+        PasskeyOut(id=r.id, name=r.name, created_at=r.created_at, last_used_at=r.last_used_at)
+        for r in passkeys.list_for(db, current.user)
+    ]
+
+
+@router.delete("/auth/passkeys/{passkey_id}", status_code=204)
+def passkey_delete(passkey_id: uuid.UUID, current: FullAuth, db: DB, info: ReqInfo) -> None:
+    from app.services import passkeys
+
+    auth.require_recent_auth(current.session)
+    passkeys.remove(db, current.user, passkey_id, info)
+    db.commit()
+
+
+@router.post("/auth/passkeys/login/options", response_model=PasskeyOptionsOut)
+def passkey_login_options(db: DB, settings: SettingsDep) -> PasskeyOptionsOut:
+    from app.services import passkeys
+
+    data = passkeys.login_options(db, settings)
+    db.commit()
+    return PasskeyOptionsOut(**data)  # type: ignore[arg-type]
+
+
+@router.post("/auth/passkeys/login", response_model=StageOut)
+def passkey_login(
+    body: PasskeyLoginIn, response: Response, db: DB, settings: SettingsDep, info: ReqInfo
+) -> StageOut:
+    from app.services import passkeys
+
+    issued = passkeys.login(db, settings, body.challenge_id, dict(body.credential), info)
+    db.commit()
+    set_session_cookie(response, settings, issued.token)
+    return StageOut(stage="full")

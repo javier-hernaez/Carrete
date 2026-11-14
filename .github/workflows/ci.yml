@@ -92,9 +92,46 @@ jobs:
           semgrep scan --error --metrics=off --exclude=web/src/api/schema.d.ts
           --config p/owasp-top-ten --config p/python --config p/react --config p/dockerfile
 
+  android:
+    name: App Android (pruebas, lint, APK firmado)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Pruebas, lint y APK
+        env:
+          # La firma vive en secretos de GitHub (y en una copia del usuario): sin ella no se puede
+          # actualizar la app ya instalada.
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          CARRETE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CARRETE_PUBLIC_URL: ${{ vars.CARRETE_PUBLIC_URL }}
+          CARRETE_APK_VERSION_CODE: ${{ github.run_number }}
+          CARRETE_APK_VERSION_NAME: 0.${{ github.run_number }}.0
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/keystore.jks"
+            export CARRETE_KEYSTORE="$RUNNER_TEMP/keystore.jks"
+          fi
+          ./gradlew --no-daemon :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease
+          mkdir -p ../deploy/apk
+          cp app/build/outputs/apk/release/app-release*.apk ../deploy/apk/carrete.apk
+          printf '{"version_code": %s, "version_name": "%s"}\n' "$CARRETE_APK_VERSION_CODE" "$CARRETE_APK_VERSION_NAME" > ../deploy/apk/carrete-apk.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: carrete-apk
+          path: deploy/apk/
+          retention-days: 30
+
   image:
     name: Imagen (construcción, Trivy, SBOM, publicación)
-    needs: [backend, web, security]
+    needs: [backend, web, security, android]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -103,6 +140,10 @@ jobs:
       IMAGE: ghcr.io/${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: carrete-apk
+          path: deploy/apk/
       - uses: docker/setup-buildx-action@v3
 
       - name: Nombre de la imagen en minúsculas

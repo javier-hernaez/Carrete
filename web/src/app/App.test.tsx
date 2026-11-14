@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { makeMe, mockApi, renderAt, SPACE_B } from "../test/render";
+import { makeMe, mockApi, renderAt, SPACE_A, SPACE_B } from "../test/render";
 
 describe("armazón de la aplicación", () => {
   it("abre en la línea temporal del último espacio", async () => {
@@ -29,7 +29,15 @@ describe("armazón de la aplicación", () => {
   });
 
   it("navega entre secciones", async () => {
-    mockApi({ "/api/v1/info": { name: "Carrete", version: "1", map_enabled: true } });
+    mockApi({
+      "/api/v1/info": {
+        name: "Carrete",
+        version: "1",
+        map_enabled: true,
+        map_style_url: "https://teselas.example/style.json",
+      },
+      [`/api/v1/spaces/${SPACE_A}/map`]: [],
+    });
     const user = userEvent.setup();
     renderAt("/");
     const nav = await screen.findByRole("navigation", { name: "Secciones" });
@@ -38,7 +46,8 @@ describe("armazón de la aplicación", () => {
     await user.click(within(nav).getByRole("link", { name: "Álbumes" }));
     expect(screen.getByRole("heading", { name: "Aún no hay álbumes" })).toBeInTheDocument();
     await user.click(await within(nav).findByRole("link", { name: "Mapa" }));
-    expect(screen.getByRole("heading", { name: "El mapa está vacío" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Mapa" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Mapa de las fotos" })).toBeInTheDocument();
     await user.click(screen.getAllByRole("link", { name: "Subir" })[0]!);
     expect(screen.getByRole("heading", { name: "Subir a «Pareja»" })).toBeInTheDocument();
   });

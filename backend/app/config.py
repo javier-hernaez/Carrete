@@ -44,6 +44,8 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path("/data")
     static_dir: Path | None = None
+    # APK de la app Android (fuera de static_dir: solo se descarga con sesión).
+    apk_dir: Path | None = None
 
     trusted_proxies: Annotated[list[IPNetwork], NoDecode] = Field(
         default_factory=lambda: _parse_networks(DEFAULT_TRUSTED_PROXIES)
@@ -57,10 +59,20 @@ class Settings(BaseSettings):
     map_style_url: str | None = None
 
     premigration_dump: bool = True
+    # Distancia de Hamming máxima entre huellas para proponer dos fotos como repetidas.
+    duplicate_distance: int = Field(default=6, ge=0, le=20)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "text"] = "json"
 
     worker_poll_seconds: float = Field(default=2.0, gt=0)
+
+    # Exportaciones
+    export_volume_bytes: int = Field(default=4 * GIB, gt=0)
+    export_ttl_days: int = Field(default=7, ge=1)
+    # Carpetas del servidor a las que el administrador puede exportar (separadas por comas).
+    export_roots: Annotated[list[Path], NoDecode] = Field(default_factory=list)
+    # Biblioteca en disco: datos/library por defecto.
+    library_enabled: bool = True
 
     # Contenedor «backup»: datos y copias dentro de un mismo montaje (enlaces duros, ADR 0008).
     backup_source_dir: Path = Path("/storage/datos")
@@ -94,6 +106,13 @@ class Settings(BaseSettings):
         if parts.scheme not in {"http", "https"} or not parts.hostname:
             raise ValueError("debe ser una dirección http:// o https:// completa")
         return value.rstrip("/")
+
+    @field_validator("export_roots", mode="before")
+    @classmethod
+    def _split_paths(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [Path(p.strip()) for p in value.split(",") if p.strip()]
+        return value
 
     @field_validator("trusted_proxies", mode="before")
     @classmethod

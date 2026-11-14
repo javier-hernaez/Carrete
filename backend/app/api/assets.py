@@ -121,6 +121,11 @@ def filters_dep(
     doubtful: bool | None = None,
     trashed: bool = False,
     q: Annotated[str | None, Query(max_length=100)] = None,
+    south: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    west: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    north: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    east: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    located: bool | None = None,
 ) -> service.Filters:
     return service.Filters(
         review=list(review) if review else None,
@@ -135,6 +140,10 @@ def filters_dep(
         doubtful=doubtful,
         trashed=trashed,
         query=q.strip() if q else None,
+        bounds=(south, west, north, east)
+        if south is not None and west is not None and north is not None and east is not None
+        else None,
+        located=located,
     )
 
 
@@ -149,7 +158,7 @@ def list_assets(
     filters: FiltersDep,
     cursor: Annotated[str | None, Query(max_length=200)] = None,
     limit: Annotated[int, Query(ge=1, le=1000)] = 300,
-    order: Literal["desc", "asc"] = "desc",
+    order: Literal["desc", "asc", "album"] = "desc",
     start: date | None = None,
 ) -> AssetPage:
     spaces.access(db, current.user, space_id)
@@ -195,6 +204,9 @@ class AssetDetail(AssetOut):
     camera: str | None
     lat: float | None
     lon: float | None
+    place_name: str | None
+    place_region: str | None
+    place_country: str | None
     description: str | None
     video_codec: str | None
     has_preview_video: bool
@@ -234,6 +246,9 @@ def get_asset(asset_id: uuid.UUID, current: FullAuth, db: DB) -> AssetDetail:
         camera=asset.camera,
         lat=asset.lat,
         lon=asset.lon,
+        place_name=asset.place_name,
+        place_region=asset.place_region,
+        place_country=asset.place_country,
         description=asset.description,
         video_codec=asset.video_codec,
         has_preview_video=asset.has_preview_video,
@@ -309,27 +324,103 @@ def original(asset_id: uuid.UUID, current: FullAuth, db: DB, storage: StorageDep
 
 # --- Acciones masivas y papelera -----------------------------------------------------------------------
 
-BatchAction = Literal["trash", "restore"]
+BatchAction = Literal[
+    "trash",
+    "restore",
+    "review",
+    "favorite",
+    "add_album",
+    "remove_album",
+    "set_date",
+    "shift_date",
+    "revert",
+    "set_location",
+]
 
 
 class BatchIn(BaseModel):
     ids: list[uuid.UUID] = Field(min_length=1, max_length=5000)
     action: BatchAction
+    state: Review | None = None
+    value: bool | None = None
+    album_id: uuid.UUID | None = None
+    taken_at: str | None = Field(default=None, max_length=40)
+    offset_minutes: int | None = None
+    minutes: int | None = None
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    snapshot: dict[str, dict[str, object]] | None = None
 
 
 class CountOut(BaseModel):
     count: int
 
 
-@router.post("/spaces/{space_id}/assets/batch", response_model=CountOut)
-def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: ReqInfo) -> CountOut:
+class BatchOut(CountOut):
+    undo: dict[str, object] | None = None
+
+
+@router.post("/spaces/{space_id}/assets/batch", response_model=BatchOut)
+def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: ReqInfo) -> BatchOut:
     from app.services import batch as batch_service
 
-    count = batch_service.apply(
-        db, current.user, space_id, body.ids, body.action, body.model_dump(exclude={"ids", "action"}), info
-    )
+    params = body.model_dump(exclude={"ids", "action"}, exclude_unset=True, mode="json")
+    count, undo = batch_service.apply(db, current.user, space_id, body.ids, body.action, params, info)
     db.commit()
-    return CountOut(count=count)
+    return BatchOut(count=count, undo=undo)
+
+
+class AssetPatch(BaseModel):
+    description: str | None = Field(default=None, max_length=2000)
+
+
+@router.patch("/assets/{asset_id}", status_code=204)
+def update_asset(asset_id: uuid.UUID, body: AssetPatch, current: FullAuth, db: DB) -> None:
+    """Descripción de texto libre."""
+    asset, _, _ = service.access_asset(db, current.user, asset_id, "collaborator")
+    if body.description is not None:
+        asset.description = body.description.strip() or None
+    db.commit()
+
+
+class CountersOut(BaseModel):
+    pending_review: int
+    duplicates: int
+    discarded: int
+    trash: int
+
+
+@router.get("/spaces/{space_id}/counters", response_model=CountersOut)
+def counters(space_id: uuid.UUID, current: FullAuth, db: DB) -> CountersOut:
+    """Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas»."""
+    from sqlalchemy import func
+
+    from app.db.models import Asset, DuplicateGroup
+
+    spaces.access(db, current.user, space_id)
+    alive = (Asset.space_id == space_id) & Asset.trashed_at.is_(None)
+    by_state = dict(
+        db.execute(select(Asset.review_state, func.count()).where(alive).group_by(Asset.review_state))
+        .tuples()
+        .all()
+    )
+    groups = (
+        db.scalar(
+            select(func.count()).where(
+                DuplicateGroup.space_id == space_id, DuplicateGroup.status == "pending"
+            )
+        )
+        or 0
+    )
+    trashed = (
+        db.scalar(select(func.count()).where(Asset.space_id == space_id, Asset.trashed_at.is_not(None))) or 0
+    )
+    return CountersOut(
+        pending_review=int(by_state.get("pending", 0)),
+        duplicates=int(groups),
+        discarded=int(by_state.get("discarded", 0)),
+        trash=int(trashed),
+    )
 
 
 class EmptyTrashIn(BaseModel):

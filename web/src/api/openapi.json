@@ -87,6 +87,282 @@
         "title": "ActiveIn",
         "type": "object"
       },
+      "ActivityOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurred_at",
+          "actor",
+          "action",
+          "detail"
+        ],
+        "title": "ActivityOut",
+        "type": "object"
+      },
+      "AdminResetIn": {
+        "properties": {
+          "reset_totp": {
+            "default": false,
+            "title": "Reset Totp",
+            "type": "boolean"
+          }
+        },
+        "title": "AdminResetIn",
+        "type": "object"
+      },
+      "AlbumIn": {
+        "properties": {
+          "asset_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "title": "Asset Ids",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 200,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AlbumIn",
+        "type": "object"
+      },
+      "AlbumOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "cover_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Asset Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "first": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sort_mode": {
+            "enum": [
+              "date",
+              "manual"
+            ],
+            "title": "Sort Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "count",
+          "cover_asset_id",
+          "sort_mode",
+          "first",
+          "last"
+        ],
+        "title": "AlbumOut",
+        "type": "object"
+      },
+      "AlbumPatch": {
+        "properties": {
+          "cover_asset_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Asset Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sort_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "date",
+                  "manual"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Mode"
+          }
+        },
+        "title": "AlbumPatch",
+        "type": "object"
+      },
+      "AndroidApp": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "version_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Code"
+          },
+          "version_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Name"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "AndroidApp",
+        "type": "object"
+      },
       "AssetDetail": {
         "properties": {
           "albums": {
@@ -204,6 +480,39 @@
           "original_filename": {
             "title": "Original Filename",
             "type": "string"
+          },
+          "place_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Country"
+          },
+          "place_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Name"
+          },
+          "place_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Region"
           },
           "processing_error": {
             "anyOf": [
@@ -364,6 +673,9 @@
           "camera",
           "lat",
           "lon",
+          "place_name",
+          "place_region",
+          "place_country",
           "description",
           "video_codec",
           "has_preview_video",
@@ -528,6 +840,24 @@
         "title": "AssetPage",
         "type": "object"
       },
+      "AssetPatch": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "title": "AssetPatch",
+        "type": "object"
+      },
       "AuditOut": {
         "properties": {
           "action": {
@@ -666,10 +996,30 @@
           "action": {
             "enum": [
               "trash",
-              "restore"
+              "restore",
+              "review",
+              "favorite",
+              "add_album",
+              "remove_album",
+              "set_date",
+              "shift_date",
+              "revert",
+              "set_location"
             ],
             "title": "Action",
             "type": "string"
+          },
+          "album_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album Id"
           },
           "ids": {
             "items": {
@@ -680,6 +1030,108 @@
             "minItems": 1,
             "title": "Ids",
             "type": "array"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes"
+          },
+          "offset_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offset Minutes"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "kept",
+                  "discarded"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "taken_at": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taken At"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
           }
         },
         "required": [
@@ -687,6 +1139,31 @@
           "action"
         ],
         "title": "BatchIn",
+        "type": "object"
+      },
+      "BatchOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "undo": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Undo"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "BatchOut",
         "type": "object"
       },
       "CheckIn": {
@@ -722,6 +1199,42 @@
         "title": "CheckOut",
         "type": "object"
       },
+      "Cluster": {
+        "properties": {
+          "bounds": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Bounds",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "cover_id": {
+            "title": "Cover Id",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "lat",
+          "lon",
+          "bounds",
+          "cover_id"
+        ],
+        "title": "Cluster",
+        "type": "object"
+      },
       "CodeIn": {
         "properties": {
           "code": {
@@ -735,6 +1248,19 @@
           "code"
         ],
         "title": "CodeIn",
+        "type": "object"
+      },
+      "CodeOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CodeOut",
         "type": "object"
       },
       "ContributorOut": {
@@ -776,6 +1302,229 @@
         "title": "CountOut",
         "type": "object"
       },
+      "CountersOut": {
+        "properties": {
+          "discarded": {
+            "title": "Discarded",
+            "type": "integer"
+          },
+          "duplicates": {
+            "title": "Duplicates",
+            "type": "integer"
+          },
+          "pending_review": {
+            "title": "Pending Review",
+            "type": "integer"
+          },
+          "trash": {
+            "title": "Trash",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending_review",
+          "duplicates",
+          "discarded",
+          "trash"
+        ],
+        "title": "CountersOut",
+        "type": "object"
+      },
+      "DeviceLoginIn": {
+        "properties": {
+          "device_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Device Name",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 512,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 64,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "device_name"
+        ],
+        "title": "DeviceLoginIn",
+        "type": "object"
+      },
+      "DeviceLoginOut": {
+        "properties": {
+          "stage": {
+            "enum": [
+              "full",
+              "totp",
+              "enroll"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "token"
+        ],
+        "title": "DeviceLoginOut",
+        "type": "object"
+      },
+      "DuplicateMemberOut": {
+        "properties": {
+          "best": {
+            "title": "Best",
+            "type": "boolean"
+          },
+          "date_doubtful": {
+            "title": "Date Doubtful",
+            "type": "boolean"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "has_exif_date": {
+            "title": "Has Exif Date",
+            "type": "boolean"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_favorite": {
+            "title": "Is Favorite",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "photo",
+              "video"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "original_filename": {
+            "title": "Original Filename",
+            "type": "string"
+          },
+          "processing_state": {
+            "title": "Processing State",
+            "type": "string"
+          },
+          "review_state": {
+            "enum": [
+              "pending",
+              "kept",
+              "discarded"
+            ],
+            "title": "Review State",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "camera",
+              "whatsapp",
+              "screenshot",
+              "other"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "taken_at": {
+            "format": "date-time",
+            "title": "Taken At",
+            "type": "string"
+          },
+          "taken_at_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taken At Offset"
+          },
+          "thumbhash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbhash"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "taken_at",
+          "taken_at_offset",
+          "date_doubtful",
+          "width",
+          "height",
+          "duration_ms",
+          "thumbhash",
+          "review_state",
+          "is_favorite",
+          "processing_state",
+          "source",
+          "size_bytes",
+          "original_filename",
+          "has_exif_date",
+          "best"
+        ],
+        "title": "DuplicateMemberOut",
+        "type": "object"
+      },
       "EmptyTrashIn": {
         "properties": {
           "confirm_name": {
@@ -788,6 +1537,198 @@
           "confirm_name"
         ],
         "title": "EmptyTrashIn",
+        "type": "object"
+      },
+      "ExportIn": {
+        "properties": {
+          "album_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Album Ids",
+            "type": "array"
+          },
+          "folder": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folder"
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "title": "Ids",
+            "type": "array"
+          },
+          "include": {
+            "default": "kept_pending",
+            "enum": [
+              "kept",
+              "kept_pending",
+              "all"
+            ],
+            "title": "Include",
+            "type": "string"
+          },
+          "naming": {
+            "default": "normalized",
+            "enum": [
+              "original",
+              "normalized"
+            ],
+            "title": "Naming",
+            "type": "string"
+          },
+          "structure": {
+            "default": "album",
+            "enum": [
+              "album",
+              "date",
+              "flat"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "target": {
+            "default": "zip",
+            "enum": [
+              "zip",
+              "folder"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "volume_bytes": {
+            "anyOf": [
+              {
+                "maximum": 107374182400.0,
+                "minimum": 104857600.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Bytes"
+          }
+        },
+        "title": "ExportIn",
+        "type": "object"
+      },
+      "ExportOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "number"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "total_bytes": {
+            "title": "Total Bytes",
+            "type": "integer"
+          },
+          "total_items": {
+            "title": "Total Items",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "progress",
+          "total_items",
+          "total_bytes",
+          "files",
+          "params",
+          "error",
+          "created_at",
+          "expires_at",
+          "mine"
+        ],
+        "title": "ExportOut",
+        "type": "object"
+      },
+      "GroupOut": {
+        "properties": {
+          "distance": {
+            "title": "Distance",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/DuplicateMemberOut"
+            },
+            "title": "Members",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "distance",
+          "members"
+        ],
+        "title": "GroupOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -822,11 +1763,70 @@
         "title": "Health",
         "type": "object"
       },
+      "ImportOut": {
+        "properties": {
+          "counts": {
+            "additionalProperties": true,
+            "title": "Counts",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "counts",
+          "error",
+          "created_at"
+        ],
+        "title": "ImportOut",
+        "type": "object"
+      },
       "InstanceInfo": {
         "properties": {
           "map_enabled": {
             "title": "Map Enabled",
             "type": "boolean"
+          },
+          "map_style_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Map Style Url"
           },
           "name": {
             "title": "Name",
@@ -1258,6 +2258,151 @@
         "title": "NoticeOut",
         "type": "object"
       },
+      "ObviousOut": {
+        "properties": {
+          "group_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Group Ids",
+            "type": "array"
+          },
+          "groups": {
+            "title": "Groups",
+            "type": "integer"
+          },
+          "keep": {
+            "title": "Keep",
+            "type": "integer"
+          },
+          "trash": {
+            "title": "Trash",
+            "type": "integer"
+          },
+          "trashed": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Trashed",
+            "type": "array"
+          }
+        },
+        "required": [
+          "groups",
+          "keep",
+          "trash"
+        ],
+        "title": "ObviousOut",
+        "type": "object"
+      },
+      "PasskeyLoginIn": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "PasskeyLoginIn",
+        "type": "object"
+      },
+      "PasskeyOptionsOut": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "options": {
+            "additionalProperties": true,
+            "title": "Options",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "options"
+        ],
+        "title": "PasskeyOptionsOut",
+        "type": "object"
+      },
+      "PasskeyOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "PasskeyOut",
+        "type": "object"
+      },
+      "PasskeyRegisterIn": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": true,
+            "title": "Credential",
+            "type": "object"
+          },
+          "name": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "PasskeyRegisterIn",
+        "type": "object"
+      },
       "PasswordIn": {
         "properties": {
           "current_password": {
@@ -1367,6 +2512,58 @@
         "title": "RecoveryCodesOut",
         "type": "object"
       },
+      "ReorderIn": {
+        "properties": {
+          "after_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Id"
+          },
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "before_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Id"
+          }
+        },
+        "required": [
+          "asset_id"
+        ],
+        "title": "ReorderIn",
+        "type": "object"
+      },
+      "ResetIn": {
+        "properties": {
+          "password": {
+            "maxLength": 512,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "ResetIn",
+        "type": "object"
+      },
       "ResetPreview": {
         "properties": {
           "reset_totp": {
@@ -1390,6 +2587,42 @@
           "reset_totp"
         ],
         "title": "ResetPreview",
+        "type": "object"
+      },
+      "ResolveIn": {
+        "properties": {
+          "keep": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Keep",
+            "type": "array"
+          }
+        },
+        "required": [
+          "keep"
+        ],
+        "title": "ResolveIn",
+        "type": "object"
+      },
+      "ResolveOut": {
+        "properties": {
+          "trashed": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Trashed",
+            "type": "array"
+          }
+        },
+        "required": [
+          "trashed"
+        ],
+        "title": "ResolveOut",
         "type": "object"
       },
       "RoleIn": {
@@ -1663,6 +2896,52 @@
         "title": "StageOut",
         "type": "object"
       },
+      "SuggestionOut": {
+        "properties": {
+          "asset_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Asset Ids",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "count",
+          "place",
+          "asset_ids"
+        ],
+        "title": "SuggestionOut",
+        "type": "object"
+      },
       "TimelineOut": {
         "properties": {
           "months": {
@@ -1835,31 +3114,6 @@
         ],
         "title": "ValidationError",
         "type": "object"
-      },
-      "app__api__admin__ResetIn": {
-        "properties": {
-          "reset_totp": {
-            "default": false,
-            "title": "Reset Totp",
-            "type": "boolean"
-          }
-        },
-        "title": "ResetIn",
-        "type": "object"
-      },
-      "app__api__spaces__ResetIn": {
-        "properties": {
-          "password": {
-            "maxLength": 512,
-            "title": "Password",
-            "type": "string"
-          }
-        },
-        "required": [
-          "password"
-        ],
-        "title": "ResetIn",
-        "type": "object"
       }
     }
   },
@@ -2021,6 +3275,31 @@
         ]
       }
     },
+    "/api/v1/admin/library/rebuild": {
+      "post": {
+        "operationId": "rebuild_library_api_v1_admin_library_rebuild_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Rebuild Library Api V1 Admin Library Rebuild Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Rebuild Library",
+        "tags": [
+          "exportar"
+        ]
+      }
+    },
     "/api/v1/admin/notices": {
       "get": {
         "operationId": "list_notices_api_v1_admin_notices_get",
@@ -2152,6 +3431,43 @@
         ]
       }
     },
+    "/api/v1/admin/users/{user_id}": {
+      "delete": {
+        "description": "Borrado real de una cuenta. Sus fotos siguen en los espacios (son del grupo),\nsin su nombre; se borran su cuenta, sesiones, códigos y pertenencias. La auditoría se conserva.",
+        "operationId": "delete_user_api_v1_admin_users__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete User",
+        "tags": [
+          "administración"
+        ]
+      }
+    },
     "/api/v1/admin/users/{user_id}/active": {
       "post": {
         "operationId": "set_active_api_v1_admin_users__user_id__active_post",
@@ -2217,7 +3533,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__api__admin__ResetIn"
+                "$ref": "#/components/schemas/AdminResetIn"
               }
             }
           },
@@ -2287,6 +3603,62 @@
         ]
       }
     },
+    "/api/v1/app/android": {
+      "get": {
+        "description": "Versión disponible (la app la consulta para avisar de actualizaciones).",
+        "operationId": "latest_api_v1_app_android_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AndroidApp"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Latest",
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/app/android/apk": {
+      "get": {
+        "operationId": "download_api_v1_app_android_apk_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Download",
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/app/android/setup-qr": {
+      "get": {
+        "description": "Código QR con la dirección del servidor, para configurar la app sin teclearla.",
+        "operationId": "setup_qr_api_v1_app_android_setup_qr_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Setup Qr",
+        "tags": [
+          "app"
+        ]
+      }
+    },
     "/api/v1/assets/{asset_id}": {
       "get": {
         "operationId": "get_asset_api_v1_assets__asset_id__get",
@@ -2325,6 +3697,51 @@
           }
         },
         "summary": "Get Asset",
+        "tags": [
+          "elementos"
+        ]
+      },
+      "patch": {
+        "description": "Descripción de texto libre.",
+        "operationId": "update_asset_api_v1_assets__asset_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Asset",
         "tags": [
           "elementos"
         ]
@@ -2476,6 +3893,69 @@
         ]
       }
     },
+    "/api/v1/auth/device/login": {
+      "post": {
+        "description": "Inicio de sesión de la app: devuelve un *token* de dispositivo revocable (nunca se guarda la\ncontraseña). Si falta el segundo factor, se completa con POST /auth/totp y el mismo *token*.",
+        "operationId": "device_login_api_v1_auth_device_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceLoginOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Device Login",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/device/web-code": {
+      "post": {
+        "operationId": "device_web_code_api_v1_auth_device_web_code_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Device Web Code",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",
@@ -2526,6 +4006,189 @@
           }
         },
         "summary": "Logout",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys": {
+      "get": {
+        "operationId": "passkey_list_api_v1_auth_passkeys_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PasskeyOut"
+                  },
+                  "title": "Response Passkey List Api V1 Auth Passkeys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Passkey List",
+        "tags": [
+          "acceso"
+        ]
+      },
+      "post": {
+        "operationId": "passkey_register_api_v1_auth_passkeys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyRegisterIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Passkey Register",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/login": {
+      "post": {
+        "operationId": "passkey_login_api_v1_auth_passkeys_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Passkey Login",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/login/options": {
+      "post": {
+        "operationId": "passkey_login_options_api_v1_auth_passkeys_login_options_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Passkey Login Options",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/register/options": {
+      "post": {
+        "operationId": "passkey_register_options_api_v1_auth_passkeys_register_options_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Passkey Register Options",
+        "tags": [
+          "acceso"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/{passkey_id}": {
+      "delete": {
+        "operationId": "passkey_delete_api_v1_auth_passkeys__passkey_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "passkey_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Passkey Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Passkey Delete",
         "tags": [
           "acceso"
         ]
@@ -3088,7 +4751,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__api__spaces__ResetIn"
+                "$ref": "#/components/schemas/ResetIn"
               }
             }
           },
@@ -3340,6 +5003,395 @@
         ]
       }
     },
+    "/api/v1/spaces/{space_id}/activity": {
+      "get": {
+        "operationId": "activity_api_v1_spaces__space_id__activity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityOut"
+                  },
+                  "title": "Response Activity Api V1 Spaces  Space Id  Activity Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/albums": {
+      "get": {
+        "operationId": "list_albums_api_v1_spaces__space_id__albums_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumOut"
+                  },
+                  "title": "Response List Albums Api V1 Spaces  Space Id  Albums Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Albums",
+        "tags": [
+          "álbumes"
+        ]
+      },
+      "post": {
+        "operationId": "create_album_api_v1_spaces__space_id__albums_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Album",
+        "tags": [
+          "álbumes"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/albums/{album_id}": {
+      "delete": {
+        "description": "Eliminar un álbum nunca elimina sus fotos.",
+        "operationId": "delete_album_api_v1_spaces__space_id__albums__album_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Album",
+        "tags": [
+          "álbumes"
+        ]
+      },
+      "get": {
+        "operationId": "get_album_api_v1_spaces__space_id__albums__album_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Album",
+        "tags": [
+          "álbumes"
+        ]
+      },
+      "patch": {
+        "operationId": "update_album_api_v1_spaces__space_id__albums__album_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Album",
+        "tags": [
+          "álbumes"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/albums/{album_id}/reorder": {
+      "post": {
+        "operationId": "reorder_api_v1_spaces__space_id__albums__album_id__reorder_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reorder",
+        "tags": [
+          "álbumes"
+        ]
+      }
+    },
     "/api/v1/spaces/{space_id}/assets": {
       "get": {
         "operationId": "list_assets_api_v1_spaces__space_id__assets_get",
@@ -3391,7 +5443,8 @@
               "default": "desc",
               "enum": [
                 "desc",
-                "asc"
+                "asc",
+                "album"
               ],
               "title": "Order",
               "type": "string"
@@ -3616,6 +5669,94 @@
               ],
               "title": "Q"
             }
+          },
+          {
+            "in": "query",
+            "name": "south",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "South"
+            }
+          },
+          {
+            "in": "query",
+            "name": "west",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "West"
+            }
+          },
+          {
+            "in": "query",
+            "name": "north",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "North"
+            }
+          },
+          {
+            "in": "query",
+            "name": "east",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "East"
+            }
+          },
+          {
+            "in": "query",
+            "name": "located",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Located"
+            }
           }
         ],
         "responses": {
@@ -3676,7 +5817,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CountOut"
+                  "$ref": "#/components/schemas/BatchOut"
                 }
               }
             },
@@ -3749,6 +5890,605 @@
         "summary": "Check Hashes",
         "tags": [
           "elementos"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/counters": {
+      "get": {
+        "description": "Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas».",
+        "operationId": "counters_api_v1_spaces__space_id__counters_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountersOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Counters",
+        "tags": [
+          "elementos"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/duplicates": {
+      "get": {
+        "operationId": "list_groups_api_v1_spaces__space_id__duplicates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GroupOut"
+                  },
+                  "title": "Response List Groups Api V1 Spaces  Space Id  Duplicates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Groups",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/duplicates/resolve-obvious": {
+      "post": {
+        "description": "Resolver de una vez los grupos evidentes. Sin ``apply`` solo devuelve el resumen previo.",
+        "operationId": "resolve_obvious_api_v1_spaces__space_id__duplicates_resolve_obvious_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "apply",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Apply",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObviousOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Obvious",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/dismiss": {
+      "post": {
+        "operationId": "dismiss_api_v1_spaces__space_id__duplicates__group_id__dismiss_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dismiss",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/reopen": {
+      "post": {
+        "description": "Deshacer una resolución: vuelve a proponer el grupo (las fotos se recuperan aparte).",
+        "operationId": "reopen_api_v1_spaces__space_id__duplicates__group_id__reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reopen",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/resolve": {
+      "post": {
+        "operationId": "resolve_api_v1_spaces__space_id__duplicates__group_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve",
+        "tags": [
+          "repetidas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/exports": {
+      "get": {
+        "operationId": "list_exports_api_v1_spaces__space_id__exports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExportOut"
+                  },
+                  "title": "Response List Exports Api V1 Spaces  Space Id  Exports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Exports",
+        "tags": [
+          "exportar"
+        ]
+      },
+      "post": {
+        "operationId": "create_export_api_v1_spaces__space_id__exports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Export",
+        "tags": [
+          "exportar"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/exports/{export_id}": {
+      "delete": {
+        "operationId": "delete_export_api_v1_spaces__space_id__exports__export_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Export",
+        "tags": [
+          "exportar"
+        ]
+      },
+      "get": {
+        "operationId": "get_export_api_v1_spaces__space_id__exports__export_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Export",
+        "tags": [
+          "exportar"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/exports/{export_id}/files/{number}": {
+      "get": {
+        "description": "Descarga reanudable (peticiones Range) de un volumen.",
+        "operationId": "download_volume_api_v1_spaces__space_id__exports__export_id__files__number__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Volume",
+        "tags": [
+          "exportar"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/imports": {
+      "get": {
+        "operationId": "list_imports_api_v1_spaces__space_id__imports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportOut"
+                  },
+                  "title": "Response List Imports Api V1 Spaces  Space Id  Imports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Imports",
+        "tags": [
+          "exportar"
         ]
       }
     },
@@ -3847,6 +6587,137 @@
         "summary": "Create Invitation",
         "tags": [
           "espacios"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/map": {
+      "get": {
+        "operationId": "space_map_api_v1_spaces__space_id__map_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "zoom",
+            "required": false,
+            "schema": {
+              "default": 2,
+              "maximum": 22,
+              "minimum": 0,
+              "title": "Zoom",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "south",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "South"
+            }
+          },
+          {
+            "in": "query",
+            "name": "west",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "West"
+            }
+          },
+          {
+            "in": "query",
+            "name": "north",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "North"
+            }
+          },
+          {
+            "in": "query",
+            "name": "east",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "East"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Cluster"
+                  },
+                  "title": "Response Space Map Api V1 Spaces  Space Id  Map Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Space Map",
+        "tags": [
+          "mapa"
         ]
       }
     },
@@ -3994,6 +6865,54 @@
         "summary": "Change Member Role",
         "tags": [
           "espacios"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/suggestions": {
+      "get": {
+        "description": "Propuestas de álbum a partir de la bandeja de entrada.",
+        "operationId": "suggestions_api_v1_spaces__space_id__suggestions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionOut"
+                  },
+                  "title": "Response Suggestions Api V1 Spaces  Space Id  Suggestions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Suggestions",
+        "tags": [
+          "álbumes"
         ]
       }
     },
@@ -4212,6 +7131,94 @@
                 }
               ],
               "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "south",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "South"
+            }
+          },
+          {
+            "in": "query",
+            "name": "west",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "West"
+            }
+          },
+          {
+            "in": "query",
+            "name": "north",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "North"
+            }
+          },
+          {
+            "in": "query",
+            "name": "east",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "East"
+            }
+          },
+          {
+            "in": "query",
+            "name": "located",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Located"
             }
           }
         ],

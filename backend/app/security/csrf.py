@@ -7,7 +7,8 @@ navegador son «el mismo sitio» y ``SameSite`` no basta. Toda petición que mod
    ``fetch`` entre orígenes exigiría una comprobación CORS que no se concede), y
 2. traer ``Origin`` (o, si falta, ``Referer``) exactamente igual al origen público, **con puerto**.
 
-Las peticiones con ``Authorization: Bearer`` (app Android) no usan cookies y quedan fuera.
+Las peticiones con ``Authorization: Bearer`` (app Android) no usan cookies y quedan fuera, igual que
+el inicio de sesión de la app (``EXEMPT_PATHS``), que no establece ninguna cookie.
 """
 
 from __future__ import annotations
@@ -18,6 +19,9 @@ from urllib.parse import urlsplit
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+# Inicio de sesión de la app Android: no establece cookies (el token viaja en el cuerpo de la respuesta,
+# que otra web no puede leer), así que no hay sesión que falsificar. Es la única excepción.
+EXEMPT_PATHS = frozenset({"/api/v1/auth/device/login"})
 
 
 def _origin_of(url: str) -> str:
@@ -39,7 +43,7 @@ class CSRFMiddleware:
             await self.app(scope, receive, send)
             return
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope.get("headers", [])}
-        if headers.get("authorization", "").lower().startswith("bearer "):
+        if headers.get("authorization", "").lower().startswith("bearer ") or scope["path"] in EXEMPT_PATHS:
             await self.app(scope, receive, send)
             return
         origin = headers.get("origin") or _origin_of(headers.get("referer", ""))

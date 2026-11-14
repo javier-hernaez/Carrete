@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Carrete" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorAccent">#A84B15</item>
+        <item name="android:statusBarColor">#F6F3EE</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/background</item>
+    </style>
+    <style name="Theme.Carrete.Dialog" parent="android:Theme.Material.Light.Dialog">
+        <item name="android:colorAccent">#A84B15</item>
+    </style>
+</resources>

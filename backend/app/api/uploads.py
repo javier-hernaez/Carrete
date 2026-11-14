@@ -17,7 +17,7 @@ import hashlib
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Request, Response
@@ -245,9 +245,39 @@ async def upload_chunk(
         await run_in_threadpool(db.commit)
         return Response(status_code=204, headers=headers)
 
-    asset_id, duplicate = await run_in_threadpool(_finalize, db, settings, storage, upload)
+    try:
+        asset_id, duplicate = await run_in_threadpool(_finalize, db, settings, storage, upload)
+    except ImportQueued as queued:
+        return Response(status_code=204, headers={**headers, "Carrete-Import-Id": queued.import_id})
     headers |= {"Carrete-Asset-Id": str(asset_id), "Carrete-Duplicate": "1" if duplicate else "0"}
     return Response(status_code=204, headers=headers)
+
+
+def _queue_zip_import(db: Session, storage: Storage, upload: Upload, path: Path) -> tuple[uuid.UUID, bool]:
+    """Un ZIP (exportación de WhatsApp o de Google Takeout) se importa en segundo plano."""
+    from app.db.models import Import
+    from app.jobs import queue
+
+    record = Import(
+        space_id=upload.space_id,
+        user_id=upload.user_id,
+        album_id=upload.album_id,
+        source="zip",
+        name=upload.filename,
+    )
+    db.add(record)
+    db.flush()
+    target = storage.uploads / f"import-{record.id}.zip"
+    path.replace(target)
+    queue.enqueue(db, "import_zip", {"import_id": str(record.id)}, priority=110, max_attempts=1)
+    upload.state = "done"
+    db.commit()
+    raise ImportQueued(str(record.id))
+
+
+class ImportQueued(Exception):
+    def __init__(self, import_id: str) -> None:
+        self.import_id = import_id
 
 
 def _finalize(db: Session, settings: Settings, storage: Storage, upload: Upload) -> tuple[uuid.UUID, bool]:
@@ -262,7 +292,10 @@ def _finalize(db: Session, settings: Settings, storage: Storage, upload: Upload)
             "El fichero llegó distinto de como salió; vuelve a subirlo", code="file_mismatch"
         )
     with path.open("rb") as f:
-        file_type = sniff.detect(f.read(sniff.HEADER_BYTES))
+        header = f.read(sniff.HEADER_BYTES)
+    file_type = sniff.detect(header)
+    if file_type is None and header.startswith(b"PK\x03\x04") and upload.filename.lower().endswith(".zip"):
+        return _queue_zip_import(db, storage, upload, path)
     if file_type is None:
         upload.state = "failed"
         db.commit()

@@ -16,6 +16,17 @@ export type AssetItem = S["AssetOut"];
 export type AssetPage = S["AssetPage"];
 export type AssetDetail = S["AssetDetail"];
 export type Timeline = S["TimelineOut"];
+export type Album = S["AlbumOut"];
+export type DuplicateGroup = S["GroupOut"];
+export type Counters = S["CountersOut"];
+export type Activity = S["ActivityOut"];
+export type BatchResult = S["BatchOut"];
+export type ExportJob = S["ExportOut"];
+export type ImportJob = S["ImportOut"];
+export type AndroidApp = S["AndroidApp"];
+export type MapCluster = S["Cluster"];
+export type Suggestion = S["SuggestionOut"];
+export type Passkey = S["PasskeyOut"];
 
 interface Run {
   started_at: string;
@@ -51,6 +62,7 @@ export interface AdminStatus {
     problems: Record<string, unknown>[];
   } | null;
   queue: Record<string, number>;
+  library: { built_at?: string; files?: number; spaces?: number; missing?: number };
   failed_jobs: { kind: string; error: string | null; at: string | null }[];
 }
 
@@ -200,11 +212,66 @@ export const api = {
   uploadSummary: (space: string, body: { uploaded: number; duplicates: number; failed: number }) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/uploads/summary`, json(body)),
   batch: (space: string, ids: string[], action: string, extra: Record<string, unknown> = {}) =>
-    apiFetch<{ count: number }>(`/api/v1/spaces/${space}/assets/batch`, json({ ids, action, ...extra })),
+    apiFetch<BatchResult>(`/api/v1/spaces/${space}/assets/batch`, json({ ids, action, ...extra })),
+  updateAsset: (id: string, body: S["AssetPatch"]) =>
+    apiFetch<undefined>(`/api/v1/assets/${id}`, patch(body)),
+  counters: (space: string) => apiFetch<Counters>(`/api/v1/spaces/${space}/counters`),
+  activity: (space: string, before?: string) =>
+    apiFetch<Activity[]>(`/api/v1/spaces/${space}/activity${before ? `?before=${before}` : ""}`),
+  albums: (space: string) => apiFetch<Album[]>(`/api/v1/spaces/${space}/albums`),
+  album: (space: string, id: string) => apiFetch<Album>(`/api/v1/spaces/${space}/albums/${id}`),
+  createAlbum: (space: string, name: string, asset_ids: string[] = []) =>
+    apiFetch<Album>(`/api/v1/spaces/${space}/albums`, json({ name, asset_ids })),
+  updateAlbum: (space: string, id: string, body: S["AlbumPatch"]) =>
+    apiFetch<Album>(`/api/v1/spaces/${space}/albums/${id}`, patch(body)),
+  deleteAlbum: (space: string, id: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}`, del),
+  reorderAlbum: (space: string, id: string, body: S["ReorderIn"]) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}/reorder`, json(body)),
+  duplicates: (space: string) => apiFetch<DuplicateGroup[]>(`/api/v1/spaces/${space}/duplicates`),
+  resolveDuplicates: (space: string, group: string, keep: string[]) =>
+    apiFetch<{ trashed: string[] }>(`/api/v1/spaces/${space}/duplicates/${group}/resolve`, json({ keep })),
+  reopenDuplicates: (space: string, group: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/duplicates/${group}/reopen`, post),
+  dismissDuplicates: (space: string, group: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/duplicates/${group}/dismiss`, post),
+  resolveObvious: (space: string, apply: boolean) =>
+    apiFetch<S["ObviousOut"]>(
+      `/api/v1/spaces/${space}/duplicates/resolve-obvious${apply ? "?apply=true" : ""}`,
+      post,
+    ),
   trashCount: (space: string) => apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash`),
   emptyTrash: (space: string, confirm_name: string) =>
     apiFetch<{ count: number }>(`/api/v1/spaces/${space}/trash/empty`, json({ confirm_name })),
   adminStatus: () => apiFetch<AdminStatus>("/api/v1/admin/status"),
+  exports: (space: string) => apiFetch<ExportJob[]>(`/api/v1/spaces/${space}/exports`),
+  exportJob: (space: string, id: string) => apiFetch<ExportJob>(`/api/v1/spaces/${space}/exports/${id}`),
+  createExport: (space: string, body: S["ExportIn"]) =>
+    apiFetch<ExportJob>(`/api/v1/spaces/${space}/exports`, json(body)),
+  deleteExport: (space: string, id: string) =>
+    apiFetch<undefined>(`/api/v1/spaces/${space}/exports/${id}`, del),
+  imports: (space: string) => apiFetch<ImportJob[]>(`/api/v1/spaces/${space}/imports`),
+  androidApp: () => apiFetch<AndroidApp>("/api/v1/app/android"),
+  mapClusters: (space: string, params: Record<string, string>) =>
+    apiFetch<MapCluster[]>(`/api/v1/spaces/${space}/map?${new URLSearchParams(params).toString()}`),
+  suggestions: (space: string) => apiFetch<Suggestion[]>(`/api/v1/spaces/${space}/suggestions`),
+  passkeys: () => apiFetch<Passkey[]>("/api/v1/auth/passkeys"),
+  passkeyRegisterOptions: () =>
+    apiFetch<{ challenge_id: string; options: Record<string, unknown> }>(
+      "/api/v1/auth/passkeys/register/options",
+      post,
+    ),
+  passkeyRegister: (challenge_id: string, credential: unknown, name: string) =>
+    apiFetch<Passkey>("/api/v1/auth/passkeys", json({ challenge_id, credential, name })),
+  passkeyDelete: (id: string) => apiFetch<undefined>(`/api/v1/auth/passkeys/${id}`, del),
+  passkeyLoginOptions: () =>
+    apiFetch<{ challenge_id: string; options: Record<string, unknown> }>(
+      "/api/v1/auth/passkeys/login/options",
+      post,
+    ),
+  passkeyLogin: (challenge_id: string, credential: unknown) =>
+    apiFetch<{ stage: Stage }>("/api/v1/auth/passkeys/login", json({ challenge_id, credential })),
+  rebuildLibrary: () => apiFetch<{ status: string }>("/api/v1/admin/library/rebuild", post),
   // Administración
   adminUsers: () => apiFetch<AdminUser[]>("/api/v1/admin/users"),
   adminSetActive: (id: string, active: boolean) =>
@@ -212,6 +279,7 @@ export const api = {
   adminRevokeSessions: (id: string) => apiFetch<undefined>(`/api/v1/admin/users/${id}/revoke-sessions`, post),
   adminReset: (id: string, reset_totp: boolean) =>
     apiFetch<S["LinkOut"]>(`/api/v1/admin/users/${id}/reset`, json({ reset_totp })),
+  adminDeleteUser: (id: string) => apiFetch<undefined>(`/api/v1/admin/users/${id}`, del),
   adminInvite: () => apiFetch<S["LinkOut"]>("/api/v1/admin/invitations", post),
   adminAudit: (params: Record<string, string>) =>
     apiFetch<AuditPage>(`/api/v1/admin/audit?${new URLSearchParams(params).toString()}`),

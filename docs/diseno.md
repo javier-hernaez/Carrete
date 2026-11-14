@@ -24,6 +24,7 @@ Un único acento, el **ámbar de carrete**; el resto, neutros cálidos. Tema cla
 | `--color-border` | `#ddd6cb` | `#3a352f` | Separadores |
 | `--color-text` | `#1c1916` | `#f2eee8` | Texto principal |
 | `--color-text-muted` | `#5f574e` | `#b5ab9f` | Texto secundario (≥ 4,5:1 sobre el fondo) |
+| `--color-text-subtle` | `#6b6358` | `#978d81` | Texto terciario: fechas, contadores (≥ 4,5:1, comprobado con axe) |
 | `--color-accent` | `#a84b15` | `#f0954f` | Acción principal, sección activa, foco |
 | `--color-on-accent` | `#ffffff` | `#1a120c` | Texto sobre el acento (≥ 4,5:1) |
 | `--color-danger` | `#b42318` | `#f28b82` | Acciones destructivas |

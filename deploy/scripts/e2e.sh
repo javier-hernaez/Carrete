@@ -15,6 +15,8 @@ CARRETE_SECRET_KEY=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')
 CARRETE_SETUP_TOKEN=$TOKEN
 # Carpeta temporal pequeña: la reserva de disco de producción (20 GB) no aplica aquí.
 CARRETE_MIN_FREE_BYTES=50000000
+# Proveedor de teselas ficticio: el navegador de la prueba sirve el estilo (sin salir a internet).
+CARRETE_MAP_STYLE_URL=https://teselas.example/estilo.json
 CARRETE_ROOT=$WORK
 CARRETE_ENV_FILE=$WORK/.env
 CARRETE_UID=$(id -u)
@@ -26,7 +28,8 @@ cleanup() {
   compose down -v --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$WORK" 2>/dev/null || true
 }
-trap cleanup EXIT INT TERM
+# KEEP=1 deja la instancia en marcha para investigar un fallo (se borra luego con «docker compose -p carrete-e2e down -v»).
+[ "${KEEP:-0}" = "1" ] || trap cleanup EXIT INT TERM
 compose up -d --no-build --pull never
 for _ in $(seq 1 60); do curl -fsS http://127.0.0.1:8011/readyz >/dev/null 2>&1 && break; sleep 2; done
 docker run --rm --network host -u "$(id -u):$(id -g)" -e HOME=/tmp -e CI=1 \
@@ -38,3 +41,22 @@ compose exec -T backup carrete backup
 compose exec -T backup carrete verify
 test -n "$(find "$WORK/copias/originals" -type f -name '*.jpg' 2>/dev/null)"
 echo "Copias e integridad: correctas"
+
+# Exportación: el ZIP preparado por la prueba coincide con su manifiesto.
+compose exec -T app python - <<'PY'
+import glob, hashlib, json, zipfile
+volumes = sorted(glob.glob("/data/exports/*/0*.zip"))
+assert volumes, "no hay ninguna exportación"
+with zipfile.ZipFile(volumes[0]) as zf:
+    manifest = json.loads(zf.read("carrete-manifest.json"))
+    checked = 0
+    for item in manifest["items"]:
+        for path in item["paths"]:
+            assert hashlib.sha256(zf.read(path)).hexdigest() == item["sha256"], path
+            checked += 1
+print(f"Exportación: {checked} ficheros coinciden con el manifiesto")
+PY
+# Biblioteca en disco: carpetas normales con enlaces duros
+compose exec -T app carrete library
+test -n "$(find "$WORK/datos/library" -type f -name '*.jpg' -links +1 2>/dev/null)"
+echo "Biblioteca en disco: correcta"

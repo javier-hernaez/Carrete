@@ -3,6 +3,7 @@
 Cómo instalar, actualizar, volver atrás y recuperar Carrete en el mini PC. Todas las órdenes se lanzan
 desde `deploy/` y no necesitan `sudo`.
 
+
 ## Instalar
 
 ```sh
@@ -124,6 +125,77 @@ otra forma de borrar originales.
 El `worker` revisa cada 15 minutos y avisa en Administración si: el disco pasa del 80 % o del 90 %, la
 copia de la base de datos tiene más de 2 horas, hay originales sin copiar desde hace más de 15 minutos,
 la verificación de integridad encuentra problemas, o hay ráfagas de accesos fallidos.
+
+## Importar fotos antiguas
+
+**Desde la web**: arrastra carpetas enteras o un `.zip` exportado de WhatsApp o de Google Fotos
+(Takeout). El ZIP se importa en segundo plano con sus fechas y ubicaciones (`.json` de Takeout).
+
+**Desde un disco del mini PC** (sin pasar por la red):
+
+```sh
+docker compose run --rm -v /media/disco/Fotos:/importar:ro app \
+  carrete import /importar --space "Familia" --albums
+```
+
+`--albums` crea un álbum por cada carpeta de primer nivel; `--user lucia` atribuye la subida a otra
+persona (por defecto, al propietario del espacio). Lo que ya estaba no se duplica.
+
+## Exportar
+
+- **Desde la web** (Más → Exportar): ZIP de un álbum, varios o el espacio entero (solo propietario), en
+  partes de 4 GB que se descargan de forma reanudable. Incluye `carrete-manifest.json` y `.csv`.
+  Caducan a los 7 días.
+- **A una carpeta del servidor** (solo administrador): define `CARRETE_EXPORT_ROOTS` (p. ej.
+  `/exportar`) y monta ese disco en `app` y `worker` (`- /media/usb:/exportar` en `volumes`).
+- **Biblioteca en disco**: `CARRETE_ROOT/datos/library/<Espacio>/<Álbum>/…`, enlaces duros que se
+  regeneran cada noche (o con «Regenerar ahora» en Administración, o `docker compose exec app carrete
+  library`). Se puede abrir y copiar con cualquier explorador aunque Carrete esté parado.
+
+## App Android
+
+**Compilar** (dentro de Docker, sin instalar nada):
+
+```sh
+CARRETE_PUBLIC_URL=https://javier-default-string.taila9c233.ts.net:10000 android/build.sh
+cp android/build/carrete.apk android/build/carrete-apk.json deploy/apk/
+make image && cd deploy && docker compose up -d
+```
+
+La primera vez crea la **clave de firma** `android/keystore.jks` y su contraseña en
+`android/.keystore-password`. **Guarda las dos con tus copias de seguridad y en el gestor de
+contraseñas**: Android solo deja actualizar una app instalada si la nueva versión va firmada con la misma
+clave. Para que el CI firme igual, súbelas a GitHub (Settings → Secrets → Actions):
+`ANDROID_KEYSTORE_B64` (`base64 -w0 android/keystore.jks`) y `ANDROID_KEYSTORE_PASSWORD`; y la variable
+`CARRETE_PUBLIC_URL`.
+
+**Instalar**: Ajustes → App para el móvil → «Descargar la app», abrirla en el móvil y escanear el QR.
+
+**Prueba guiada en un móvil real**:
+1. Instalar, escanear el QR, entrar con usuario, contraseña y código.
+2. En WhatsApp, elegir 50 fotos de un chat → Compartir → Carrete → espacio → Subir.
+3. Apagar la pantalla a mitad de la subida; esperar a la notificación «Subida terminada».
+4. Comprobar en la web que están las 50, una sola vez, con su fecha. Repetir el paso 2: «ya estaban».
+5. Con «solo con wifi» (por defecto, para vídeos), compartir un vídeo con datos móviles: debe esperar.
+
+## Mapa y lugares
+
+- El nombre del lugar (ciudad y país) se calcula en el mini PC con datos de GeoNames incluidos en la
+  imagen: ninguna coordenada sale de aquí.
+- El mapa usa **OpenFreeMap** si `CARRETE_MAP_STYLE_URL` no está definida. Para otro proveedor, pon la
+  dirección de su estilo; para quitar el mapa, déjala vacía (`CARRETE_MAP_STYLE_URL=`). Después,
+  `docker compose up -d`. Si el proveedor sirve teselas o fuentes desde otro dominio, la CSP las
+  bloqueará (ADR 0010).
+- El lugar se calcula al procesar cada foto. Las que ya estaban antes de tener mapa lo reciben solas:
+  el worker rellena 5 000 por hora.
+- Las fotos de WhatsApp no traen ubicación, y Android la quita al compartir salvo con la app de Carrete
+  (permiso `ACCESS_MEDIA_LOCATION`). Se pone a mano con «Lugar…» en la selección.
+
+## Llaves de acceso
+
+Ajustes → Llaves de acceso → «Añadir». Solo funcionan en la dirección de `CARRETE_PUBLIC_URL` (con
+HTTPS, o `localhost`): una llave creada en `http://127.0.0.1:8010` no vale en el Funnel. Créalas cuando
+esté activo. La contraseña y la 2FA siguen valiendo; quitar una llave pide volver a identificarse.
 
 ## Exponer a internet
 

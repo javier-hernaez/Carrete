@@ -9,6 +9,7 @@ import { Button } from "../../design-system/components/Button";
 import { Alert, Card, PageTitle } from "../../design-system/components/Card";
 import { SelectField, TextField } from "../../design-system/components/Field";
 import { RecoveryCodes } from "../auth/RecoveryCodes";
+import { PasskeysCard } from "../passkeys/PasskeysCard";
 import styles from "../page.module.css";
 
 export function SettingsPage() {
@@ -18,6 +19,8 @@ export function SettingsPage() {
       <ProfileCard />
       <PasswordCard />
       <TwoFactorCard />
+      <PasskeysCard />
+      <AndroidCard />
       <SessionsCard />
       <LogoutCard />
     </div>
@@ -219,5 +222,34 @@ function LogoutCard() {
     <Button variant="secondary" onClick={() => logout.mutate()}>
       Cerrar sesión
     </Button>
+  );
+}
+
+/** Distribución de la app sin tiendas: APK desde aquí y QR para configurarla. */
+function AndroidCard() {
+  const app = useQuery({ queryKey: ["android"], queryFn: api.androidApp });
+  if (!app.data?.available) return null;
+  return (
+    <Card title="App para el móvil (Android)">
+      <p className={styles.muted}>
+        Para subir desde WhatsApp o la galería con «Compartir», y para que las subidas sigan aunque apagues la
+        pantalla. Versión {app.data.version_name ?? "—"}.
+      </p>
+      <ol className={styles.form}>
+        <li>
+          <a href="/api/v1/app/android/apk" download>
+            Descargar la app (APK)
+          </a>{" "}
+          y ábrela en el móvil. Android pedirá permiso para instalar apps de esta fuente.
+        </li>
+        <li>Al abrirla, escanea este código con la cámara del móvil para poner la dirección del servidor:</li>
+      </ol>
+      <img
+        src="/api/v1/app/android/setup-qr"
+        alt="Código QR con la dirección del servidor de Carrete"
+        width={200}
+        height={200}
+      />
+    </Card>
   );
 }

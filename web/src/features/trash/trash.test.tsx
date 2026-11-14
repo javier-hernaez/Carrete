@@ -15,7 +15,8 @@ describe("papelera y eliminar", () => {
       [`/api/v1/spaces/${SPACE_A}/assets`]: { items, next_cursor: null },
       [`POST /api/v1/spaces/${SPACE_A}/assets/batch`]: (init: RequestInit) => {
         calls.push(init.body as string);
-        return { count: 1 };
+        const { action } = JSON.parse(init.body as string) as { action: string };
+        return { count: 1, undo: action === "trash" ? { action: "restore" } : { action: "trash" } };
       },
     });
     const user = userEvent.setup();
@@ -49,7 +50,7 @@ describe("papelera y eliminar", () => {
         searches.push(url.search);
         return { items, next_cursor: null };
       },
-      [`POST /api/v1/spaces/${SPACE_A}/assets/batch`]: { count: 1 },
+      [`POST /api/v1/spaces/${SPACE_A}/assets/batch`]: { count: 1, undo: { action: "trash" } },
       [`POST /api/v1/spaces/${SPACE_A}/trash/empty`]: (init: RequestInit) => {
         emptied = init.body as string;
         return { count: 2 };
@@ -123,6 +124,7 @@ describe("estado de la instancia", () => {
           problems: [{ type: "corrupt_original" }],
         },
         queue: { done: 10, failed: 1 },
+        library: { built_at: NOW, files: 1200 },
         failed_jobs: [{ kind: "process_asset", error: "MediaError", at: NOW }],
       },
     });

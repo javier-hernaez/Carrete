@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/library/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rebuild Library */
+        post: operations["rebuild_library_api_v1_admin_library_rebuild_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/notices": {
         parameters: {
             query?: never;
@@ -106,6 +123,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete User
+         * @description Borrado real de una cuenta. Sus fotos siguen en los espacios (son del grupo),
+         *     sin su nombre; se borran su cuenta, sesiones, códigos y pertenencias. La auditoría se conserva.
+         */
+        delete: operations["delete_user_api_v1_admin_users__user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users/{user_id}/active": {
         parameters: {
             query?: never;
@@ -157,6 +195,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/android": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Latest
+         * @description Versión disponible (la app la consulta para avisar de actualizaciones).
+         */
+        get: operations["latest_api_v1_app_android_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/android/apk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download */
+        get: operations["download_api_v1_app_android_apk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/android/setup-qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Setup Qr
+         * @description Código QR con la dirección del servidor, para configurar la app sin teclearla.
+         */
+        get: operations["setup_qr_api_v1_app_android_setup_qr_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assets/{asset_id}": {
         parameters: {
             query?: never;
@@ -171,7 +266,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Asset
+         * @description Descripción de texto libre.
+         */
+        patch: operations["update_asset_api_v1_assets__asset_id__patch"];
         trace?: never;
     };
     "/api/v1/assets/{asset_id}/original": {
@@ -248,6 +347,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/device/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Device Login
+         * @description Inicio de sesión de la app: devuelve un *token* de dispositivo revocable (nunca se guarda la
+         *     contraseña). Si falta el segundo factor, se completa con POST /auth/totp y el mismo *token*.
+         */
+        post: operations["device_login_api_v1_auth_device_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/device/web-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Device Web Code */
+        post: operations["device_web_code_api_v1_auth_device_web_code_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -277,6 +414,92 @@ export interface paths {
         /** Logout */
         post: operations["logout_api_v1_auth_logout_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Passkey List */
+        get: operations["passkey_list_api_v1_auth_passkeys_get"];
+        put?: never;
+        /** Passkey Register */
+        post: operations["passkey_register_api_v1_auth_passkeys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Login */
+        post: operations["passkey_login_api_v1_auth_passkeys_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/login/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Login Options */
+        post: operations["passkey_login_options_api_v1_auth_passkeys_login_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/register/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passkey Register Options */
+        post: operations["passkey_register_options_api_v1_auth_passkeys_register_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkeys/{passkey_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Passkey Delete */
+        delete: operations["passkey_delete_api_v1_auth_passkeys__passkey_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -610,6 +833,80 @@ export interface paths {
         patch: operations["update_space_api_v1_spaces__space_id__patch"];
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Activity */
+        get: operations["activity_api_v1_spaces__space_id__activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Albums */
+        get: operations["list_albums_api_v1_spaces__space_id__albums_get"];
+        put?: never;
+        /** Create Album */
+        post: operations["create_album_api_v1_spaces__space_id__albums_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums/{album_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Album */
+        get: operations["get_album_api_v1_spaces__space_id__albums__album_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Album
+         * @description Eliminar un álbum nunca elimina sus fotos.
+         */
+        delete: operations["delete_album_api_v1_spaces__space_id__albums__album_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Album */
+        patch: operations["update_album_api_v1_spaces__space_id__albums__album_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/albums/{album_id}/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reorder */
+        post: operations["reorder_api_v1_spaces__space_id__albums__album_id__reorder_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/assets": {
         parameters: {
             query?: never;
@@ -661,6 +958,190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/counters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Counters
+         * @description Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas».
+         */
+        get: operations["counters_api_v1_spaces__space_id__counters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Groups */
+        get: operations["list_groups_api_v1_spaces__space_id__duplicates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/resolve-obvious": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Obvious
+         * @description Resolver de una vez los grupos evidentes. Sin ``apply`` solo devuelve el resumen previo.
+         */
+        post: operations["resolve_obvious_api_v1_spaces__space_id__duplicates_resolve_obvious_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss */
+        post: operations["dismiss_api_v1_spaces__space_id__duplicates__group_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reopen
+         * @description Deshacer una resolución: vuelve a proponer el grupo (las fotos se recuperan aparte).
+         */
+        post: operations["reopen_api_v1_spaces__space_id__duplicates__group_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/duplicates/{group_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve */
+        post: operations["resolve_api_v1_spaces__space_id__duplicates__group_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exports */
+        get: operations["list_exports_api_v1_spaces__space_id__exports_get"];
+        put?: never;
+        /** Create Export */
+        post: operations["create_export_api_v1_spaces__space_id__exports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/exports/{export_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Export */
+        get: operations["get_export_api_v1_spaces__space_id__exports__export_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Export */
+        delete: operations["delete_export_api_v1_spaces__space_id__exports__export_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/exports/{export_id}/files/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Volume
+         * @description Descarga reanudable (peticiones Range) de un volumen.
+         */
+        get: operations["download_volume_api_v1_spaces__space_id__exports__export_id__files__number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports_api_v1_spaces__space_id__imports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/invitations": {
         parameters: {
             query?: never;
@@ -673,6 +1154,23 @@ export interface paths {
         put?: never;
         /** Create Invitation */
         post: operations["create_invitation_api_v1_spaces__space_id__invitations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Space Map */
+        get: operations["space_map_api_v1_spaces__space_id__map_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -712,6 +1210,26 @@ export interface paths {
         head?: never;
         /** Change Member Role */
         patch: operations["change_member_role_api_v1_spaces__space_id__members__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggestions
+         * @description Propuestas de álbum a partir de la bandeja de entrada.
+         */
+        get: operations["suggestions_api_v1_spaces__space_id__suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/spaces/{space_id}/timeline": {
@@ -883,6 +1401,91 @@ export interface components {
             /** Active */
             active: boolean;
         };
+        /** ActivityOut */
+        ActivityOut: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string | null;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** AdminResetIn */
+        AdminResetIn: {
+            /**
+             * Reset Totp
+             * @default false
+             */
+            reset_totp: boolean;
+        };
+        /** AlbumIn */
+        AlbumIn: {
+            /** Asset Ids */
+            asset_ids?: string[];
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** AlbumOut */
+        AlbumOut: {
+            /** Count */
+            count: number;
+            /** Cover Asset Id */
+            cover_asset_id: string | null;
+            /** Description */
+            description: string | null;
+            /** First */
+            first: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last */
+            last: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Sort Mode
+             * @enum {string}
+             */
+            sort_mode: "date" | "manual";
+        };
+        /** AlbumPatch */
+        AlbumPatch: {
+            /** Cover Asset Id */
+            cover_asset_id?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Sort Mode */
+            sort_mode?: ("date" | "manual") | null;
+        };
+        /** AndroidApp */
+        AndroidApp: {
+            /** Available */
+            available: boolean;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Version Code */
+            version_code?: number | null;
+            /** Version Name */
+            version_name?: string | null;
+        };
         /** AssetDetail */
         AssetDetail: {
             /** Albums */
@@ -923,6 +1526,12 @@ export interface components {
             mime: string;
             /** Original Filename */
             original_filename: string;
+            /** Place Country */
+            place_country: string | null;
+            /** Place Name */
+            place_name: string | null;
+            /** Place Region */
+            place_region: string | null;
             /** Processing Error */
             processing_error: string | null;
             /** Processing State */
@@ -1024,6 +1633,11 @@ export interface components {
             /** Next Cursor */
             next_cursor: string | null;
         };
+        /** AssetPatch */
+        AssetPatch: {
+            /** Description */
+            description?: string | null;
+        };
         /** AuditOut */
         AuditOut: {
             /** Action */
@@ -1068,9 +1682,40 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "trash" | "restore";
+            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "set_date" | "shift_date" | "revert" | "set_location";
+            /** Album Id */
+            album_id?: string | null;
             /** Ids */
             ids: string[];
+            /** Lat */
+            lat?: number | null;
+            /** Lon */
+            lon?: number | null;
+            /** Minutes */
+            minutes?: number | null;
+            /** Offset Minutes */
+            offset_minutes?: number | null;
+            /** Snapshot */
+            snapshot?: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            } | null;
+            /** State */
+            state?: ("pending" | "kept" | "discarded") | null;
+            /** Taken At */
+            taken_at?: string | null;
+            /** Value */
+            value?: boolean | null;
+        };
+        /** BatchOut */
+        BatchOut: {
+            /** Count */
+            count: number;
+            /** Undo */
+            undo?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CheckIn */
         CheckIn: {
@@ -1082,8 +1727,26 @@ export interface components {
             /** Present */
             present: string[];
         };
+        /** Cluster */
+        Cluster: {
+            /** Bounds */
+            bounds: number[];
+            /** Count */
+            count: number;
+            /** Cover Id */
+            cover_id: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+        };
         /** CodeIn */
         CodeIn: {
+            /** Code */
+            code: string;
+        };
+        /** CodeOut */
+        CodeOut: {
             /** Code */
             code: string;
         };
@@ -1102,10 +1765,177 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** CountersOut */
+        CountersOut: {
+            /** Discarded */
+            discarded: number;
+            /** Duplicates */
+            duplicates: number;
+            /** Pending Review */
+            pending_review: number;
+            /** Trash */
+            trash: number;
+        };
+        /** DeviceLoginIn */
+        DeviceLoginIn: {
+            /** Device Name */
+            device_name: string;
+            /** Password */
+            password: string;
+            /** Username */
+            username: string;
+        };
+        /** DeviceLoginOut */
+        DeviceLoginOut: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "full" | "totp" | "enroll";
+            /** Token */
+            token: string;
+        };
+        /** DuplicateMemberOut */
+        DuplicateMemberOut: {
+            /** Best */
+            best: boolean;
+            /** Date Doubtful */
+            date_doubtful: boolean;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Has Exif Date */
+            has_exif_date: boolean;
+            /** Height */
+            height: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Favorite */
+            is_favorite: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "photo" | "video";
+            /** Original Filename */
+            original_filename: string;
+            /** Processing State */
+            processing_state: string;
+            /**
+             * Review State
+             * @enum {string}
+             */
+            review_state: "pending" | "kept" | "discarded";
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "camera" | "whatsapp" | "screenshot" | "other";
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Taken At Offset */
+            taken_at_offset: number | null;
+            /** Thumbhash */
+            thumbhash: string | null;
+            /** Width */
+            width: number | null;
+        };
         /** EmptyTrashIn */
         EmptyTrashIn: {
             /** Confirm Name */
             confirm_name: string;
+        };
+        /** ExportIn */
+        ExportIn: {
+            /** Album Ids */
+            album_ids?: string[];
+            /** Folder */
+            folder?: string | null;
+            /** Ids */
+            ids?: string[];
+            /**
+             * Include
+             * @default kept_pending
+             * @enum {string}
+             */
+            include: "kept" | "kept_pending" | "all";
+            /**
+             * Naming
+             * @default normalized
+             * @enum {string}
+             */
+            naming: "original" | "normalized";
+            /**
+             * Structure
+             * @default album
+             * @enum {string}
+             */
+            structure: "album" | "date" | "flat";
+            /**
+             * Target
+             * @default zip
+             * @enum {string}
+             */
+            target: "zip" | "folder";
+            /** Volume Bytes */
+            volume_bytes?: number | null;
+        };
+        /** ExportOut */
+        ExportOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Files */
+            files: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mine */
+            mine: boolean;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Progress */
+            progress: number;
+            /** State */
+            state: string;
+            /** Total Bytes */
+            total_bytes: number;
+            /** Total Items */
+            total_items: number;
+        };
+        /** GroupOut */
+        GroupOut: {
+            /** Distance */
+            distance: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Members */
+            members: components["schemas"]["DuplicateMemberOut"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1122,10 +1952,35 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** ImportOut */
+        ImportOut: {
+            /** Counts */
+            counts: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** State */
+            state: string;
+        };
         /** InstanceInfo */
         InstanceInfo: {
             /** Map Enabled */
             map_enabled: boolean;
+            /** Map Style Url */
+            map_style_url?: string | null;
             /** Name */
             name: string;
             /** Version */
@@ -1293,6 +2148,83 @@ export interface components {
             /** Severity */
             severity: string;
         };
+        /** ObviousOut */
+        ObviousOut: {
+            /**
+             * Group Ids
+             * @default []
+             */
+            group_ids: string[];
+            /** Groups */
+            groups: number;
+            /** Keep */
+            keep: number;
+            /** Trash */
+            trash: number;
+            /**
+             * Trashed
+             * @default []
+             */
+            trashed: string[];
+        };
+        /** PasskeyLoginIn */
+        PasskeyLoginIn: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
+        };
+        /** PasskeyOptionsOut */
+        PasskeyOptionsOut: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Options */
+            options: {
+                [key: string]: unknown;
+            };
+        };
+        /** PasskeyOut */
+        PasskeyOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+        };
+        /** PasskeyRegisterIn */
+        PasskeyRegisterIn: {
+            /**
+             * Challenge Id
+             * Format: uuid
+             */
+            challenge_id: string;
+            /** Credential */
+            credential: {
+                [key: string]: unknown;
+            };
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+        };
         /** PasswordIn */
         PasswordIn: {
             /** Current Password */
@@ -1331,12 +2263,39 @@ export interface components {
             /** Recovery Codes */
             recovery_codes: string[];
         };
+        /** ReorderIn */
+        ReorderIn: {
+            /** After Id */
+            after_id?: string | null;
+            /**
+             * Asset Id
+             * Format: uuid
+             */
+            asset_id: string;
+            /** Before Id */
+            before_id?: string | null;
+        };
+        /** ResetIn */
+        ResetIn: {
+            /** Password */
+            password: string;
+        };
         /** ResetPreview */
         ResetPreview: {
             /** Reset Totp */
             reset_totp: boolean;
             /** Username */
             username: string | null;
+        };
+        /** ResolveIn */
+        ResolveIn: {
+            /** Keep */
+            keep: string[];
+        };
+        /** ResolveOut */
+        ResolveOut: {
+            /** Trashed */
+            trashed: string[];
         };
         /** RoleIn */
         RoleIn: {
@@ -1448,6 +2407,25 @@ export interface components {
              */
             stage: "full" | "totp" | "enroll";
         };
+        /** SuggestionOut */
+        SuggestionOut: {
+            /** Asset Ids */
+            asset_ids: string[];
+            /** Count */
+            count: number;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Place */
+            place: string | null;
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+        };
         /** TimelineOut */
         TimelineOut: {
             /** Months */
@@ -1513,19 +2491,6 @@ export interface components {
             /** Error Type */
             type: string;
         };
-        /** ResetIn */
-        app__api__admin__ResetIn: {
-            /**
-             * Reset Totp
-             * @default false
-             */
-            reset_totp: boolean;
-        };
-        /** ResetIn */
-        app__api__spaces__ResetIn: {
-            /** Password */
-            password: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -1587,6 +2552,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LinkOut"];
+                };
+            };
+        };
+    };
+    rebuild_library_api_v1_admin_library_rebuild_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
         };
@@ -1693,6 +2680,35 @@ export interface operations {
             };
         };
     };
+    delete_user_api_v1_admin_users__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     set_active_api_v1_admin_users__user_id__active_post: {
         parameters: {
             query?: never;
@@ -1737,7 +2753,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__api__admin__ResetIn"];
+                "application/json": components["schemas"]["AdminResetIn"];
             };
         };
         responses: {
@@ -1790,6 +2806,64 @@ export interface operations {
             };
         };
     };
+    latest_api_v1_app_android_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AndroidApp"];
+                };
+            };
+        };
+    };
+    download_api_v1_app_android_apk_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setup_qr_api_v1_app_android_setup_qr_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     get_asset_api_v1_assets__asset_id__get: {
         parameters: {
             query?: never;
@@ -1809,6 +2883,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AssetDetail"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_asset_api_v1_assets__asset_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -1937,6 +3044,59 @@ export interface operations {
             };
         };
     };
+    device_login_api_v1_auth_device_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceLoginOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    device_web_code_api_v1_auth_device_web_code_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeOut"];
+                };
+            };
+        };
+    };
     login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
@@ -1985,6 +3145,161 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    passkey_list_api_v1_auth_passkeys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOut"][];
+                };
+            };
+        };
+    };
+    passkey_register_api_v1_auth_passkeys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRegisterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passkey_login_api_v1_auth_passkeys_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyLoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passkey_login_options_api_v1_auth_passkeys_login_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptionsOut"];
+                };
+            };
+        };
+    };
+    passkey_register_options_api_v1_auth_passkeys_register_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptionsOut"];
+                };
+            };
+        };
+    };
+    passkey_delete_api_v1_auth_passkeys__passkey_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                passkey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
@@ -2453,7 +3768,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__api__spaces__ResetIn"];
+                "application/json": components["schemas"]["ResetIn"];
             };
         };
         responses: {
@@ -2649,12 +3964,244 @@ export interface operations {
             };
         };
     };
+    activity_api_v1_spaces__space_id__activity_get: {
+        parameters: {
+            query?: {
+                before?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_albums_api_v1_spaces__space_id__albums_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_album_api_v1_spaces__space_id__albums_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlbumIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_album_api_v1_spaces__space_id__albums__album_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_album_api_v1_spaces__space_id__albums__album_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_album_api_v1_spaces__space_id__albums__album_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlbumPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlbumOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reorder_api_v1_spaces__space_id__albums__album_id__reorder_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                album_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_assets_api_v1_spaces__space_id__assets_get: {
         parameters: {
             query?: {
                 cursor?: string | null;
                 limit?: number;
-                order?: "desc" | "asc";
+                order?: "desc" | "asc" | "album";
                 start?: string | null;
                 review?: ("pending" | "kept" | "discarded")[] | null;
                 favorite?: boolean | null;
@@ -2668,6 +4215,11 @@ export interface operations {
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+                located?: boolean | null;
             };
             header?: never;
             path: {
@@ -2718,7 +4270,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CountOut"];
+                    "application/json": components["schemas"]["BatchOut"];
                 };
             };
             /** @description Validation Error */
@@ -2754,6 +4306,387 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    counters_api_v1_spaces__space_id__counters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountersOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_groups_api_v1_spaces__space_id__duplicates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_obvious_api_v1_spaces__space_id__duplicates_resolve_obvious_post: {
+        parameters: {
+            query?: {
+                apply?: boolean;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObviousOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_api_v1_spaces__space_id__duplicates__group_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_api_v1_spaces__space_id__duplicates__group_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_api_v1_spaces__space_id__duplicates__group_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_exports_api_v1_spaces__space_id__exports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_export_api_v1_spaces__space_id__exports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_export_api_v1_spaces__space_id__exports__export_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_export_api_v1_spaces__space_id__exports__export_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_volume_api_v1_spaces__space_id__exports__export_id__files__number__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                export_id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_imports_api_v1_spaces__space_id__imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"][];
                 };
             };
             /** @description Validation Error */
@@ -2820,6 +4753,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    space_map_api_v1_spaces__space_id__map_get: {
+        parameters: {
+            query?: {
+                zoom?: number;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cluster"][];
                 };
             };
             /** @description Validation Error */
@@ -2928,6 +4898,37 @@ export interface operations {
             };
         };
     };
+    suggestions_api_v1_spaces__space_id__suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     timeline_api_v1_spaces__space_id__timeline_get: {
         parameters: {
             query?: {
@@ -2943,6 +4944,11 @@ export interface operations {
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+                located?: boolean | null;
             };
             header?: never;
             path: {

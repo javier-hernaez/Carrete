@@ -179,7 +179,7 @@ class AuthSession(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
-        CheckConstraint("kind IN ('web', 'device')", name="kind_valid"),
+        CheckConstraint("kind IN ('web', 'device', 'exchange')", name="kind_valid"),
         CheckConstraint("stage IN ('full', 'totp', 'enroll')", name="stage_valid"),
     )
 
@@ -343,6 +343,9 @@ class Asset(TimestampMixin, Base):
     lat: Mapped[float | None] = mapped_column(Double)
     lon: Mapped[float | None] = mapped_column(Double)
     place_id: Mapped[int | None] = mapped_column(BigInteger)
+    place_name: Mapped[str | None] = mapped_column(Text)
+    place_region: Mapped[str | None] = mapped_column(Text)
+    place_country: Mapped[str | None] = mapped_column(Text)
     camera: Mapped[str | None] = mapped_column(Text)
     video_codec: Mapped[str | None] = mapped_column(Text)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
@@ -374,6 +377,17 @@ class Asset(TimestampMixin, Base):
             text("id DESC"),
         ),
         Index("ix_assets_space_id_phash", "space_id", "phash"),
+        Index(
+            "ix_assets_space_id_lat_lon", "space_id", "lat", "lon", postgresql_where=text("lat IS NOT NULL")
+        ),
+        # La vista por defecto de la línea temporal (todo menos descartadas y papelera), ya ordenada.
+        Index(
+            "ix_assets_visible_timeline",
+            "space_id",
+            text("taken_at_local DESC"),
+            text("id DESC"),
+            postgresql_where=text("trashed_at IS NULL AND review_state <> 'discarded'"),
+        ),
     )
 
 
@@ -466,3 +480,197 @@ class AppState(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class Album(TimestampMixin, Base):
+    """Agrupación manual dentro de un espacio. Un solo nivel. Borrarlo no borra elementos."""
+
+    __tablename__ = "albums"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    cover_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="SET NULL")
+    )
+    sort_mode: Mapped[str] = mapped_column(Text, nullable=False, server_default="date")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (CheckConstraint("sort_mode IN ('date', 'manual')", name="sort_mode_valid"),)
+
+
+class AlbumAsset(Base):
+    """Pertenencia a un álbum. ``position`` es un índice fraccionario para el orden manual."""
+
+    __tablename__ = "album_assets"
+
+    album_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("albums.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    position: Mapped[float] = mapped_column(Double, nullable=False)
+    added_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    added_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (Index("ix_album_assets_album_id_position", "album_id", "position"),)
+
+
+class DuplicateGroup(Base):
+    """Elementos casi idénticos pendientes de resolver."""
+
+    __tablename__ = "duplicate_groups"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False
+    )
+    kind: Mapped[str] = mapped_column(Text, nullable=False, server_default="similar")
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")
+    distance: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('exact', 'similar')", name="kind_valid"),
+        CheckConstraint("status IN ('pending', 'resolved', 'dismissed')", name="status_valid"),
+        Index("ix_duplicate_groups_space_id_status", "space_id", "status"),
+    )
+
+
+class DuplicateMember(Base):
+    __tablename__ = "duplicate_members"
+
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("duplicate_groups.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+
+class DuplicateDismissal(Base):
+    """Pareja marcada como «No son repetidas»: no se vuelve a proponer."""
+
+    __tablename__ = "duplicate_dismissals"
+
+    asset_a: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_b: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    __table_args__ = (CheckConstraint("asset_a < asset_b", name="ordered"),)
+
+
+class Export(Base):
+    """Exportación en segundo plano: ZIP por volúmenes o copia a una carpeta del servidor."""
+
+    __tablename__ = "exports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    params: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    state: Mapped[str] = mapped_column(Text, nullable=False, server_default="queued")
+    progress: Mapped[float] = mapped_column(Double, nullable=False, server_default="0")
+    total_items: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    total_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    files: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("state IN ('queued', 'running', 'ready', 'failed', 'expired')", name="state_valid"),
+    )
+
+
+class Import(Base):
+    """Importación de un ZIP (WhatsApp, Google Takeout) o de una carpeta del servidor."""
+
+    __tablename__ = "imports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    album_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("albums.id", ondelete="SET NULL")
+    )
+    source: Mapped[str] = mapped_column(Text, nullable=False)  # zip | folder
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    state: Mapped[str] = mapped_column(Text, nullable=False, server_default="queued")
+    counts: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("state IN ('queued', 'running', 'done', 'failed')", name="state_valid"),
+        CheckConstraint("source IN ('zip', 'folder')", name="source_valid"),
+    )
+
+
+class WebauthnCredential(Base):
+    """Llave de acceso (passkey): alternativa a contraseña + TOTP."""
+
+    __tablename__ = "webauthn_credentials"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    credential_id: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, unique=True)
+    public_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    sign_count: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    transports: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WebauthnChallenge(Base):
+    """Reto de un solo uso para registrar o usar una llave de acceso (caduca en 5 minutos)."""
+
+    __tablename__ = "webauthn_challenges"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
+    )
+    purpose: Mapped[str] = mapped_column(Text, nullable=False)
+    challenge: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (CheckConstraint("purpose IN ('register', 'login')", name="purpose_valid"),)

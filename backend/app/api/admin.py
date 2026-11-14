@@ -100,7 +100,7 @@ def revoke_sessions(user_id: uuid.UUID, current: AdminAuth, db: DB, info: ReqInf
     db.commit()
 
 
-class ResetIn(BaseModel):
+class AdminResetIn(BaseModel):
     reset_totp: bool = False
 
 
@@ -111,7 +111,7 @@ class LinkOut(BaseModel):
 
 @router.post("/users/{user_id}/reset", response_model=LinkOut)
 def reset_access(
-    user_id: uuid.UUID, body: ResetIn, current: AdminAuth, db: DB, settings: SettingsDep, info: ReqInfo
+    user_id: uuid.UUID, body: AdminResetIn, current: AdminAuth, db: DB, settings: SettingsDep, info: ReqInfo
 ) -> LinkOut:
     auth.require_recent_auth(current.session)
     link = invitations.create_reset(
@@ -234,3 +234,36 @@ def instance_status(current: AdminAuth, db: DB, settings: SettingsDep) -> dict[s
     data["version"] = __version__
     data["open_notices"] = len(list(db.scalars(select(Notice.id).where(Notice.acknowledged_at.is_(None)))))
     return data
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(user_id: uuid.UUID, current: AdminAuth, db: DB, info: ReqInfo) -> None:
+    """Borrado real de una cuenta. Sus fotos siguen en los espacios (son del grupo),
+    sin su nombre; se borran su cuenta, sesiones, códigos y pertenencias. La auditoría se conserva."""
+    auth.require_recent_auth(current.session)
+    user = _target(db, user_id)
+    if user.id == current.user.id:
+        raise Conflict("No puedes borrar tu propia cuenta", code="self")
+    owned = db.scalars(
+        select(Membership.space_id).where(Membership.user_id == user.id, Membership.role == "owner")
+    )
+    for space_id in owned:
+        owners = db.scalar(
+            select(func.count()).where(Membership.space_id == space_id, Membership.role == "owner")
+        )
+        if (owners or 0) <= 1:
+            raise Conflict(
+                "Es la única propietaria de algún espacio: nombra antes a otra persona propietaria",
+                code="last_owner",
+            )
+    audit.record(
+        db,
+        "user.deleted",
+        actor_id=current.user.id,
+        target_type="user",
+        target_id=user.id,
+        request=info,
+        detail={"username": user.username},
+    )
+    db.delete(user)
+    db.commit()

@@ -138,6 +138,8 @@ class Filters:
     doubtful: bool | None = None
     trashed: bool = False
     query: str | None = None
+    bounds: tuple[float, float, float, float] | None = None  # sur, oeste, norte, este
+    located: bool | None = None
 
 
 DOUBTFUL_SOURCES = ("mtime", "upload")
@@ -166,8 +168,32 @@ def apply_filters(stmt: AnySelect, space_id: uuid.UUID, f: Filters) -> AnySelect
         cond = Asset.taken_at_source.in_(DOUBTFUL_SOURCES)
         stmt = stmt.where(cond if f.doubtful else ~cond)
     if f.query:
+        # Búsqueda: nombre de fichero, descripción, lugar y álbum.
+        from app.db.models import Album, AlbumAsset
+
         like = f"%{f.query.replace('%', '').replace('_', '')}%"
-        stmt = stmt.where(or_(Asset.original_filename.ilike(like), Asset.description.ilike(like)))
+        in_album = Asset.id.in_(
+            select(AlbumAsset.asset_id)
+            .join(Album, Album.id == AlbumAsset.album_id)
+            .where(Album.space_id == space_id, Album.name.ilike(like))
+        )
+        stmt = stmt.where(
+            or_(
+                Asset.original_filename.ilike(like),
+                Asset.description.ilike(like),
+                Asset.place_name.ilike(like),
+                Asset.place_region.ilike(like),
+                in_album,
+            )
+        )
+    if f.located is not None:
+        stmt = stmt.where(Asset.lat.is_not(None) if f.located else Asset.lat.is_(None))
+    if f.bounds is not None:
+        south, west, north, east = f.bounds
+        stmt = stmt.where(Asset.lat.between(south, north))
+        stmt = stmt.where(
+            Asset.lon.between(west, east) if west <= east else or_(Asset.lon >= west, Asset.lon <= east)
+        )
     from app.services import albums as album_service
 
     return album_service.apply_album_filter(stmt, f)
@@ -190,6 +216,8 @@ def decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
 def list_assets(
     db: Session, space_id: uuid.UUID, f: Filters, *, cursor: str | None, limit: int, order: str = "desc"
 ) -> tuple[list[Asset], str | None]:
+    if f.album_id is not None and order == "album":
+        return _list_manual(db, space_id, f, cursor=cursor, limit=limit)
     stmt = apply_filters(select(Asset), space_id, f)
     if cursor:
         when, ident = decode_cursor(cursor)
@@ -237,3 +265,17 @@ def mark_processing_failed(db: Session, asset_id: uuid.UUID, error: str) -> None
         .where(Asset.id == asset_id)
         .values(processing_state="failed", processing_error=error[:1000])
     )
+
+
+def _list_manual(
+    db: Session, space_id: uuid.UUID, f: Filters, *, cursor: str | None, limit: int
+) -> tuple[list[Asset], str | None]:
+    """Álbum en orden manual: por posición. El cursor es un desplazamiento (los álbumes son pequeños)."""
+    from app.services import albums
+
+    assert f.album_id is not None
+    album = albums.get(db, space_id, f.album_id)
+    offset = int(cursor[2:]) if cursor and cursor.startswith("o:") and cursor[2:].isdigit() else 0
+    stmt = albums.manual_order(apply_filters(select(Asset), space_id, f), album.id)
+    rows = list(db.scalars(stmt.offset(offset).limit(limit + 1)))
+    return rows[:limit], (f"o:{offset + limit}" if len(rows) > limit else None)

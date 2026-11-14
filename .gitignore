@@ -37,3 +37,7 @@ android/local.properties
 .DS_Store
 web/test-results/
 web/playwright-report/
+android/.keystore-password
+android/build/
+deploy/apk/*.apk
+deploy/apk/*.json

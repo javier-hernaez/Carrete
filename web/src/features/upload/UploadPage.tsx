@@ -8,8 +8,10 @@ import { Alert, PageTitle } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { Icon } from "../../design-system/components/Icon";
 import { cx } from "../../design-system/cx";
+import { androidBridge } from "./android";
 import { filesFromDataTransfer, filesFromInput } from "./folders";
 import { uploadQueue, type QueueItem } from "./queue";
+import { FolderAlbums, Imports } from "./FolderAlbums";
 import { useUploadQueue } from "./useUploadQueue";
 import styles from "./upload.module.css";
 
@@ -75,8 +77,14 @@ export function UploadPage() {
       >
         <Icon name="upload" size={40} />
         <p className={styles.dropText}>Arrastra aquí fotos, vídeos o carpetas enteras</p>
+        <p>También un .zip exportado de WhatsApp o de Google Fotos (Takeout): se importa con sus fechas.</p>
         <div className={styles.buttons}>
-          <Button variant="primary" onClick={() => files.current?.click()}>
+          {androidBridge() && (
+            <Button variant="primary" onClick={() => androidBridge()?.pickPhotos(space.id)}>
+              Elegir del móvil (sube en segundo plano)
+            </Button>
+          )}
+          <Button variant={androidBridge() ? "secondary" : "primary"} onClick={() => files.current?.click()}>
             Elegir fotos y vídeos
           </Button>
           <Button onClick={() => folder.current?.click()}>Elegir una carpeta</Button>
@@ -85,7 +93,7 @@ export function UploadPage() {
           ref={files}
           type="file"
           multiple
-          accept="image/*,video/*,.heic,.heif"
+          accept="image/*,video/*,.heic,.heif,.zip,application/zip"
           hidden
           aria-label="Elegir fotos y vídeos"
           onChange={(e) => {
@@ -106,6 +114,7 @@ export function UploadPage() {
         />
       </div>
 
+      <Imports spaceId={space.id} />
       {total > 0 && (
         <section aria-label="Cola de subida" className={styles.queue}>
           <div className={styles.summary} role="status" aria-live="polite">
@@ -131,6 +140,7 @@ export function UploadPage() {
           {failed > 0 && !running && (
             <Alert tone="warning">Algunos ficheros no se pudieron subir. Mira el motivo en la lista.</Alert>
           )}
+          {!running && <FolderAlbums spaceId={space.id} items={items} />}
           <ul className={styles.list}>
             {items.map((item) => (
               <li key={item.id} className={styles.item}>

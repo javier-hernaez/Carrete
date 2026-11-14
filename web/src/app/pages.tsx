@@ -9,18 +9,6 @@ import { t, type MessageKey } from "../i18n";
 import styles from "./pages.module.css";
 import { useSession } from "./session";
 
-export function ReviewPage() {
-  return <EmptyState title={t("review.empty.title")}>{t("review.empty.text")}</EmptyState>;
-}
-
-export function AlbumsPage() {
-  return <EmptyState title={t("albums.empty.title")}>{t("albums.empty.text")}</EmptyState>;
-}
-
-export function MapPage() {
-  return <EmptyState title={t("map.empty.title")}>{t("map.empty.text")}</EmptyState>;
-}
-
 interface MoreItem {
   label: MessageKey;
   icon: IconName;
@@ -29,11 +17,11 @@ interface MoreItem {
 }
 
 const MORE: MoreItem[] = [
-  { label: "more.duplicates", icon: "duplicates" },
-  { label: "more.discarded", icon: "discarded" },
+  { label: "more.duplicates", icon: "duplicates", to: "/repetidas" },
+  { label: "more.discarded", icon: "discarded", to: "/descartadas" },
   { label: "more.trash", icon: "trash", to: "/papelera" },
-  { label: "more.export", icon: "export" },
-  { label: "more.activity", icon: "activity" },
+  { label: "more.export", icon: "export", to: "/exportar" },
+  { label: "more.activity", icon: "activity", to: "/actividad" },
   { label: "more.space", icon: "albums", to: "/espacio" },
   { label: "more.settings", icon: "settings", to: "/ajustes" },
   { label: "more.admin", icon: "admin", to: "/admin", adminOnly: true },
@@ -67,6 +55,9 @@ export function MorePage() {
         )}
       </ul>
       {info.data && <p className={styles.version}>{t("more.version", { version: info.data.version })}</p>}
+      <p className={styles.version}>
+        Nombres de lugares: <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0).
+      </p>
     </section>
   );
 }
