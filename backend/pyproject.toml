@@ -36,6 +36,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "PLR", "DTZ", "PTH"]
 "app/migrations/**" = ["N", "E501"]
+# La prueba de rendimiento imprime sus tiempos y planes de consulta (se ejecuta a mano).
+"tests/perf/**" = ["T201", "E501"]
 # Horas «de pared» sin zona a propósito: la zona se guarda aparte, como desfase.
 "app/media/dates.py" = ["DTZ001"]
 

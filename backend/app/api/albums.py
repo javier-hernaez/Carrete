@@ -121,3 +121,23 @@ def reorder(space_id: uuid.UUID, album_id: uuid.UUID, body: ReorderIn, current: 
         before_id=body.before_id,
     )
     db.commit()
+
+
+class SuggestionOut(BaseModel):
+    start: datetime
+    end: datetime
+    count: int
+    place: str | None
+    asset_ids: list[uuid.UUID]
+
+
+@router.get("/spaces/{space_id}/suggestions", response_model=list[SuggestionOut])
+def suggestions(space_id: uuid.UUID, current: FullAuth, db: DB) -> list[SuggestionOut]:
+    """Propuestas de álbum a partir de la bandeja de entrada."""
+    from app.services.suggestions import suggest
+
+    spaces.access(db, current.user, space_id, "collaborator")
+    return [
+        SuggestionOut(start=s.start, end=s.end, count=len(s.ids), place=s.place, asset_ids=s.ids)
+        for s in suggest(db, space_id)
+    ]
