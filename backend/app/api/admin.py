@@ -1,5 +1,5 @@
 """Administración de la instancia. El administrador gestiona personas y ve la
-auditoría y los avisos, pero **no** entra en los espacios ajenos."""
+auditoría y los avisos; además tiene acceso de propietario a todos los espacios."""
 
 from __future__ import annotations
 

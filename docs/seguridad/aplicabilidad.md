@@ -17,7 +17,7 @@ contratado, proveedores con contrato ni instalaciones propias más allá de un e
 | A.5.33 Protección de registros | Sí | Auditoría de solo inserción, retención 2 años | migración `0001` |
 | A.5.34 Privacidad | Sí | Datos mínimos, sin telemetría ni terceros, exportación completa, borrado de cuenta | `docs/seguridad/politicas.md` |
 | A.7.10 Soportes de almacenamiento | Parcial | Cifrado en reposo opcional (LUKS) | Riesgo R12 aceptado |
-| A.8.2–8.3 Accesos privilegiados | Sí | Administrador separado de los espacios; reautenticación | `backend/app/services/spaces.py` |
+| A.8.2–8.3 Accesos privilegiados | Sí | Administrador con acceso de propietario a todos los espacios, auditado; reautenticación | `backend/app/services/spaces.py` |
 | A.8.5 Autenticación segura | Sí | Argon2id, TOTP, límites, sesiones | `asvs.md` V2–V3 |
 | A.8.6 Capacidad | Sí | Panel de estado, avisos 80/90 %, reserva de disco | `backend/app/services/status.py` |
 | A.8.7 Código malicioso | Sí | Tipo por contenido, `worker` aislado. Antivirus (ClamAV) valorado y descartado: ~1,5 GB de RAM en un equipo compartido para escanear fotos que nadie ejecuta | `amenazas.md` |

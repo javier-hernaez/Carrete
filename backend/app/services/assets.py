@@ -25,9 +25,18 @@ AnySelect = Select[*tuple[Any, ...]]
 def access_asset(
     db: Session, user: User, asset_id: uuid.UUID, minimum: str = "viewer"
 ) -> tuple[Asset, Blob, str]:
-    """Carga un elemento comprobando que la persona es miembro de su espacio. 404 si no."""
+    """Carga un elemento comprobando que la persona es miembro de su espacio (o administradora,
+    con acceso de propietario a todo). 404 si no."""
     from app.services.spaces import RANK
 
+    if user.is_admin:
+        found = db.execute(
+            select(Asset, Blob).join(Blob, Blob.id == Asset.blob_id).where(Asset.id == asset_id)
+        ).first()
+        if found is None:
+            raise NotFound("Esa foto no existe")
+        asset, blob = found.tuple()
+        return asset, blob, "owner"
     row = db.execute(
         select(Asset, Blob, Membership.role)
         .join(Blob, Blob.id == Asset.blob_id)
