@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var pickSpace: String? = null
 
-    private val picker = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(200)) { uris ->
+    // Tope del selector según el móvil: pedir más de lo que admite cierra la app (PickLimit).
+    private val picker = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(PickLimit.forThisDevice())) { uris ->
         val space = pickSpace ?: return@registerForActivityResult
         if (uris.isNotEmpty()) {
             Toast.makeText(this, getString(R.string.preparing, uris.size), Toast.LENGTH_SHORT).show()
@@ -141,5 +142,9 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun version(): Int = BuildConfig.VERSION_CODE
+
+        /** Cuántas fotos admite el selector de una vez, para avisarlo en la web. */
+        @JavascriptInterface
+        fun pickLimit(): Int = PickLimit.forThisDevice()
     }
 }

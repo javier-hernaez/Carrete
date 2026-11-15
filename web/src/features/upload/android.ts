@@ -3,6 +3,8 @@
 interface CarreteAndroid {
   pickPhotos: (spaceId: string) => void;
   version: () => number;
+  /** Desde la versión que corrige el cierre con más de 100 fotos; las anteriores no lo tienen. */
+  pickLimit?: () => number;
 }
 
 export function androidBridge(): CarreteAndroid | undefined {

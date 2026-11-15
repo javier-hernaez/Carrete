@@ -6,6 +6,8 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versiones 
 
 ### Corregido — Móvil
 
+- App Android: se cerraba al pulsar «Elegir del móvil» en móviles cuyo selector de fotos admite menos de
+  200 elementos de una vez (normalmente 100). Ahora pide el máximo de cada móvil y la web lo indica.
 - Varias pantallas (Administración, Repetidas, Exportar, Espacio, Álbumes) se salían por la derecha en
   el móvil: la columna principal crecía con su contenido más ancho. Ahora nada desborda entre 320 y
   412 px de ancho.
