@@ -37,82 +37,88 @@ export function SelectionBar({
   };
   const allFavorite = ids.every((id) => items.find((i) => i.id === id)?.is_favorite);
   return (
-    <div className={styles.bar} role="toolbar" aria-label="Acciones sobre la selección">
-      <span className={styles.count} aria-live="polite">
-        {ids.length} {ids.length === 1 ? "seleccionada" : "seleccionadas"}
-      </span>
-      {!hideStandard && (
-        <>
-          <Button variant="ghost" onClick={() => done(actions.review(ids, "kept"))}>
-            Vale
-          </Button>
-          <Button variant="ghost" onClick={() => done(actions.review(ids, "discarded"))}>
-            Descartar
-          </Button>
-          <Button variant="ghost" onClick={() => done(actions.favorite(ids, !allFavorite))}>
-            {allFavorite ? "Quitar ★" : "Favorita ★"}
-          </Button>
-          <Button variant="ghost" onClick={() => setDialog("album")}>
-            Álbum…
-          </Button>
-          <Button variant="ghost" onClick={() => setDialog("date")}>
-            Fecha…
-          </Button>
-          <Button variant="ghost" onClick={() => setDialog("place")}>
-            Lugar…
-          </Button>
-          <Button variant="ghost" onClick={() => done(downloadSelection(spaceId, ids))}>
-            Descargar
-          </Button>
-          <Button variant="ghost" onClick={() => done(actions.trash(ids))}>
-            Eliminar
-          </Button>
-        </>
-      )}
-      {extra?.(actions, ids)}
-      <span className={styles.spacer} />
-      <Button variant="ghost" onClick={onSelectAll}>
-        Todas
-      </Button>
-      <Button variant="secondary" onClick={onClear}>
-        Cancelar
-      </Button>
-      {dialog === "album" && (
-        <AlbumPicker
-          spaceId={spaceId}
-          count={ids.length}
-          onClose={() => setDialog(null)}
-          onPick={(album) => {
-            setDialog(null);
-            done(actions.addToAlbum(ids, album.id, album.name));
-          }}
-        />
-      )}
-      {dialog === "date" && (
-        <DateDialog
-          count={ids.length}
-          initial={ids.length === 1 ? items.find((i) => i.id === ids[0])?.taken_at : undefined}
-          onClose={() => setDialog(null)}
-          onSet={(value) => {
-            setDialog(null);
-            done(actions.setDate(ids, value));
-          }}
-          onShift={(minutes) => {
-            setDialog(null);
-            done(actions.shiftDate(ids, minutes));
-          }}
-        />
-      )}
-      {dialog === "place" && (
-        <LocationDialog
-          count={ids.length}
-          onClose={() => setDialog(null)}
-          onSet={(coords) => {
-            setDialog(null);
-            done(actions.setLocation(ids, coords));
-          }}
-        />
-      )}
-    </div>
+    <>
+      {/* Ocupa en la página lo mismo que la barra fija, para que no tape la última fila de fotos. */}
+      <div className={styles.placeholder} aria-hidden="true" />
+      <div className={styles.bar} role="toolbar" aria-label="Acciones sobre la selección">
+        <span className={styles.count} aria-live="polite">
+          {ids.length} {ids.length === 1 ? "seleccionada" : "seleccionadas"}
+        </span>
+        <div className={styles.actions}>
+          {!hideStandard && (
+            <>
+              <Button variant="ghost" onClick={() => done(actions.review(ids, "kept"))}>
+                Vale
+              </Button>
+              <Button variant="ghost" onClick={() => done(actions.review(ids, "discarded"))}>
+                Descartar
+              </Button>
+              <Button variant="ghost" onClick={() => done(actions.favorite(ids, !allFavorite))}>
+                {allFavorite ? "Quitar ★" : "Favorita ★"}
+              </Button>
+              <Button variant="ghost" onClick={() => setDialog("album")}>
+                Álbum…
+              </Button>
+              <Button variant="ghost" onClick={() => setDialog("date")}>
+                Fecha…
+              </Button>
+              <Button variant="ghost" onClick={() => setDialog("place")}>
+                Lugar…
+              </Button>
+              <Button variant="ghost" onClick={() => done(downloadSelection(spaceId, ids))}>
+                Descargar
+              </Button>
+              <Button variant="ghost" onClick={() => done(actions.trash(ids))}>
+                Eliminar
+              </Button>
+            </>
+          )}
+          {extra?.(actions, ids)}
+        </div>
+        <span className={styles.spacer} />
+        <Button variant="ghost" onClick={onSelectAll}>
+          Todas
+        </Button>
+        <Button variant="secondary" onClick={onClear}>
+          Cancelar
+        </Button>
+        {dialog === "album" && (
+          <AlbumPicker
+            spaceId={spaceId}
+            count={ids.length}
+            onClose={() => setDialog(null)}
+            onPick={(album) => {
+              setDialog(null);
+              done(actions.addToAlbum(ids, album.id, album.name));
+            }}
+          />
+        )}
+        {dialog === "date" && (
+          <DateDialog
+            count={ids.length}
+            initial={ids.length === 1 ? items.find((i) => i.id === ids[0])?.taken_at : undefined}
+            onClose={() => setDialog(null)}
+            onSet={(value) => {
+              setDialog(null);
+              done(actions.setDate(ids, value));
+            }}
+            onShift={(minutes) => {
+              setDialog(null);
+              done(actions.shiftDate(ids, minutes));
+            }}
+          />
+        )}
+        {dialog === "place" && (
+          <LocationDialog
+            count={ids.length}
+            onClose={() => setDialog(null)}
+            onSet={(coords) => {
+              setDialog(null);
+              done(actions.setLocation(ids, coords));
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }

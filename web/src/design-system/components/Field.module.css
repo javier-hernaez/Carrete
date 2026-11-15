@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  /* Que un campo nunca sea más ancho que su contenedor (los de número o fecha tienen un ancho propio). */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .label {
@@ -10,6 +13,8 @@
 }
 
 .input {
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-strong);

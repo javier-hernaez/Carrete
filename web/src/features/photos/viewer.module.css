@@ -115,7 +115,8 @@
   max-height: 50vh;
   overflow-y: auto;
   padding: var(--space-4) var(--space-5);
-  background: rgb(20 18 16 / 95%);
+  /* Opaco: en el móvil el panel tapa los botones de acción y no deben transparentarse. */
+  background: rgb(20 18 16);
   border-top: 1px solid rgb(255 255 255 / 12%);
 }
 

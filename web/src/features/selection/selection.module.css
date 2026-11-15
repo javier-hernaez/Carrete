@@ -14,7 +14,64 @@
   box-shadow: var(--shadow-lg);
 }
 
+.placeholder {
+  flex: none;
+  height: 112px; /* barra de dos filas (109 px) */
+}
+
 @media (min-width: 768px) {
+  .placeholder {
+    height: 88px; /* 68 de barra + su separación del borde */
+  }
+}
+
+/* Móvil: arriba el recuento, «Todas» y «Cancelar» (siempre a mano); debajo, las acciones, que se
+   deslizan en horizontal si no caben. */
+@media (max-width: 767px) {
+  .bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    overflow-x: visible;
+  }
+
+  .count {
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .actions {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    display: flex;
+    gap: var(--space-1);
+    overflow-x: auto;
+  }
+
+  .actions > * {
+    flex: none;
+  }
+}
+
+/* Escritorio: una sola fila; si las acciones no caben, se deslizan y «Todas» y «Cancelar» siguen a la vista. */
+@media (min-width: 768px) {
+  .actions {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: var(--space-1);
+    overflow-x: auto;
+  }
+
+  .actions > * {
+    flex: none;
+  }
+
   .bar {
     left: calc(var(--sidebar-width) + var(--space-6));
     right: var(--space-6);
@@ -22,6 +79,10 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
   }
+}
+
+.bar button {
+  white-space: nowrap;
 }
 
 .count {
@@ -94,6 +155,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.inline > * {
+  flex: 1 1 5.5rem;
 }
 
 .segmented {

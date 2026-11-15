@@ -22,6 +22,15 @@
   padding: var(--space-2) 0;
 }
 
+/* Si el contenido de la fila no cabe (un desplegable abierto en el móvil), baja a otra línea. */
+.row {
+  flex-wrap: wrap;
+}
+
+.row > details[open] {
+  flex-basis: 100%;
+}
+
 .row + .row {
   border-top: 1px solid var(--color-border);
 }
@@ -79,6 +88,46 @@
 
 .tableWrap {
   overflow-x: auto;
+}
+
+/* El detalle (JSON) puede no tener espacios: que se parta en vez de ensanchar la tabla. */
+.table td:last-child {
+  overflow-wrap: anywhere;
+}
+
+/* Móvil: cada fila de la tabla como una ficha, con el nombre de la columna delante de cada dato. */
+@media (max-width: 599px) {
+  .stackTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .stackTable tr {
+    display: block;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .stackTable td {
+    overflow-wrap: anywhere;
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: 2px 0;
+    border-bottom: 0;
+  }
+
+  .stackTable td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+  }
+
+  .stackTable td:empty {
+    display: none;
+  }
 }
 
 .inlineButton {
