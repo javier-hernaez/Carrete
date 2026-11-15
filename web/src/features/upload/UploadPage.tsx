@@ -84,6 +84,12 @@ export function UploadPage() {
               Elegir del móvil (sube en segundo plano)
             </Button>
           )}
+          {androidBridge()?.pickLimit && (
+            <p className={styles.pickHint}>
+              Hasta {androidBridge()?.pickLimit?.()} de cada vez; para más, repite o usa «Compartir» desde la
+              galería.
+            </p>
+          )}
           <Button variant={androidBridge() ? "secondary" : "primary"} onClick={() => files.current?.click()}>
             Elegir fotos y vídeos
           </Button>
