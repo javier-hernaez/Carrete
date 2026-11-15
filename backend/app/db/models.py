@@ -128,6 +128,11 @@ class User(TimestampMixin, Base):
     last_space_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     preferences: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
 
+    # Un único administrador en la instancia: el responsable del servidor.
+    __table_args__ = (
+        Index("uq_users_single_admin", "is_admin", unique=True, postgresql_where=text("is_admin")),
+    )
+
     @property
     def has_totp(self) -> bool:
         return self.totp_secret_enc is not None

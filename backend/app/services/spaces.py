@@ -1,5 +1,6 @@
 """Espacios, miembros y roles. Toda consulta sobre un espacio pasa por ``access``:
-exige pertenencia comprobada y responde 404 a lo ajeno, también al administrador."""
+exige pertenencia comprobada y responde 404 a lo ajeno. El administrador de la instancia es la
+excepción: tiene acceso de propietario a todos los espacios aunque no sea miembro."""
 
 from __future__ import annotations
 
@@ -7,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Membership, Space, User
@@ -32,7 +33,23 @@ class SpaceAccess:
         return RANK[self.role] >= RANK[minimum]
 
 
+def _as_admin(space: Space, user: User, membership: Membership | None) -> SpaceAccess:
+    """Acceso del administrador: propietario en cualquier espacio. Si no es miembro, la
+    pertenencia es virtual: no se guarda, así que no aparece en la lista de miembros."""
+    if membership is not None and membership.role == "owner":
+        return SpaceAccess(space, membership)
+    return SpaceAccess(space, Membership(space_id=space.id, user_id=user.id, role="owner"))
+
+
 def access(db: Session, user: User, space_id: uuid.UUID, minimum: str = "viewer") -> SpaceAccess:
+    if user.is_admin:
+        space = db.get(Space, space_id)
+        if space is None:
+            raise NotFound("Ese espacio no existe")
+        own = db.scalar(
+            select(Membership).where(Membership.space_id == space_id, Membership.user_id == user.id)
+        )
+        return _as_admin(space, user, own)
     row = db.execute(
         select(Space, Membership)
         .join(Membership, Membership.space_id == Space.id)
@@ -58,6 +75,15 @@ def _clean_name(name: str) -> str:
 
 
 def list_for_user(db: Session, user: User, *, include_archived: bool = True) -> list[SpaceAccess]:
+    if user.is_admin:
+        admin_query = (
+            select(Space, Membership)
+            .outerjoin(Membership, and_(Membership.space_id == Space.id, Membership.user_id == user.id))
+            .order_by(Space.archived_at.is_not(None), Space.name)
+        )
+        if not include_archived:
+            admin_query = admin_query.where(Space.archived_at.is_(None))
+        return [_as_admin(space, user, membership) for space, membership in db.execute(admin_query).tuples()]
     query = (
         select(Space, Membership)
         .join(Membership, Membership.space_id == Space.id)
