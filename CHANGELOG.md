@@ -4,6 +4,28 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versiones 
 
 ## [Sin publicar]
 
+### Corregido — Móvil
+
+- Varias pantallas (Administración, Repetidas, Exportar, Espacio, Álbumes) se salían por la derecha en
+  el móvil: la columna principal crecía con su contenido más ancho. Ahora nada desborda entre 320 y
+  412 px de ancho.
+- Revisar: en pantallas estrechas, «No vale» y «Vale» van en su propia fila y no quedan cortados.
+- Barra de selección: «Todas» y «Cancelar» siempre a la vista; las acciones se deslizan si no caben.
+  Ya no tapa la última fila de fotos.
+- Auditoría en el móvil como fichas; panel de información del visor opaco; campos de formulario que
+  ya no se salen de los diálogos; álbumes en dos columnas desde 320 px.
+- Prueba de aislamiento que recorre todas las rutas con un usuario ajeno al espacio y con ids ajenos
+  colados en peticiones sobre un espacio propio.
+
+### Cambiado
+
+- Hay un solo administrador (el responsable del servidor; la base de datos no admite un segundo)
+  y tiene acceso de propietario a todos los espacios, aunque no sea miembro (los ve en el selector, y
+  en la auditoría con todo el detalle). No se le añade como miembro.
+- Explicación de lo que puede hacer cada rol: al elegir el rol de una invitación, en «¿Qué puede hacer
+  cada rol?» de Miembros y en la pantalla de aceptar la invitación (que también avisa del acceso del
+  administrador).
+
 ### Añadido — Mapa y lugares
 
 - Nombre del lugar calculado en el servidor con GeoNames, sin servicios externos; búsqueda por lugar.
