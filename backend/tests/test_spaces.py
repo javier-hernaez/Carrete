@@ -66,15 +66,22 @@ def test_existing_user_accepts_invitation(world) -> None:  # type: ignore[no-unt
     token = invite(lucia, lucia.spaces["Familia"], "viewer")
     response = javier.post(f"/api/v1/invitations/by-token/{token}/accept", json={})
     assert response.json() == {"stage": "full", "space_id": lucia.spaces["Familia"]}
+    members = {
+        m["username"]: m["role"]
+        for m in lucia.get(f"/api/v1/spaces/{lucia.spaces['Familia']}/members").json()
+    }
+    assert members == {"lucia": "owner", "javier": "viewer"}
+    # Aunque sea lector en ese espacio, el administrador actúa como propietario en todos
     roles = {s["name"]: s["role"] for s in javier.get("/api/v1/spaces").json()}
-    assert roles == {"Pareja": "owner", "Familia": "viewer"}
+    assert roles == {"Pareja": "owner", "Familia": "owner"}
 
 
-def test_spaces_are_isolated(world) -> None:  # type: ignore[no-untyped-def]
-    """Nada de un espacio es visible para quien no es miembro, tampoco para el administrador."""
+def test_spaces_are_isolated(world, engine: Engine, new_client) -> None:  # type: ignore[no-untyped-def]
+    """Nada de un espacio es visible para quien no es miembro."""
     javier, lucia = world
+    pedro = join(new_client(), engine, invite(javier, javier.spaces["Pareja"]), "pedro")
     familia = lucia.spaces["Familia"]
-    assert familia not in {s["id"] for s in javier.get("/api/v1/spaces").json()}
+    assert familia not in {s["id"] for s in pedro.get("/api/v1/spaces").json()}
     for method, url, body in [
         ("get", f"/api/v1/spaces/{familia}", None),
         ("patch", f"/api/v1/spaces/{familia}", {"name": "Mía"}),
@@ -86,10 +93,27 @@ def test_spaces_are_isolated(world) -> None:  # type: ignore[no-untyped-def]
         ("get", f"/api/v1/spaces/{uuid.uuid4()}", None),
     ]:
         kwargs = {"json": body} if body is not None else {}
-        response = getattr(javier, method)(url, **kwargs)
+        response = getattr(pedro, method)(url, **kwargs)
         assert response.status_code == 404, (method, url, response.text)
         assert "Familia" not in response.text
-    assert javier.patch("/api/v1/me", json={"last_space_id": familia}).status_code == 404
+    assert pedro.patch("/api/v1/me", json={"last_space_id": familia}).status_code == 404
+
+
+def test_admin_has_owner_access_to_every_space(world) -> None:  # type: ignore[no-untyped-def]
+    """El administrador entra como propietario en todos los espacios, aunque no sea miembro."""
+    javier, lucia = world
+    familia = lucia.spaces["Familia"]
+    listed = {s["id"]: s for s in javier.get("/api/v1/spaces").json()}
+    assert listed[familia]["role"] == "owner"
+    assert familia in {s["id"] for s in javier.get("/api/v1/me").json()["spaces"]}
+    assert javier.get(f"/api/v1/spaces/{familia}").json()["role"] == "owner"
+    assert javier.patch(f"/api/v1/spaces/{familia}", json={"name": "Familia y amigos"}).status_code == 200
+    assert javier.post(f"/api/v1/spaces/{familia}/invitations", json={"role": "viewer"}).status_code == 201
+    # No se le añade como miembro: la lista de miembros sigue siendo la de siempre
+    members = javier.get(f"/api/v1/spaces/{familia}/members").json()
+    assert [m["username"] for m in members] == ["lucia"]
+    assert javier.patch("/api/v1/me", json={"last_space_id": familia}).status_code == 204
+    assert javier.get("/api/v1/me").json()["current_space_id"] == familia
 
 
 def test_role_matrix(world, engine: Engine, new_client) -> None:  # type: ignore[no-untyped-def]
@@ -133,7 +157,8 @@ def test_archive_space(world) -> None:  # type: ignore[no-untyped-def]
     javier, _ = world
     pareja = javier.spaces["Pareja"]
     assert javier.patch(f"/api/v1/spaces/{pareja}", json={"archived": True}).json()["archived"] is True
-    assert javier.get("/api/v1/spaces").json()[0]["archived"] is True
+    listed = {s["id"]: s for s in javier.get("/api/v1/spaces").json()}
+    assert listed[pareja]["archived"] is True
 
 
 def _id(person: Person) -> str:
@@ -242,3 +267,13 @@ def test_admin_deletes_account(world, engine: Engine) -> None:  # type: ignore[n
             conn.execute(text("SELECT count(*) FROM audit_log WHERE action = 'user.deleted'")).scalar_one()
             == 1
         )
+
+
+def test_only_one_admin(world, engine: Engine) -> None:  # type: ignore[no-untyped-def]
+    """La base de datos no admite un segundo administrador."""
+    from sqlalchemy.exc import IntegrityError
+
+    with pytest.raises(IntegrityError), engine.begin() as conn:
+        conn.execute(text("UPDATE users SET is_admin = true WHERE username = 'lucia'"))
+    with engine.connect() as conn:
+        assert conn.scalar(text("SELECT count(*) FROM users WHERE is_admin")) == 1

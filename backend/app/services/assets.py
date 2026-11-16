@@ -25,9 +25,18 @@ AnySelect = Select[*tuple[Any, ...]]
 def access_asset(
     db: Session, user: User, asset_id: uuid.UUID, minimum: str = "viewer"
 ) -> tuple[Asset, Blob, str]:
-    """Carga un elemento comprobando que la persona es miembro de su espacio. 404 si no."""
+    """Carga un elemento comprobando que la persona es miembro de su espacio (o administradora,
+    con acceso de propietario a todo). 404 si no."""
     from app.services.spaces import RANK
 
+    if user.is_admin:
+        found = db.execute(
+            select(Asset, Blob).join(Blob, Blob.id == Asset.blob_id).where(Asset.id == asset_id)
+        ).first()
+        if found is None:
+            raise NotFound("Esa foto no existe")
+        asset, blob = found.tuple()
+        return asset, blob, "owner"
     row = db.execute(
         select(Asset, Blob, Membership.role)
         .join(Blob, Blob.id == Asset.blob_id)
@@ -135,6 +144,8 @@ class Filters:
     date_to: date | None = None
     album_id: uuid.UUID | None = None
     no_album: bool = False
+    tag_ids: list[uuid.UUID] | None = None
+    no_tag: bool = False
     doubtful: bool | None = None
     trashed: bool = False
     query: str | None = None
@@ -168,8 +179,8 @@ def apply_filters(stmt: AnySelect, space_id: uuid.UUID, f: Filters) -> AnySelect
         cond = Asset.taken_at_source.in_(DOUBTFUL_SOURCES)
         stmt = stmt.where(cond if f.doubtful else ~cond)
     if f.query:
-        # Búsqueda: nombre de fichero, descripción, lugar y álbum.
-        from app.db.models import Album, AlbumAsset
+        # Búsqueda: nombre de fichero, descripción, lugar, álbum y etiqueta.
+        from app.db.models import Album, AlbumAsset, AssetTag, Tag
 
         like = f"%{f.query.replace('%', '').replace('_', '')}%"
         in_album = Asset.id.in_(
@@ -184,6 +195,11 @@ def apply_filters(stmt: AnySelect, space_id: uuid.UUID, f: Filters) -> AnySelect
                 Asset.place_name.ilike(like),
                 Asset.place_region.ilike(like),
                 in_album,
+                Asset.id.in_(
+                    select(AssetTag.asset_id)
+                    .join(Tag, Tag.id == AssetTag.tag_id)
+                    .where(Tag.space_id == space_id, Tag.name.ilike(like))
+                ),
             )
         )
     if f.located is not None:
@@ -195,8 +211,9 @@ def apply_filters(stmt: AnySelect, space_id: uuid.UUID, f: Filters) -> AnySelect
             Asset.lon.between(west, east) if west <= east else or_(Asset.lon >= west, Asset.lon <= east)
         )
     from app.services import albums as album_service
+    from app.services import tags as tag_service
 
-    return album_service.apply_album_filter(stmt, f)
+    return tag_service.apply_tag_filter(album_service.apply_album_filter(stmt, f), f)
 
 
 def encode_cursor(asset: Asset) -> str:

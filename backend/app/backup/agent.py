@@ -222,6 +222,7 @@ class BackupAgent:
     def write_manifests(self) -> int:
         started = datetime.now(UTC)
         from app.services import albums as album_service
+        from app.services import tags as tag_service
 
         stamp = started.strftime("%Y-%m-%d")
         written = 0
@@ -232,6 +233,7 @@ class BackupAgent:
                 folder.mkdir(parents=True, exist_ok=True)
                 tmp = folder / f"{stamp}.jsonl.partial"
                 album_map = album_service.album_names_by_asset(db, space.id)
+                tag_map = tag_service.tag_names_by_asset(db, space.id)
                 with tmp.open("w", encoding="utf-8") as f:
                     f.write(
                         json.dumps(
@@ -251,10 +253,8 @@ class BackupAgent:
                         .order_by(Asset.taken_at_local)
                     )
                     for asset, blob in rows.tuples():
-                        f.write(
-                            json.dumps(manifest_entry(asset, blob, names, album_map), ensure_ascii=False)
-                            + "\n"
-                        )
+                        entry = manifest_entry(asset, blob, names, album_map, tag_map)
+                        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
                         written += 1
                 tmp.replace(folder / f"{stamp}.jsonl")
                 for old in sorted(folder.glob("*.jsonl"))[:-KEEP_MANIFESTS]:
@@ -371,7 +371,11 @@ class BackupAgent:
 
 
 def manifest_entry(
-    asset: Asset, blob: Blob, names: dict[Any, str], albums: dict[Any, list[str]]
+    asset: Asset,
+    blob: Blob,
+    names: dict[Any, str],
+    albums: dict[Any, list[str]],
+    tags: dict[Any, list[str]] | None = None,
 ) -> dict[str, Any]:
     return {
         "id": str(asset.id),
@@ -385,6 +389,7 @@ def manifest_entry(
         "favorite": asset.is_favorite,
         "description": asset.description,
         "albums": albums.get(asset.id, []),
+        "tags": (tags or {}).get(asset.id, []),
         "lat": asset.lat,
         "lon": asset.lon,
         "uploaded_by": names.get(asset.uploaded_by),

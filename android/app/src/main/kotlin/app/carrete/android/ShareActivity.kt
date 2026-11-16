@@ -88,8 +88,8 @@ class ShareActivity : ComponentActivity() {
             Toast.makeText(this, getString(R.string.preparing, uris.size), Toast.LENGTH_SHORT).show()
             lifecycleScope.launch {
                 // La copia se hace ya, antes de cerrar: el permiso sobre las URIs recibidas es temporal.
-                withContext(Dispatchers.IO) { Intake(this@ShareActivity).enqueue(uris, space.id, album?.id) }
-                Toast.makeText(this@ShareActivity, R.string.queued, Toast.LENGTH_SHORT).show()
+                val result = withContext(Dispatchers.IO) { Intake(this@ShareActivity).enqueue(uris, space.id, album?.id) }
+                Toast.makeText(this@ShareActivity, intakeMessage(this@ShareActivity, result), Toast.LENGTH_LONG).show()
                 finish()
             }
         }

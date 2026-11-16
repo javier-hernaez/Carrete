@@ -8,7 +8,7 @@ import { Alert, PageTitle } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { Icon } from "../../design-system/components/Icon";
 import { cx } from "../../design-system/cx";
-import { androidBridge } from "./android";
+import { androidBridge, isMobileBrowser } from "./android";
 import { filesFromDataTransfer, filesFromInput } from "./folders";
 import { uploadQueue, type QueueItem } from "./queue";
 import { FolderAlbums, Imports } from "./FolderAlbums";
@@ -31,6 +31,8 @@ export function UploadPage() {
   const [dragging, setDragging] = useState(false);
   const files = useRef<HTMLInputElement>(null);
   const folder = useRef<HTMLInputElement>(null);
+  const bridge = androidBridge();
+  const mobile = isMobileBrowser();
 
   // Al terminar un lote, la línea temporal se refresca.
   useEffect(() => {
@@ -76,18 +78,47 @@ export function UploadPage() {
         onDrop={(e) => void onDrop(e)}
       >
         <Icon name="upload" size={40} />
-        <p className={styles.dropText}>Arrastra aquí fotos, vídeos o carpetas enteras</p>
+        {bridge || mobile ? (
+          <p className={styles.dropText}>Sube fotos y vídeos del móvil</p>
+        ) : (
+          <p className={styles.dropText}>Arrastra aquí fotos, vídeos o carpetas enteras</p>
+        )}
         <p>También un .zip exportado de WhatsApp o de Google Fotos (Takeout): se importa con sus fechas.</p>
         <div className={styles.buttons}>
-          {androidBridge() && (
-            <Button variant="primary" onClick={() => androidBridge()?.pickPhotos(space.id)}>
-              Elegir del móvil (sube en segundo plano)
-            </Button>
+          {bridge ? (
+            <>
+              <Button variant="primary" onClick={() => bridge.pickPhotos(space.id)}>
+                Elegir fotos
+              </Button>
+              {bridge.pickFolder && (
+                <Button variant="primary" onClick={() => bridge.pickFolder?.(space.id)}>
+                  Elegir una carpeta
+                </Button>
+              )}
+              <Button onClick={() => files.current?.click()}>Elegir ficheros o un .zip</Button>
+              <p className={styles.pickHint}>
+                {bridge.pickLimit
+                  ? `«Elegir fotos» admite hasta ${bridge.pickLimit()} de cada vez. `
+                  : "«Elegir fotos» tiene un máximo por vez. "}
+                {bridge.pickFolder
+                  ? "«Elegir una carpeta» sube todo lo que contiene, sin límite. Las dos siguen en segundo plano aunque apagues la pantalla."
+                  : "Actualiza la app (Ajustes → App para el móvil) para poder elegir carpetas enteras."}
+              </p>
+            </>
+          ) : (
+            <>
+              <Button variant="primary" onClick={() => files.current?.click()}>
+                Elegir fotos y vídeos
+              </Button>
+              {!mobile && <Button onClick={() => folder.current?.click()}>Elegir una carpeta</Button>}
+              {mobile && (
+                <p className={styles.pickHint}>
+                  Deja esta pantalla abierta hasta que termine. Para subir carpetas enteras o muchas fotos en
+                  segundo plano, usa la app de Android (Ajustes → App para el móvil).
+                </p>
+              )}
+            </>
           )}
-          <Button variant={androidBridge() ? "secondary" : "primary"} onClick={() => files.current?.click()}>
-            Elegir fotos y vídeos
-          </Button>
-          <Button onClick={() => folder.current?.click()}>Elegir una carpeta</Button>
         </div>
         <input
           ref={files}

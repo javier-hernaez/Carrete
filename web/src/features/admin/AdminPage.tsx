@@ -171,7 +171,7 @@ function AuditCard() {
         }}
       />
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={`${styles.table ?? ""} ${styles.stackTable ?? ""}`}>
           <thead>
             <tr>
               <th scope="col">Cuándo</th>
@@ -184,11 +184,11 @@ function AuditCard() {
           <tbody>
             {audit.data?.items.map((e) => (
               <tr key={e.id}>
-                <td>{dateTime.format(new Date(e.occurred_at))}</td>
-                <td>{e.actor_name ?? "—"}</td>
-                <td>{e.action}</td>
-                <td>{e.ip ?? ""}</td>
-                <td>{Object.keys(e.detail).length ? JSON.stringify(e.detail) : ""}</td>
+                <td data-label="Cuándo">{dateTime.format(new Date(e.occurred_at))}</td>
+                <td data-label="Quién">{e.actor_name ?? "—"}</td>
+                <td data-label="Acción">{e.action}</td>
+                <td data-label="IP">{e.ip ?? ""}</td>
+                <td data-label="Detalle">{Object.keys(e.detail).length ? JSON.stringify(e.detail) : ""}</td>
               </tr>
             ))}
           </tbody>

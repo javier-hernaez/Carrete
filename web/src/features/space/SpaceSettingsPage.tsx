@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { api, type Role } from "../../api/client";
 import { errorMessage } from "../../app/errors";
+import { RoleHelp, RoleSummary } from "../../app/RoleHelp";
 import { ROLE_OPTIONS } from "../../app/roles";
 import { isOwner, useSession } from "../../app/session";
 import { Button } from "../../design-system/components/Button";
@@ -112,6 +113,7 @@ function MembersCard() {
           </li>
         ))}
       </ul>
+      <RoleHelp />
     </Card>
   );
 }
@@ -142,6 +144,7 @@ function InviteCard() {
           Crear enlace
         </Button>
       </div>
+      <RoleSummary role={role} />
       {create.data?.url && (
         <>
           <p className={styles.link}>{create.data.url}</p>

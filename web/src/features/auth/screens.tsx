@@ -7,6 +7,8 @@ import { errorMessage, UserError } from "../../app/errors";
 import { Button } from "../../design-system/components/Button";
 import { Alert } from "../../design-system/components/Card";
 import { TextField } from "../../design-system/components/Field";
+import { RoleSummary } from "../../app/RoleHelp";
+import { ADMIN_NOTE } from "../../app/roles";
 import { AuthLayout } from "./AuthLayout";
 import styles from "./auth.module.css";
 import { EnrollTotp } from "./EnrollTotp";
@@ -258,6 +260,12 @@ export function InviteScreen() {
           accept.mutate();
         }}
       >
+        {data?.space_name && data.role && (
+          <>
+            <RoleSummary role={data.role} />
+            <p className={styles.note}>{ADMIN_NOTE}</p>
+          </>
+        )}
         {accept.isError && <Alert tone="danger">{errorMessage(accept.error)}</Alert>}
         {loggedIn ? (
           <p>

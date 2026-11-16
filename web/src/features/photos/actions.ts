@@ -20,7 +20,7 @@ export function useAssetActions(spaceId: string) {
   const queryClient = useQueryClient();
   const refresh = useCallback(async () => {
     await Promise.all(
-      ["assets", "timeline", "trash", "albums", "album", "counters", "duplicates", "asset"].map(
+      ["assets", "timeline", "trash", "albums", "album", "tags", "counters", "duplicates", "asset"].map(
         (key) => queryClient.invalidateQueries({ queryKey: [key] }),
       ),
     );
@@ -32,11 +32,17 @@ export function useAssetActions(spaceId: string) {
       action: string,
       extra: Record<string, unknown>,
       message: Message,
-      options: { quiet?: boolean } = {},
+      options: { quiet?: boolean; zero?: string } = {},
     ) => {
       try {
         const result = await api.batch(spaceId, ids, action, extra);
-        await refresh();
+        // La lista se recarga en segundo plano: el aviso sale en cuanto el servidor confirma, aunque la
+        // conexión sea lenta (antes esperaba a recargarlo todo y parecía que el botón no hacía nada).
+        void refresh();
+        if (result.count === 0) {
+          showToast(options.zero ?? "No ha cambiado nada: ya estaba así");
+          return result;
+        }
         const undo = result.undo;
         if (!options.quiet || undo) {
           showToast(message(result.count), {
@@ -105,8 +111,28 @@ export function useAssetActions(spaceId: string) {
             : plural("Quitada de favoritas", (n) => `${n} quitadas de favoritas`),
         ),
       addToAlbum: (ids: string[], albumId: string, albumName: string) =>
-        run(ids, "add_album", { album_id: albumId }, (n) =>
-          n === 0 ? `Ya estaban en «${albumName}»` : `${n} añadidas a «${albumName}»`,
+        run(
+          ids,
+          "add_album",
+          { album_id: albumId },
+          plural(`Añadida a «${albumName}»`, (n) => `${n} añadidas a «${albumName}»`),
+          { zero: ids.length === 1 ? `Ya estaba en «${albumName}»` : `Ya estaban en «${albumName}»` },
+        ),
+      addTag: (ids: string[], tag: { id: string; name: string }) =>
+        run(
+          ids,
+          "add_tag",
+          { tag_id: tag.id },
+          plural(`Etiqueta «${tag.name}» puesta`, (n) => `«${tag.name}» puesta a ${n}`),
+          { zero: `Ya tenían «${tag.name}»` },
+        ),
+      removeTag: (ids: string[], tag: { id: string; name: string }) =>
+        run(
+          ids,
+          "remove_tag",
+          { tag_id: tag.id },
+          plural(`Etiqueta «${tag.name}» quitada`, (n) => `«${tag.name}» quitada a ${n}`),
+          { zero: `No tenían «${tag.name}»` },
         ),
       removeFromAlbum: (ids: string[], albumId: string) =>
         run(

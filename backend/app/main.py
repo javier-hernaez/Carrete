@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
+from starlette.middleware.gzip import GZipMiddleware
 
 from app import __version__
 from app.api import (
@@ -27,6 +28,7 @@ from app.api import (
     map,
     meta,
     spaces,
+    tags,
     uploads,
 )
 from app.api.errors import install_error_handlers, problem
@@ -36,6 +38,20 @@ from app.security.csrf import CSRFMiddleware
 from app.security.headers import RequestContextMiddleware, SecurityHeadersMiddleware
 
 log = logging.getLogger(__name__)
+
+NOT_COMPRESSED = (
+    "image/*",
+    "video/*",
+    "audio/*",
+    "font/*",
+    "application/zip",
+    "application/gzip",
+    "application/x-gzip",
+    "application/octet-stream",
+    "application/vnd.android.package-archive",
+    "application/grpc",
+    "text/event-stream",
+)
 
 # Rutas que nunca son la web: si no existen, 404 en problem+json en lugar de devolver index.html.
 _NON_SPA_PREFIXES = ("/api/", "/healthz", "/readyz", "/assets/")
@@ -71,6 +87,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(uploads.router)
     app.include_router(assets.router)
     app.include_router(albums.router)
+    app.include_router(tags.router)
     app.include_router(duplicates.router)
     app.include_router(exports.router)
     app.include_router(android.router)
@@ -86,6 +103,11 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         _mount_web(app, settings.static_dir)
 
     # El último añadido es el más externo: el identificador de petición envuelve todo.
+    # Compresión solo de texto (JSON, JS, CSS, HTML): con una conexión lenta es la diferencia entre
+    # esperar y no esperar. Fotos, vídeos, ZIP y respuestas parciales (Range) salen tal cual.
+    app.add_middleware(
+        GZipMiddleware, minimum_size=1024, compresslevel=6, exclude_content_types=NOT_COMPRESSED
+    )
     app.add_middleware(CSRFMiddleware, public_origin=settings.public_origin)
     app.add_middleware(SecurityHeadersMiddleware, settings=settings)
     app.add_middleware(RequestContextMiddleware)

@@ -561,6 +561,24 @@
             "title": "Space Id",
             "type": "string"
           },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Tag Ids",
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
           "taken_at": {
             "format": "date-time",
             "title": "Taken At",
@@ -682,7 +700,8 @@
           "processing_error",
           "contributors",
           "trashed_at",
-          "albums"
+          "albums",
+          "tags"
         ],
         "title": "AssetDetail",
         "type": "object"
@@ -754,6 +773,14 @@
             ],
             "title": "Source",
             "type": "string"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Tag Ids",
+            "type": "array"
           },
           "taken_at": {
             "format": "date-time",
@@ -1001,6 +1028,8 @@
               "favorite",
               "add_album",
               "remove_album",
+              "add_tag",
+              "remove_tag",
               "set_date",
               "shift_date",
               "revert",
@@ -1109,6 +1138,18 @@
               }
             ],
             "title": "State"
+          },
+          "tag_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag Id"
           },
           "taken_at": {
             "anyOf": [
@@ -1463,6 +1504,14 @@
             ],
             "title": "Source",
             "type": "string"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Tag Ids",
+            "type": "array"
           },
           "taken_at": {
             "format": "date-time",
@@ -2940,6 +2989,67 @@
           "asset_ids"
         ],
         "title": "SuggestionOut",
+        "type": "object"
+      },
+      "TagIn": {
+        "properties": {
+          "asset_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "title": "Asset Ids",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TagIn",
+        "type": "object"
+      },
+      "TagOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "count"
+        ],
+        "title": "TagOut",
+        "type": "object"
+      },
+      "TagPatch": {
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TagPatch",
         "type": "object"
       },
       "TimelineOut": {
@@ -5629,6 +5739,37 @@
           },
           {
             "in": "query",
+            "name": "tag_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 10,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "no_tag",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "No Tag",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "doubtful",
             "required": false,
             "schema": {
@@ -6916,6 +7057,213 @@
         ]
       }
     },
+    "/api/v1/spaces/{space_id}/tags": {
+      "get": {
+        "operationId": "list_tags_api_v1_spaces__space_id__tags_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TagOut"
+                  },
+                  "title": "Response List Tags Api V1 Spaces  Space Id  Tags Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tags",
+        "tags": [
+          "etiquetas"
+        ]
+      },
+      "post": {
+        "description": "Crea la etiqueta (o devuelve la que ya tiene ese nombre) y se la pone a los elementos que se den.",
+        "operationId": "create_tag_api_v1_spaces__space_id__tags_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Tag",
+        "tags": [
+          "etiquetas"
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}/tags/{tag_id}": {
+      "delete": {
+        "description": "Eliminar una etiqueta nunca elimina fotos: solo se la quita a todas.",
+        "operationId": "delete_tag_api_v1_spaces__space_id__tags__tag_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tag Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Tag",
+        "tags": [
+          "etiquetas"
+        ]
+      },
+      "patch": {
+        "operationId": "rename_tag_api_v1_spaces__space_id__tags__tag_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tag_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tag Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rename Tag",
+        "tags": [
+          "etiquetas"
+        ]
+      }
+    },
     "/api/v1/spaces/{space_id}/timeline": {
       "get": {
         "operationId": "timeline_api_v1_spaces__space_id__timeline_get",
@@ -7087,6 +7435,37 @@
             "schema": {
               "default": false,
               "title": "No Album",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 10,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "no_tag",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "No Tag",
               "type": "boolean"
             }
           },

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 
 import { api } from "../api/client";
 import { Icon, type IconName } from "../design-system/components/Icon";
@@ -48,6 +48,9 @@ export function AppShell() {
     applyTheme(theme);
   }, [theme]);
   const items = NAV.filter((item) => item.to !== "/mapa" || info.data?.map_enabled === true);
+  // El botón flotante de subir solo donde se ven fotos: en el resto tapaba botones y textos.
+  const { pathname } = useLocation();
+  const withFab = pathname === "/" || pathname.startsWith("/albumes");
 
   return (
     <div className={styles.shell}>
@@ -102,14 +105,16 @@ export function AppShell() {
         {space && <SidebarAlbums spaceId={space.id} editor={space.role !== "viewer"} />}
       </nav>
 
-      <main id="contenido" className={styles.main} tabIndex={-1}>
+      <main id="contenido" className={cx(styles.main, withFab && styles.mainWithFab)} tabIndex={-1}>
         <Outlet />
       </main>
 
       <Toaster />
-      <NavLink to="/subir" className={cx(styles.fab)} aria-label={t("action.upload")}>
-        <Icon name="upload" />
-      </NavLink>
+      {withFab && (
+        <NavLink to="/subir" className={cx(styles.fab)} aria-label={t("action.upload")}>
+          <Icon name="upload" />
+        </NavLink>
+      )}
     </div>
   );
 }

@@ -21,4 +21,4 @@ internet ──TLS──▶ tailscaled (Funnel) ──▶ 127.0.0.1:8010 ──�
 | Worker | — | Originales en solo lectura | Errores registrados por tarea | Sin red: no puede filtrar nada | Tiempo máximo, `nice`, límites de memoria y CPU | Sin privilegios, solo lectura, sin capacidades |
 | Medios servidos | Sesión y pertenencia en cada fichero | — | — | `Cache-Control: private`; originales como adjunto; `nosniff` | Range para descargas grandes | — |
 | Copias | — | Enlaces duros (borrar en `datos/` no afecta) y verificación semanal | Ejecuciones registradas | Carpeta no accesible para app y worker; sin secretos en la copia de configuración | Aviso si la copia se atrasa | Contenedor propio sin red |
-| Administración | — | Auditoría de solo inserción (disparador) | Toda acción de administración auditada | El administrador no ve espacios ajenos | — | Reautenticación |
+| Administración | — | Auditoría de solo inserción (disparador) | Toda acción de administración auditada | El administrador ve todos los espacios; sus acciones quedan en la auditoría | — | Reautenticación |

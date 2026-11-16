@@ -17,6 +17,6 @@ importante (nuevo despliegue, copia externa, abrir a más personas).
 | R10 | Despliegue automático de una versión defectuosa | 2 | 2 | 4 | CI completo antes de `latest`; volcado antes de migrar; expandir/contraer; vuelta atrás por `:sha` | Bajo |
 | R11 | Dependencia o imagen comprometida | 1 | 3 | 3 | Versiones fijadas con hash; `pip-audit`, `npm audit`, Trivy, SBOM; imágenes base oficiales | Bajo |
 | R12 | Acceso físico al disco (fotos sin cifrar en reposo) | 1 | 3 | 3 | Opcional: LUKS (requiere `sudo`) | **Aceptado** |
-| R13 | El administrador del servidor ve espacios ajenos en el disco | 1 | 2 | 2 | La interfaz no se lo permite; el acceso físico se documenta con transparencia | **Aceptado** |
+| R13 | El administrador ve y modifica los espacios ajenos | 3 | 2 | 6 | Decisión deliberada: acceso de propietario a todo; cada acción queda en la auditoría; 2FA y reautenticación en lo sensible | **Aceptado** |
 | R14 | Abuso de recursos (subidas masivas que llenan el disco) | 2 | 2 | 4 | Solo personas invitadas; tamaño máximo por fichero; reserva de disco; avisos al 80 y 90 % | Bajo |
 | R15 | Pérdida de la clave `CARRETE_SECRET_KEY` | 1 | 2 | 2 | Copia en el gestor de contraseñas; sin ella hay que volver a activar el 2FA de todos | Bajo |

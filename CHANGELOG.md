@@ -4,6 +4,39 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versiones 
 
 ## [Sin publicar]
 
+### Corregido — Móvil
+
+- App Android: se cerraba al pulsar «Elegir del móvil» en móviles cuyo selector de fotos admite menos de
+  200 elementos de una vez (normalmente 100). Ahora pide el máximo de cada móvil y la web lo indica.
+- App Android: se cerraba al recibir las fotos del selector en Android 15 (no deja leer el original con
+  ubicación de esas fotos). Ahora sube la foto tal cual y un fichero ilegible ya no tumba el lote.
+- App Android: «Elegir una carpeta» con el selector de carpetas de Android, que sube la carpeta y sus
+  subcarpetas sin límite y sin copiar las fotos al móvil.
+- App Android: los botones de la web para elegir ficheros (también un .zip) no hacían nada dentro de la
+  app.
+- App Android: el resumen final de la subida a veces no aparecía (Android descartaba notificaciones por
+  exceso de actualizaciones de progreso).
+- Web en el navegador del móvil: ya no ofrece «Elegir una carpeta», que ahí no funciona, y remite a la app.
+- Varias pantallas (Administración, Repetidas, Exportar, Espacio, Álbumes) se salían por la derecha en
+  el móvil: la columna principal crecía con su contenido más ancho. Ahora nada desborda entre 320 y
+  412 px de ancho.
+- Revisar: en pantallas estrechas, «No vale» y «Vale» van en su propia fila y no quedan cortados.
+- Barra de selección: «Todas» y «Cancelar» siempre a la vista; las acciones se deslizan si no caben.
+  Ya no tapa la última fila de fotos.
+- Auditoría en el móvil como fichas; panel de información del visor opaco; campos de formulario que
+  ya no se salen de los diálogos; álbumes en dos columnas desde 320 px.
+- Prueba de aislamiento que recorre todas las rutas con un usuario ajeno al espacio y con ids ajenos
+  colados en peticiones sobre un espacio propio.
+
+### Cambiado
+
+- Hay un solo administrador (el responsable del servidor; la base de datos no admite un segundo)
+  y tiene acceso de propietario a todos los espacios, aunque no sea miembro (los ve en el selector, y
+  en la auditoría con todo el detalle). No se le añade como miembro.
+- Explicación de lo que puede hacer cada rol: al elegir el rol de una invitación, en «¿Qué puede hacer
+  cada rol?» de Miembros y en la pantalla de aceptar la invitación (que también avisa del acceso del
+  administrador).
+
 ### Añadido — Mapa y lugares
 
 - Nombre del lugar calculado en el servidor con GeoNames, sin servicios externos; búsqueda por lugar.
