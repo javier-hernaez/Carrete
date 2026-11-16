@@ -26,6 +26,12 @@
     <string name="share_no_space">No tienes ningún espacio donde puedas subir.</string>
     <string name="preparing">Preparando %d…</string>
     <string name="queued">En cola: se subirán aunque apagues la pantalla.</string>
+    <string name="queued_count" tools:ignore="PluralsCandidate">%1$d en cola: se subirán aunque apagues la pantalla.</string>
+    <string name="queued_some_failed" tools:ignore="PluralsCandidate">%1$d en cola; %2$d no se pudieron leer.</string>
+    <string name="nothing_read">No se pudo leer ninguna de las fotos elegidas.</string>
+    <string name="folder_scanning">Buscando fotos y vídeos en la carpeta…</string>
+    <string name="folder_empty">En esa carpeta no hay fotos ni vídeos.</string>
+    <string name="folder_error">No se pudo leer esa carpeta. Prueba con otra (Android no deja elegir algunas, como Descargas entera).</string>
     <string name="channel_uploads">Subidas</string>
     <string name="uploading_title">Subiendo %1$d de %2$d</string>
     <string name="upload_done_title">Subida terminada</string>

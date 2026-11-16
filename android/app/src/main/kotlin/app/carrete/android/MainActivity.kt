@@ -2,13 +2,16 @@ package app.carrete.android
 
 import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.URLUtil
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -40,10 +43,40 @@ class MainActivity : ComponentActivity() {
         if (uris.isNotEmpty()) {
             Toast.makeText(this, getString(R.string.preparing, uris.size), Toast.LENGTH_SHORT).show()
             lifecycleScope.launch {
-                withContext(Dispatchers.IO) { Intake(this@MainActivity).enqueue(uris, space, null) }
-                Toast.makeText(this@MainActivity, R.string.queued, Toast.LENGTH_SHORT).show()
+                val result = withContext(Dispatchers.IO) { Intake(this@MainActivity).enqueue(uris, space, null) }
+                Toast.makeText(this@MainActivity, intakeMessage(this@MainActivity, result), Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    // Carpeta entera (y subcarpetas): sin límite de cantidad y sin copiar las fotos al móvil.
+    private val folderPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        val space = pickSpace ?: return@registerForActivityResult
+        tree ?: return@registerForActivityResult
+        Toast.makeText(this, R.string.folder_scanning, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) { runCatching { Intake(this@MainActivity).enqueueFolder(tree, space) } }
+            val text = result.fold({ intakeMessage(this@MainActivity, it) }, {
+                Log.w("Carrete", "Carpeta ilegible: $tree", it)
+                getString(R.string.folder_error)
+            })
+            Toast.makeText(this@MainActivity, text, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Los <input type="file"> de la web (p. ej. «Elegir fotos y vídeos», un .zip): la WebView no los
+    // atiende sola, hay que abrir el selector y devolverle lo elegido.
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private val fileChooser = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data
+        val uris = if (result.resultCode != RESULT_OK || data == null) {
+            null
+        } else {
+            val clip = data.clipData
+            if (clip != null) Array(clip.itemCount) { clip.getItemAt(it).uri } else data.data?.let { arrayOf(it) }
+        }
+        fileCallback?.onReceiveValue(uris)
+        fileCallback = null
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -68,7 +101,26 @@ class MainActivity : ComponentActivity() {
             mediaPlaybackRequiresUserGesture = true
         }
         CookieManager.getInstance().setAcceptCookie(true)
-        web.webChromeClient = WebChromeClient()
+        web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                fileCallback?.onReceiveValue(null)
+                fileCallback = callback
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    val types = params.acceptTypes.flatMap { it.split(",") }.map { it.trim() }.filter { it.contains('/') }
+                    if (types.isNotEmpty()) putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                }
+                return try {
+                    fileChooser.launch(intent)
+                    true
+                } catch (e: ActivityNotFoundException) {
+                    fileCallback = null
+                    false
+                }
+            }
+        }
         web.webViewClient = object : WebViewClient() {
             // Solo se navega dentro del servidor; cualquier otro enlace se abre en el navegador.
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -137,6 +189,16 @@ class MainActivity : ComponentActivity() {
                 if (!ServerUrl.sameOrigin(server, current) || !spaceId.matches(Regex("^[0-9a-f-]{36}$"))) return@runOnUiThread
                 pickSpace = spaceId
                 picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+            }
+        }
+
+        @JavascriptInterface
+        fun pickFolder(spaceId: String) {
+            runOnUiThread {
+                val current = web.url ?: return@runOnUiThread
+                if (!ServerUrl.sameOrigin(server, current) || !spaceId.matches(Regex("^[0-9a-f-]{36}$"))) return@runOnUiThread
+                pickSpace = spaceId
+                folderPicker.launch(null)
             }
         }
 
