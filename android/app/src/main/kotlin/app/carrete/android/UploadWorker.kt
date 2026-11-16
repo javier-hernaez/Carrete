@@ -3,9 +3,13 @@ package app.carrete.android
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -40,13 +44,22 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             return@withContext Result.success()
         }
         setForeground(foreground(0, items.size, items.first().name))
-        val uploader = Uploader(CarreteApi(server, token), TusClient(server, token), store)
+        val uploader = Uploader(CarreteApi(server, token), TusClient(server, token), store) { item ->
+            if (Source.isContentUri(item.file)) UriSource(applicationContext, Uri.parse(item.file)) else FileSource(File(item.file))
+        }
         var retry = false
+        // Android descarta las notificaciones de una app que pasa de ~5 por segundo, y entre las descartadas
+        // podía caer el resumen final. Con muchas fotos pequeñas, el progreso se actualiza una vez por segundo.
+        var lastProgress = 0L
         items.forEachIndexed { index, item ->
             try {
                 uploader.upload(item) { sent ->
-                    val fraction = if (item.size > 0) sent.toDouble() / item.size else 1.0
-                    notifications.notify(PROGRESS_ID, progress(index + fraction, items.size, item.name))
+                    val now = SystemClock.elapsedRealtime()
+                    if (now - lastProgress >= PROGRESS_EVERY_MS) {
+                        lastProgress = now
+                        val fraction = if (item.size > 0) sent.toDouble() / item.size else 1.0
+                        notifications.notify(PROGRESS_ID, progress(index + fraction, items.size, item.name))
+                    }
                 }
             } catch (e: ApiException) {
                 if (e.status == 401) return@withContext Result.failure() // token revocado: hay que volver a entrar
@@ -61,10 +74,23 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         Result.success()
     }
 
+    /** Suelta el permiso persistente de las carpetas que ya no tienen nada pendiente. */
+    private fun releaseFolders(group: List<QueueItem>, store: QueueStore) {
+        val stillUsed = store.pending().mapNotNull { it.tree }.toSet()
+        for (tree in group.mapNotNull { it.tree }.toSet() - stillUsed) {
+            try {
+                applicationContext.contentResolver.releasePersistableUriPermission(Uri.parse(tree), Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (e: SecurityException) {
+                // Ya no lo teníamos.
+            }
+        }
+    }
+
     /** Resumen final: «58 subidas, 12 ya estaban, 0 errores». */
     private fun finishBatches(store: QueueStore, api: CarreteApi) {
         val finished = store.all().groupBy { it.batch }.filterValues { g -> g.none { it.status == QueueItem.PENDING } }
         for ((batch, group) in finished) {
+            releaseFolders(group, store)
             val summary = store.summary(batch)
             try {
                 api.summary(group.first().spaceId, summary.uploaded, summary.duplicates, summary.failed)
@@ -72,6 +98,7 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                 // El resumen de auditoría no es imprescindible.
             }
             val text = applicationContext.getString(R.string.upload_summary, summary.uploaded, summary.duplicates, summary.failed)
+            Log.i("CarreteUpload", "Lote terminado: $text")
             notifications.cancel(PROGRESS_ID)
             notifications.notify(
                 SUMMARY_ID,
@@ -110,6 +137,7 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         const val CHANNEL = "subidas"
         private const val PROGRESS_ID = 1
         private const val SUMMARY_ID = 2
+        private const val PROGRESS_EVERY_MS = 1000L
 
         fun queueStore(context: Context) = QueueStore(File(context.filesDir, "cola"))
 

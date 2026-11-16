@@ -130,4 +130,34 @@ class UploaderTest {
         assertEquals(QueueItem.DONE, uploader.upload(pending).status) // HEAD → sigue desde donde se quedó
         assertTrue(fake.received.toByteArray().contentEquals(content))
     }
+
+    /** Original de una carpeta (no copiado): se lee por el origen, se reanuda en su sitio y no se borra. */
+    @Test
+    fun sube_un_original_de_carpeta_sin_copiarlo_y_lo_reanuda() {
+        val content = ByteArray(3 * 1024 * 1024) { (it % 13).toByte() }
+        val original = tmp.newFile("original.jpg").apply { writeBytes(content) }
+        val store = QueueStore(tmp.newFolder())
+        store.addReference("content://docs/tree/x/document/1", "IMG_0001.jpg", content.size.toLong(), null, "esp", null, false, "lote", "content://docs/tree/x")
+        val opened = mutableListOf<Long>()
+        val source = object : Source {
+            override fun exists() = original.exists()
+            override fun length() = original.length()
+            override fun open(offset: Long) = FileSource(original).open(offset).also { opened += offset }
+            override fun release() = Unit
+        }
+        val uploader = Uploader(CarreteApi(base(), "tok"), TusClient(base(), "tok"), store) { source }
+        fake.failNextPatch = true
+        try {
+            uploader.upload(store.pending().single())
+        } catch (e: ApiException) {
+            assertEquals(500, e.status)
+        } catch (e: IOException) {
+            // también válido
+        }
+        assertEquals(QueueItem.DONE, uploader.upload(store.pending().single()).status)
+        assertTrue(fake.received.toByteArray().contentEquals(content))
+        assertTrue(opened.any { it > 0 }) // la reanudación lee desde el desplazamiento, no desde cero
+        assertTrue(original.exists()) // el original de la carpeta nunca se borra
+        assertEquals("content://docs/tree/x", store.all().single().tree)
+    }
 }
