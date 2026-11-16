@@ -7,7 +7,6 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import java.io.File
-import java.io.RandomAccessFile
 import java.util.Base64
 
 /** Resultado de una subida terminada. */
@@ -47,7 +46,10 @@ class TusClient(private val server: String, private val token: String, private v
     }
 
     /** Envía el resto del fichero desde ``start``. Devuelve el resultado al terminar. */
-    fun send(location: String, file: File, start: Long, chunkSize: Long = CHUNK, onProgress: (Long) -> Unit = {}): Uploaded {
+    fun send(location: String, file: File, start: Long, chunkSize: Long = CHUNK, onProgress: (Long) -> Unit = {}): Uploaded =
+        send(location, FileSource(file), start, chunkSize, onProgress)
+
+    fun send(location: String, file: Source, start: Long, chunkSize: Long = CHUNK, onProgress: (Long) -> Unit = {}): Uploaded {
         var offset = start
         val length = file.length()
         var last: Uploaded? = null
@@ -71,16 +73,15 @@ class TusClient(private val server: String, private val token: String, private v
         "Error en la subida"
     }
 
-    private inner class ChunkBody(private val file: File, private val offset: Long, private val size: Long) : RequestBody() {
+    private inner class ChunkBody(private val file: Source, private val offset: Long, private val size: Long) : RequestBody() {
         override fun contentType() = octet
         override fun contentLength() = size
         override fun writeTo(sink: BufferedSink) {
-            RandomAccessFile(file, "r").use { raf ->
-                raf.seek(offset)
+            file.open(offset).use { input ->
                 val buffer = ByteArray(64 * 1024)
                 var remaining = size
                 while (remaining > 0) {
-                    val read = raf.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
+                    val read = input.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
                     if (read < 0) break
                     sink.write(buffer, 0, read)
                     remaining -= read
