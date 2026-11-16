@@ -17,6 +17,24 @@
   }
 }
 
+/* Con la barra de selección abierta, el aviso va encima de ella y no tapa sus botones. */
+:global(body:has([data-selection-bar])) .region {
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 112px + var(--space-3));
+}
+
+@media (min-width: 768px) {
+  :global(body:has([data-selection-bar])) .region {
+    bottom: calc(88px + var(--space-6));
+  }
+}
+
+/* Visor y Revisar ocupan toda la pantalla y tienen sus botones abajo: el aviso sale arriba, bajo la
+   barra superior, para no tapar «Vale», «Eliminar», etc. (antes un toque ahí acababa en el aviso). */
+:global(body:has([data-fullscreen])) .region {
+  top: calc(env(safe-area-inset-top) + 64px);
+  bottom: auto;
+}
+
 .toast {
   display: flex;
   align-items: center;

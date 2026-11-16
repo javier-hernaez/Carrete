@@ -40,7 +40,12 @@ export function SelectionBar({
     <>
       {/* Ocupa en la página lo mismo que la barra fija, para que no tape la última fila de fotos. */}
       <div className={styles.placeholder} aria-hidden="true" />
-      <div className={styles.bar} role="toolbar" aria-label="Acciones sobre la selección">
+      <div
+        className={styles.bar}
+        role="toolbar"
+        aria-label="Acciones sobre la selección"
+        data-selection-bar=""
+      >
         <span className={styles.count} aria-live="polite">
           {ids.length} {ids.length === 1 ? "seleccionada" : "seleccionadas"}
         </span>

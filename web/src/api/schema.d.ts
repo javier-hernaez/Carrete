@@ -1232,6 +1232,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tags */
+        get: operations["list_tags_api_v1_spaces__space_id__tags_get"];
+        put?: never;
+        /**
+         * Create Tag
+         * @description Crea la etiqueta (o devuelve la que ya tiene ese nombre) y se la pone a los elementos que se den.
+         */
+        post: operations["create_tag_api_v1_spaces__space_id__tags_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/tags/{tag_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Tag
+         * @description Eliminar una etiqueta nunca elimina fotos: solo se la quita a todas.
+         */
+        delete: operations["delete_tag_api_v1_spaces__space_id__tags__tag_id__delete"];
+        options?: never;
+        head?: never;
+        /** Rename Tag */
+        patch: operations["rename_tag_api_v1_spaces__space_id__tags__tag_id__patch"];
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/timeline": {
         parameters: {
             query?: never;
@@ -1555,6 +1597,12 @@ export interface components {
              * Format: uuid
              */
             space_id: string;
+            /** Tag Ids */
+            tag_ids?: string[];
+            /** Tags */
+            tags: {
+                [key: string]: string;
+            }[];
             /**
              * Taken At
              * Format: date-time
@@ -1614,6 +1662,8 @@ export interface components {
              * @enum {string}
              */
             source: "camera" | "whatsapp" | "screenshot" | "other";
+            /** Tag Ids */
+            tag_ids?: string[];
             /**
              * Taken At
              * Format: date-time
@@ -1682,7 +1732,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "set_date" | "shift_date" | "revert" | "set_location";
+            action: "trash" | "restore" | "review" | "favorite" | "add_album" | "remove_album" | "add_tag" | "remove_tag" | "set_date" | "shift_date" | "revert" | "set_location";
             /** Album Id */
             album_id?: string | null;
             /** Ids */
@@ -1703,6 +1753,8 @@ export interface components {
             } | null;
             /** State */
             state?: ("pending" | "kept" | "discarded") | null;
+            /** Tag Id */
+            tag_id?: string | null;
             /** Taken At */
             taken_at?: string | null;
             /** Value */
@@ -1835,6 +1887,8 @@ export interface components {
              * @enum {string}
              */
             source: "camera" | "whatsapp" | "screenshot" | "other";
+            /** Tag Ids */
+            tag_ids?: string[];
             /**
              * Taken At
              * Format: date-time
@@ -2425,6 +2479,30 @@ export interface components {
              * Format: date-time
              */
             start: string;
+        };
+        /** TagIn */
+        TagIn: {
+            /** Asset Ids */
+            asset_ids?: string[];
+            /** Name */
+            name: string;
+        };
+        /** TagOut */
+        TagOut: {
+            /** Count */
+            count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** TagPatch */
+        TagPatch: {
+            /** Name */
+            name: string;
         };
         /** TimelineOut */
         TimelineOut: {
@@ -4212,6 +4290,8 @@ export interface operations {
                 date_to?: string | null;
                 album_id?: string | null;
                 no_album?: boolean;
+                tag_id?: string[] | null;
+                no_tag?: boolean;
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
@@ -4929,6 +5009,138 @@ export interface operations {
             };
         };
     };
+    list_tags_api_v1_spaces__space_id__tags_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_tag_api_v1_spaces__space_id__tags_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_tag_api_v1_spaces__space_id__tags__tag_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                tag_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_tag_api_v1_spaces__space_id__tags__tag_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+                tag_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     timeline_api_v1_spaces__space_id__timeline_get: {
         parameters: {
             query?: {
@@ -4941,6 +5153,8 @@ export interface operations {
                 date_to?: string | null;
                 album_id?: string | null;
                 no_album?: boolean;
+                tag_id?: string[] | null;
+                no_tag?: boolean;
                 doubtful?: boolean | null;
                 trashed?: boolean;
                 q?: string | null;
