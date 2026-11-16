@@ -80,9 +80,15 @@ class SecurityHeadersMiddleware:
             await self.app(scope, receive, send)
             return
 
+        api = scope.get("path", "").startswith("/api/")
+
         async def send_with_headers(message: Message) -> None:
             if message["type"] == "http.response.start":
                 existing = [(k, v) for k, v in message.get("headers", []) if k.lower() not in self._names]
+                # Datos de la API (listas, detalles): privados y siempre frescos. Las fotos y miniaturas
+                # ya traen su propia caché privada.
+                if api and not any(k.lower() == b"cache-control" for k, _ in existing):
+                    existing.append((b"cache-control", b"private, no-store"))
                 message["headers"] = existing + self.headers
             await send(message)
 

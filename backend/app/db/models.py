@@ -531,6 +531,45 @@ class AlbumAsset(Base):
     __table_args__ = (Index("ix_album_assets_album_id_position", "album_id", "position"),)
 
 
+class Tag(TimestampMixin, Base):
+    """Etiqueta de un espacio («Personas», «Paisajes», «Humor»…). Una foto puede tener varias; borrar una
+    etiqueta nunca borra fotos. A diferencia de los álbumes, no tiene orden ni portada."""
+
+    __tablename__ = "tags"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    space_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    # Nombre normalizado (minúsculas, espacios simples): «Humor» y «humor » son la misma etiqueta.
+    key: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+    __table_args__ = (UniqueConstraint("space_id", "key"),)
+
+
+class AssetTag(Base):
+    """Etiqueta puesta a un elemento."""
+
+    __tablename__ = "asset_tags"
+
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    added_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    added_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+
 class DuplicateGroup(Base):
     """Elementos casi idénticos pendientes de resolver."""
 

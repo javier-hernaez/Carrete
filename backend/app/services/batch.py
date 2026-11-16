@@ -15,7 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.db.models import Asset, User
-from app.services import albums, audit, spaces, trash
+from app.services import albums, audit, spaces, tags, trash
 from app.services.audit import RequestInfo
 from app.services.errors import Invalid
 
@@ -26,6 +26,8 @@ MINIMUM_ROLE = {
     "favorite": "collaborator",
     "add_album": "collaborator",
     "remove_album": "collaborator",
+    "add_tag": "collaborator",
+    "remove_tag": "collaborator",
     "set_date": "collaborator",
     "shift_date": "collaborator",
     "revert": "collaborator",
@@ -39,6 +41,7 @@ REVERTIBLE = {
     "taken_at_offset",
     "taken_at_source",
     "in_album",
+    "has_tag",
     "lat",
     "lon",
     "place_id",
@@ -127,6 +130,16 @@ def apply(
             count = albums.remove_assets(db, album, valid)
         return count, {"action": "revert", "snapshot": before, "album_id": str(album.id)}
 
+    if action in ("add_tag", "remove_tag"):
+        tag = tags.get(db, space_id, _uuid(params.get("tag_id"), "tag_id"))
+        present = tags.membership(db, tag.id, valid)
+        before = {str(i): {"has_tag": i in present} for i in valid}
+        if action == "add_tag":
+            count = tags.add_assets(db, tag, valid, user.id)
+        else:
+            count = tags.remove_assets(db, tag, valid)
+        return count, {"action": "revert", "snapshot": before, "tag_id": str(tag.id)}
+
     if action in ("set_date", "shift_date"):
         before = _snapshot(db, valid, ["taken_at_local", "taken_at_offset", "taken_at_source"])
         if action == "set_date":
@@ -193,6 +206,7 @@ def _revert(
     album = (
         albums.get(db, space_id, _uuid(params["album_id"], "album_id")) if params.get("album_id") else None
     )
+    tag = tags.get(db, space_id, _uuid(params["tag_id"], "tag_id")) if params.get("tag_id") else None
     count = 0
     for key, values in snapshot.items():
         if key not in allowed or not isinstance(values, dict) or not set(values) <= REVERTIBLE:
@@ -205,6 +219,14 @@ def _revert(
                 count += albums.add_assets(db, album, [asset_id], user.id)
             else:
                 count += albums.remove_assets(db, album, [asset_id])
+            continue
+        if "has_tag" in values:
+            if tag is None:
+                raise Invalid("Falta la etiqueta para deshacer", code="invalid_snapshot")
+            if values["has_tag"]:
+                count += tags.add_assets(db, tag, [asset_id], user.id)
+            else:
+                count += tags.remove_assets(db, tag, [asset_id])
             continue
         changes = dict(values)
         if "review_state" in changes and changes["review_state"] not in REVIEW_STATES:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date, datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from app.services import audit, spaces
 from app.services.errors import NotFound
 
 router = APIRouter(prefix="/api/v1", tags=["elementos"])
+log = logging.getLogger(__name__)
 
 Review = Literal["pending", "kept", "discarded"]
 Kind = Literal["photo", "video"]
@@ -80,9 +82,10 @@ class AssetOut(BaseModel):
     is_favorite: bool
     processing_state: str
     source: Source
+    tag_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
-def asset_out(a: object) -> AssetOut:
+def asset_out(a: object, tag_ids: list[uuid.UUID] | None = None) -> AssetOut:
     from app.db.models import Asset
 
     assert isinstance(a, Asset)
@@ -100,6 +103,7 @@ def asset_out(a: object) -> AssetOut:
         is_favorite=a.is_favorite,
         processing_state=a.processing_state,
         source=a.source,  # type: ignore[arg-type]
+        tag_ids=tag_ids or [],
     )
 
 
@@ -118,6 +122,8 @@ def filters_dep(
     date_to: date | None = None,
     album_id: uuid.UUID | None = None,
     no_album: bool = False,
+    tag_id: Annotated[list[uuid.UUID] | None, Query(max_length=10)] = None,
+    no_tag: bool = False,
     doubtful: bool | None = None,
     trashed: bool = False,
     q: Annotated[str | None, Query(max_length=100)] = None,
@@ -137,6 +143,8 @@ def filters_dep(
         date_to=date_to,
         album_id=album_id,
         no_album=no_album,
+        tag_ids=list(tag_id) if tag_id else None,
+        no_tag=no_tag,
         doubtful=doubtful,
         trashed=trashed,
         query=q.strip() if q else None,
@@ -165,7 +173,10 @@ def list_assets(
     if start is not None and cursor is None:
         cursor = service.cursor_for_date(db, space_id, filters, start)
     items, next_cursor = service.list_assets(db, space_id, filters, cursor=cursor, limit=limit, order=order)
-    return AssetPage(items=[asset_out(a) for a in items], next_cursor=next_cursor)
+    from app.services.tags import tag_ids_by_asset
+
+    tags = tag_ids_by_asset(db, (a.id for a in items))
+    return AssetPage(items=[asset_out(a, tags.get(a.id)) for a in items], next_cursor=next_cursor)
 
 
 class MonthCount(BaseModel):
@@ -214,6 +225,7 @@ class AssetDetail(AssetOut):
     contributors: list[ContributorOut]
     trashed_at: datetime | None
     albums: list[dict[str, str]]
+    tags: list[dict[str, str]]
 
 
 @router.get("/assets/{asset_id}", response_model=AssetDetail)
@@ -230,10 +242,11 @@ def get_asset(asset_id: uuid.UUID, current: FullAuth, db: DB) -> AssetDetail:
         .where(AssetContribution.asset_id == asset.id)
         .order_by(AssetContribution.uploaded_at)
     ).all()
-    from app.services import albums
+    from app.services import albums, tags
 
+    tag_list = tags.tags_of(db, asset.id)
     return AssetDetail(
-        **asset_out(asset).model_dump(),
+        **asset_out(asset, [uuid.UUID(t["id"]) for t in tag_list]).model_dump(),
         space_id=asset.space_id,
         original_filename=asset.original_filename,
         size_bytes=blob.size_bytes,
@@ -256,6 +269,7 @@ def get_asset(asset_id: uuid.UUID, current: FullAuth, db: DB) -> AssetDetail:
         contributors=[ContributorOut(display_name=n, uploaded_at=t) for n, t in contributors],
         trashed_at=asset.trashed_at,
         albums=albums.albums_of(db, asset.id),
+        tags=tag_list,
     )
 
 
@@ -331,6 +345,8 @@ BatchAction = Literal[
     "favorite",
     "add_album",
     "remove_album",
+    "add_tag",
+    "remove_tag",
     "set_date",
     "shift_date",
     "revert",
@@ -344,6 +360,7 @@ class BatchIn(BaseModel):
     state: Review | None = None
     value: bool | None = None
     album_id: uuid.UUID | None = None
+    tag_id: uuid.UUID | None = None
     taken_at: str | None = Field(default=None, max_length=40)
     offset_minutes: int | None = None
     minutes: int | None = None
@@ -367,6 +384,8 @@ def batch(space_id: uuid.UUID, body: BatchIn, current: FullAuth, db: DB, info: R
     params = body.model_dump(exclude={"ids", "action"}, exclude_unset=True, mode="json")
     count, undo = batch_service.apply(db, current.user, space_id, body.ids, body.action, params, info)
     db.commit()
+    # Qué se pidió y cuántos cambiaron: sin esto no se distingue «no llegó» de «no cambió nada».
+    log.info("Acción en lote", extra={"action": body.action, "requested": len(body.ids), "changed": count})
     return BatchOut(count=count, undo=undo)
 
 
