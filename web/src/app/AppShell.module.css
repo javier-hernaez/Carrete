@@ -76,6 +76,11 @@
   padding: var(--space-4);
 }
 
+/* Móvil: hueco al final para que el botón flotante no tape lo último de la página. */
+.mainWithFab {
+  padding-bottom: calc(56px + var(--space-8));
+}
+
 .main:focus {
   outline: none;
 }
@@ -143,6 +148,11 @@
 
 .fab:active {
   transform: scale(0.95);
+}
+
+/* Con la barra de selección abierta, el botón de subir sobra y la tapaba. */
+:global(body:has([data-selection-bar])) .fab {
+  display: none;
 }
 
 /* Escritorio: barra lateral, botón de subir en la cabecera. */

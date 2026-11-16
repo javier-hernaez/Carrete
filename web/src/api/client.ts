@@ -17,6 +17,7 @@ export type AssetPage = S["AssetPage"];
 export type AssetDetail = S["AssetDetail"];
 export type Timeline = S["TimelineOut"];
 export type Album = S["AlbumOut"];
+export type Tag = S["TagOut"];
 export type DuplicateGroup = S["GroupOut"];
 export type Counters = S["CountersOut"];
 export type Activity = S["ActivityOut"];
@@ -228,6 +229,12 @@ export const api = {
     apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}`, del),
   reorderAlbum: (space: string, id: string, body: S["ReorderIn"]) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}/reorder`, json(body)),
+  tags: (space: string) => apiFetch<Tag[]>(`/api/v1/spaces/${space}/tags`),
+  createTag: (space: string, name: string, asset_ids: string[] = []) =>
+    apiFetch<Tag>(`/api/v1/spaces/${space}/tags`, json({ name, asset_ids })),
+  renameTag: (space: string, id: string, name: string) =>
+    apiFetch<Tag>(`/api/v1/spaces/${space}/tags/${id}`, patch({ name })),
+  deleteTag: (space: string, id: string) => apiFetch<undefined>(`/api/v1/spaces/${space}/tags/${id}`, del),
   duplicates: (space: string) => apiFetch<DuplicateGroup[]>(`/api/v1/spaces/${space}/duplicates`),
   resolveDuplicates: (space: string, group: string, keep: string[]) =>
     apiFetch<{ trashed: string[] }>(`/api/v1/spaces/${space}/duplicates/${group}/resolve`, json({ keep })),

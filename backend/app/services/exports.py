@@ -160,6 +160,9 @@ def _manifest_rows(
         .where(Album.space_id == export.space_id)
     ):
         album_names.setdefault(asset_id, []).append(name)
+    from app.services.tags import tag_names_by_asset
+
+    tag_names = tag_names_by_asset(db, export.space_id)
     rows = []
     for asset, blob in items:
         rows.append(
@@ -175,6 +178,7 @@ def _manifest_rows(
                 "review_state": asset.review_state,
                 "favorite": asset.is_favorite,
                 "albums": sorted(album_names.get(asset.id, [])),
+                "tags": tag_names.get(asset.id, []),
                 "description": asset.description,
                 "lat": asset.lat,
                 "lon": asset.lon,
@@ -200,6 +204,7 @@ def _manifests(rows: list[dict[str, Any]], meta: dict[str, Any]) -> tuple[bytes,
         "review_state",
         "favorite",
         "albums",
+        "tags",
         "description",
         "lat",
         "lon",
@@ -209,7 +214,14 @@ def _manifests(rows: list[dict[str, Any]], meta: dict[str, Any]) -> tuple[bytes,
     writer = csv.DictWriter(out, fieldnames=fields)
     writer.writeheader()
     for row in rows:
-        writer.writerow({**row, "paths": " | ".join(row["paths"]), "albums": " | ".join(row["albums"])})
+        writer.writerow(
+            {
+                **row,
+                "paths": " | ".join(row["paths"]),
+                "albums": " | ".join(row["albums"]),
+                "tags": " | ".join(row["tags"]),
+            }
+        )
     return as_json, ("﻿" + out.getvalue()).encode()  # BOM: Excel lo abre bien con tildes
 
 

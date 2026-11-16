@@ -148,7 +148,13 @@ export function Viewer({ items, index, onIndex, onClose, actions, onKey, hideNav
   };
 
   return (
-    <div className={styles.viewer} role="dialog" aria-modal="true" aria-label="Visor de fotos">
+    <div
+      className={styles.viewer}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Visor de fotos"
+      data-fullscreen=""
+    >
       <div className={styles.toolbar}>
         <button
           ref={closeRef}

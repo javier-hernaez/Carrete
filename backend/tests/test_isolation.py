@@ -32,6 +32,9 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
         json={"name": "Vacaciones secretas", "description": "Solo la familia", "asset_ids": [foto]},
     ).json()["id"]
     lucia.patch(f"/api/v1/spaces/{familia}/albums/{album}", json={"name": "Boda secreta"})
+    etiqueta = lucia.post(
+        f"/api/v1/spaces/{familia}/tags", json={"name": "Familia secreta", "asset_ids": [foto]}
+    ).json()["id"]
     export = lucia.post(f"/api/v1/spaces/{familia}/exports", json={"ids": [foto]})
     assert export.status_code == 201, export.text
     export_id = export.json()["id"]
@@ -62,6 +65,10 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
         ("delete", f"{s}/albums/{album}", None),
         ("post", f"{s}/albums/{album}/reorder", {"asset_id": foto}),
         ("get", f"{s}/suggestions", None),
+        ("get", f"{s}/tags", None),
+        ("post", f"{s}/tags", {"name": "Intrusa"}),
+        ("patch", f"{s}/tags/{etiqueta}", {"name": "Mía"}),
+        ("delete", f"{s}/tags/{etiqueta}", None),
         ("get", f"{s}/duplicates", None),
         ("post", f"{s}/duplicates/{ZERO}/resolve", {"keep": [foto]}),
         ("post", f"{s}/duplicates/{ZERO}/dismiss", None),
@@ -95,6 +102,12 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
     for action in ("add_album", "remove_album"):
         batch = {"ids": [propia], "action": action, "album_id": album}
         assert pedro.post(f"{p}/assets/batch", json=batch).status_code == 404
+    for action in ("add_tag", "remove_tag"):
+        batch = {"ids": [propia], "action": action, "tag_id": etiqueta}
+        assert pedro.post(f"{p}/assets/batch", json=batch).status_code == 404
+    assert pedro.get(f"{p}/assets", params={"tag_id": etiqueta}).json()["items"] == []
+    nuestra = pedro.post(f"{p}/tags", json={"name": "Nuestra", "asset_ids": [foto]}).json()
+    assert nuestra["count"] == 0
     mine = pedro.post(f"{p}/albums", json={"name": "Nuestro", "asset_ids": [foto]}).json()
     assert mine["count"] == 0
     assert pedro.patch(f"{p}/albums/{mine['id']}", json={"cover_asset_id": foto}).status_code == 422
@@ -105,6 +118,7 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
     # Lucía sigue teniendo todo intacto
     assert lucia.get(f"/api/v1/assets/{foto}").json()["trashed_at"] is None
     assert lucia.get(f"{s}/albums/{album}").json()["count"] == 1
+    assert lucia.get(f"/api/v1/assets/{foto}").json()["tags"] == [{"id": etiqueta, "name": "Familia secreta"}]
 
 
 def test_admin_sees_and_manages_every_space(  # type: ignore[no-untyped-def]
