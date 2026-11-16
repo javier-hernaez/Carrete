@@ -6,7 +6,11 @@ import java.io.InputStream
 import java.security.MessageDigest
 import java.util.UUID
 
-/** Elemento de la cola. El fichero ya está copiado al almacenamiento privado de la app. */
+/**
+ * Elemento de la cola. ``file`` es una copia en el almacenamiento privado de la app o, si viene de
+ * una carpeta elegida, la URI ``content://`` del original (``tree`` es entonces la carpeta, con permiso
+ * persistente que se suelta al terminar).
+ */
 data class QueueItem(
     val id: String,
     val file: String,
@@ -21,12 +25,13 @@ data class QueueItem(
     val uploadUrl: String? = null,
     val error: String? = null,
     val batch: String,
+    val tree: String? = null,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id).put("file", file).put("name", name).put("size", size).put("mtime", mtimeMs ?: JSONObject.NULL)
         .put("space", spaceId).put("album", albumId ?: JSONObject.NULL).put("video", isVideo).put("status", status)
         .put("sha256", sha256 ?: JSONObject.NULL).put("upload", uploadUrl ?: JSONObject.NULL).put("error", error ?: JSONObject.NULL)
-        .put("batch", batch)
+        .put("batch", batch).put("tree", tree ?: JSONObject.NULL)
 
     companion object {
         const val PENDING = "pending"
@@ -41,6 +46,7 @@ data class QueueItem(
             status = o.getString("status"), sha256 = if (o.isNull("sha256")) null else o.getString("sha256"),
             uploadUrl = if (o.isNull("upload")) null else o.getString("upload"),
             error = if (o.isNull("error")) null else o.getString("error"), batch = o.getString("batch"),
+            tree = if (!o.has("tree") || o.isNull("tree")) null else o.getString("tree"),
         )
     }
 }
@@ -63,6 +69,14 @@ class QueueStore(private val root: File) {
         return item
     }
 
+    /** Un original de una carpeta elegida: no se copia, se lee al subir (la URI tiene permiso persistente). */
+    @Synchronized
+    fun addReference(uri: String, name: String, size: Long, mtimeMs: Long?, spaceId: String, albumId: String?, isVideo: Boolean, batch: String, tree: String): QueueItem {
+        val item = QueueItem(UUID.randomUUID().toString(), uri, name, size, mtimeMs, spaceId, albumId, isVideo, batch = batch, tree = tree)
+        save(item)
+        return item
+    }
+
     @Synchronized
     fun save(item: QueueItem) {
         val tmp = File(items, "${item.id}.tmp")
@@ -80,7 +94,7 @@ class QueueStore(private val root: File) {
     /** Terminado: se borra la copia temporal del fichero, se conserva el registro para el resumen. */
     @Synchronized
     fun finish(item: QueueItem, status: String, error: String? = null) {
-        File(item.file).delete()
+        if (!Source.isContentUri(item.file)) File(item.file).delete()
         save(item.copy(status = status, error = error))
     }
 
@@ -102,9 +116,11 @@ class QueueStore(private val root: File) {
     }
 
     companion object {
-        fun sha256(file: File): String {
+        fun sha256(file: File): String = sha256(FileSource(file))
+
+        fun sha256(source: Source): String {
             val digest = MessageDigest.getInstance("SHA-256")
-            file.inputStream().use { input ->
+            source.open().use { input ->
                 val buffer = ByteArray(1024 * 1024)
                 while (true) {
                     val read = input.read(buffer)
@@ -121,9 +137,14 @@ class QueueStore(private val root: File) {
  * Sube un elemento de la cola: huella → ¿ya estaba? → crear o reanudar la subida tus → trozos.
  * Devuelve el elemento actualizado. Lanza excepción si hay que reintentar más tarde (red, servidor).
  */
-class Uploader(private val api: CarreteApi, private val tus: TusClient, private val store: QueueStore) {
+class Uploader(
+    private val api: CarreteApi,
+    private val tus: TusClient,
+    private val store: QueueStore,
+    private val sourceOf: (QueueItem) -> Source = { FileSource(File(it.file)) },
+) {
     fun upload(item: QueueItem, onProgress: (Long) -> Unit = {}): QueueItem {
-        val file = File(item.file)
+        val file = sourceOf(item)
         if (!file.exists()) {
             store.finish(item, QueueItem.FAILED, "El fichero ya no existe")
             return item.copy(status = QueueItem.FAILED)
@@ -149,7 +170,7 @@ class Uploader(private val api: CarreteApi, private val tus: TusClient, private 
                 current.albumId?.let { put("album_id", it) }
             }
             val location = try {
-                tus.create(file.length(), metadata)
+                tus.create(file.length().takeIf { it >= 0 } ?: item.size, metadata)
             } catch (e: TusClient.DuplicateException) {
                 store.finish(current, QueueItem.DUPLICATE)
                 return current.copy(status = QueueItem.DUPLICATE)

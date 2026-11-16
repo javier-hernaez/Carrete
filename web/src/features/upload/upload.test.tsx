@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeMe, mockApi, renderAt, SPACE_A } from "../../test/render";
 
@@ -100,22 +100,58 @@ describe("subir", () => {
 });
 
 describe("dentro de la app Android", () => {
-  it("ofrece el selector nativo con subida en segundo plano", async () => {
-    const picked: string[] = [];
-    (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid = {
-      pickPhotos: (id: string) => picked.push(id),
-      version: () => 1,
-    };
+  const setBridge = (bridge: unknown) => {
+    (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid = bridge;
+  };
+  afterEach(() => {
+    delete (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid;
+  });
+
+  it("ofrece fotos y carpeta con el selector nativo, y avisa del máximo", async () => {
+    const photos: string[] = [];
+    const folders: string[] = [];
+    setBridge({
+      pickPhotos: (id: string) => photos.push(id),
+      pickFolder: (id: string) => folders.push(id),
+      pickLimit: () => 100,
+      version: () => 2,
+    });
+    mockApi();
+    const user = userEvent.setup();
+    renderAt("/subir");
+    await user.click(await screen.findByRole("button", { name: "Elegir fotos" }));
+    await user.click(screen.getByRole("button", { name: "Elegir una carpeta" }));
+    expect(photos).toEqual([SPACE_A]);
+    expect(folders).toEqual([SPACE_A]);
+    expect(screen.getByText(/hasta 100 de cada vez/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Elegir ficheros o un .zip" })).toBeInTheDocument();
+  });
+
+  it("con una app antigua sin carpetas, pide actualizarla", async () => {
+    setBridge({ pickPhotos: () => undefined, version: () => 1 });
+    mockApi();
+    renderAt("/subir");
+    expect(await screen.findByRole("button", { name: "Elegir fotos" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Elegir una carpeta" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Actualiza la app/)).toBeInTheDocument();
+  });
+});
+
+describe("en el navegador de un móvil", () => {
+  it("no ofrece elegir carpetas (no funciona ahí) y remite a la app", async () => {
+    const ua = vi
+      .spyOn(navigator, "userAgent", "get")
+      .mockReturnValue(
+        "Mozilla/5.0 (Linux; Android 15; 2312DRA50G) AppleWebKit/537.36 Chrome/131.0 Mobile Safari/537.36",
+      );
     try {
       mockApi();
-      const user = userEvent.setup();
       renderAt("/subir");
-      await user.click(
-        await screen.findByRole("button", { name: "Elegir del móvil (sube en segundo plano)" }),
-      );
-      expect(picked).toEqual([SPACE_A]);
+      expect(await screen.findByRole("button", { name: "Elegir fotos y vídeos" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Elegir una carpeta" })).not.toBeInTheDocument();
+      expect(screen.getByText(/usa la app de Android/)).toBeInTheDocument();
     } finally {
-      delete (window as unknown as { CarreteAndroid?: unknown }).CarreteAndroid;
+      ua.mockRestore();
     }
   });
 });

@@ -8,6 +8,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versiones 
 
 - App Android: se cerraba al pulsar «Elegir del móvil» en móviles cuyo selector de fotos admite menos de
   200 elementos de una vez (normalmente 100). Ahora pide el máximo de cada móvil y la web lo indica.
+- App Android: se cerraba al recibir las fotos del selector en Android 15 (no deja leer el original con
+  ubicación de esas fotos). Ahora sube la foto tal cual y un fichero ilegible ya no tumba el lote.
+- App Android: «Elegir una carpeta» con el selector de carpetas de Android, que sube la carpeta y sus
+  subcarpetas sin límite y sin copiar las fotos al móvil.
+- App Android: los botones de la web para elegir ficheros (también un .zip) no hacían nada dentro de la
+  app.
+- App Android: el resumen final de la subida a veces no aparecía (Android descartaba notificaciones por
+  exceso de actualizaciones de progreso).
+- Web en el navegador del móvil: ya no ofrece «Elegir una carpeta», que ahí no funciona, y remite a la app.
 - Varias pantallas (Administración, Repetidas, Exportar, Espacio, Álbumes) se salían por la derecha en
   el móvil: la columna principal crecía con su contenido más ancho. Ahora nada desborda entre 320 y
   412 px de ancho.
