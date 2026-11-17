@@ -53,6 +53,7 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
         ("patch", f"/api/v1/assets/{foto}", {"description": "mía"}),
         ("get", f"{s}/assets", None),
         ("get", f"{s}/timeline", None),
+        ("get", f"{s}/assets/random", None),
         ("get", f"{s}/counters", None),
         ("get", f"{s}/trash", None),
         ("post", f"{s}/trash/empty", {"confirm_name": "Familia"}),
@@ -66,6 +67,7 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
         ("post", f"{s}/albums/{album}/reorder", {"asset_id": foto}),
         ("get", f"{s}/suggestions", None),
         ("get", f"{s}/tags", None),
+        ("get", f"{s}/tags?album_id={album}", None),
         ("post", f"{s}/tags", {"name": "Intrusa"}),
         ("patch", f"{s}/tags/{etiqueta}", {"name": "Mía"}),
         ("delete", f"{s}/tags/{etiqueta}", None),
@@ -95,9 +97,11 @@ def test_outsider_sees_nothing_of_a_foreign_space(  # type: ignore[no-untyped-de
     # Ids ajenos colados en peticiones sobre un espacio propio: 404 o se ignoran
     p = f"/api/v1/spaces/{pareja}"
     assert pedro.get(f"{p}/albums/{album}").status_code == 404
+    assert pedro.get(f"{p}/tags", params={"album_id": album}).status_code == 404
     assert pedro.get(f"{p}/exports/{export_id}").status_code == 404
     assert pedro.get(f"{p}/exports/{export_id}/files/1").status_code == 404
     assert pedro.post(f"{p}/exports", json={"album_ids": [album]}).status_code == 404
+    assert pedro.post(f"{p}/exports", json={"all_albums": True, "tag_ids": [etiqueta]}).status_code == 404
     propia = upload(pedro, pareja, make_jpeg(tmp_path / "propia.jpg", pattern=6))
     for action in ("add_album", "remove_album"):
         batch = {"ids": [propia], "action": action, "album_id": album}

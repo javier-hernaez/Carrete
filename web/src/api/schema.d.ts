@@ -958,6 +958,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/spaces/{space_id}/assets/random": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Random Asset
+         * @description Un elemento al azar de todo el espacio (con o sin álbum), con los mismos filtros que la lista.
+         */
+        get: operations["random_asset_api_v1_spaces__space_id__assets_random_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/spaces/{space_id}/counters": {
         parameters: {
             query?: never;
@@ -1239,7 +1259,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Tags */
+        /**
+         * List Tags
+         * @description Con ``album_id``, solo las etiquetas que hay dentro de ese álbum, con su recuento allí.
+         */
         get: operations["list_tags_api_v1_spaces__space_id__tags_get"];
         put?: never;
         /**
@@ -1910,6 +1933,11 @@ export interface components {
         ExportIn: {
             /** Album Ids */
             album_ids?: string[];
+            /**
+             * All Albums
+             * @default false
+             */
+            all_albums: boolean;
             /** Folder */
             folder?: string | null;
             /** Ids */
@@ -1932,6 +1960,8 @@ export interface components {
              * @enum {string}
              */
             structure: "album" | "date" | "flat";
+            /** Tag Ids */
+            tag_ids?: string[];
             /**
              * Target
              * @default zip
@@ -4399,6 +4429,57 @@ export interface operations {
             };
         };
     };
+    random_asset_api_v1_spaces__space_id__assets_random_get: {
+        parameters: {
+            query?: {
+                review?: ("pending" | "kept" | "discarded")[] | null;
+                favorite?: boolean | null;
+                kind?: ("photo" | "video") | null;
+                source?: ("camera" | "whatsapp" | "screenshot" | "other") | null;
+                uploaded_by?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                album_id?: string | null;
+                no_album?: boolean;
+                tag_id?: string[] | null;
+                no_tag?: boolean;
+                doubtful?: boolean | null;
+                trashed?: boolean;
+                q?: string | null;
+                south?: number | null;
+                west?: number | null;
+                north?: number | null;
+                east?: number | null;
+                located?: boolean | null;
+            };
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     counters_api_v1_spaces__space_id__counters_get: {
         parameters: {
             query?: never;
@@ -5011,7 +5092,9 @@ export interface operations {
     };
     list_tags_api_v1_spaces__space_id__tags_get: {
         parameters: {
-            query?: never;
+            query?: {
+                album_id?: string | null;
+            };
             header?: never;
             path: {
                 space_id: string;

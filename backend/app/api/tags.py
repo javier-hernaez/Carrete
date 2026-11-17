@@ -8,7 +8,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from app.api.deps import DB, FullAuth, ReqInfo
-from app.services import spaces, tags
+from app.services import albums, spaces, tags
 
 router = APIRouter(prefix="/api/v1", tags=["etiquetas"])
 
@@ -37,9 +37,14 @@ def _one(db: DB, space_id: uuid.UUID, tag_id: uuid.UUID) -> TagOut:
 
 
 @router.get("/spaces/{space_id}/tags", response_model=list[TagOut])
-def list_tags(space_id: uuid.UUID, current: FullAuth, db: DB) -> list[TagOut]:
+def list_tags(
+    space_id: uuid.UUID, current: FullAuth, db: DB, album_id: uuid.UUID | None = None
+) -> list[TagOut]:
+    """Con ``album_id``, solo las etiquetas que hay dentro de ese álbum, con su recuento allí."""
     spaces.access(db, current.user, space_id)
-    return [_out(s) for s in tags.list_tags(db, space_id)]
+    if album_id is not None:
+        albums.get(db, space_id, album_id)
+    return [_out(s) for s in tags.list_tags(db, space_id, album_id)]
 
 
 @router.post("/spaces/{space_id}/tags", response_model=TagOut, status_code=201)
