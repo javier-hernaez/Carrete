@@ -23,6 +23,8 @@
         android:usesCleartextTraffic="false"
         tools:targetApi="34">
 
+        <!-- Exportada por fuerza: es la pantalla de inicio que abre el lanzador del sistema. -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
@@ -33,7 +35,10 @@
             </intent-filter>
         </activity>
 
-        <!-- El QR de Ajustes → App para el móvil abre «carrete:https://…» con la dirección ya puesta. -->
+        <!-- El QR de Ajustes → App para el móvil abre «carrete:https://…» con la dirección ya puesta.
+             Exportada para recibir ese enlace; solo rellena el campo, que se ve y se puede cambiar, y
+             no guarda nada hasta que la persona entra con usuario, contraseña y código. -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:name=".SetupActivity"
             android:exported="true">
@@ -45,7 +50,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Destino de «Compartir» para una o varias fotos y vídeos. -->
+        <!-- Destino de «Compartir» para una o varias fotos y vídeos. Exportada para que otras apps
+             puedan compartir con Carrete; solo acepta imágenes y vídeos y pide elegir el espacio. -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:name=".ShareActivity"
             android:exported="true"
