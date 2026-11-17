@@ -4,6 +4,7 @@ import type { AssetItem } from "../../api/client";
 import { Button } from "../../design-system/components/Button";
 import { downloadSelection } from "../export/download";
 import { useAssetActions } from "../photos/actions";
+import { TagPicker } from "../tags/TagPicker";
 import { AlbumPicker } from "./AlbumPicker";
 import { DateDialog } from "./DateDialog";
 import { LocationDialog } from "./LocationDialog";
@@ -20,7 +21,7 @@ interface SelectionBarProps {
   hideStandard?: boolean | undefined;
 }
 
-/** Barra de acciones sobre la selección: vale, descartar, favorita, álbum, fecha, eliminar. */
+/** Barra de acciones sobre la selección: vale, descartar, favorita, etiquetas, álbum, fecha, eliminar. */
 export function SelectionBar({
   spaceId,
   ids,
@@ -31,7 +32,7 @@ export function SelectionBar({
   hideStandard,
 }: SelectionBarProps) {
   const actions = useAssetActions(spaceId);
-  const [dialog, setDialog] = useState<"album" | "date" | "place" | null>(null);
+  const [dialog, setDialog] = useState<"album" | "tags" | "date" | "place" | null>(null);
   const done = (promise: Promise<unknown>) => {
     void promise.then(onClear);
   };
@@ -60,6 +61,9 @@ export function SelectionBar({
               </Button>
               <Button variant="ghost" onClick={() => done(actions.favorite(ids, !allFavorite))}>
                 {allFavorite ? "Quitar ★" : "Favorita ★"}
+              </Button>
+              <Button variant="ghost" onClick={() => setDialog("tags")}>
+                Etiquetas…
               </Button>
               <Button variant="ghost" onClick={() => setDialog("album")}>
                 Álbum…
@@ -96,6 +100,14 @@ export function SelectionBar({
               setDialog(null);
               done(actions.addToAlbum(ids, album.id, album.name));
             }}
+          />
+        )}
+        {dialog === "tags" && (
+          <TagPicker
+            spaceId={spaceId}
+            ids={ids}
+            tagsOf={(id) => items.find((i) => i.id === id)?.tag_ids ?? []}
+            onClose={() => setDialog(null)}
           />
         )}
         {dialog === "date" && (

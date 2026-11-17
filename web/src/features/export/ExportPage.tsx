@@ -9,6 +9,7 @@ import { Alert, Card, PageTitle } from "../../design-system/components/Card";
 import { SelectField } from "../../design-system/components/Field";
 import { formatBytes } from "../photos/format";
 import { useAlbums } from "../selection/albums";
+import { useTags } from "../tags/tags";
 import styles from "../page.module.css";
 import { volumeUrl } from "./download";
 
@@ -20,15 +21,20 @@ const STATE: Record<string, string> = {
   expired: "Caducada",
 };
 
-/** Exportar: ZIP ordenado de un álbum, varios o el espacio entero, siempre con los originales. */
+/**
+ * Exportar: ZIP ordenado del espacio entero, de todos los álbumes o de algunos, siempre con los
+ * originales. Opcionalmente, solo lo que tenga alguna de las etiquetas elegidas.
+ */
 export function ExportPage() {
   const { space, withReauth } = useSession();
   const queryClient = useQueryClient();
   const spaceId = space?.id ?? "";
   const albums = useAlbums(spaceId);
   const owner = isOwner(space);
-  const [scope, setScope] = useState(owner ? "space" : "albums");
+  const tags = useTags(spaceId);
+  const [scope, setScope] = useState(owner ? "space" : "all-albums");
   const [albumIds, setAlbumIds] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const [structure, setStructure] = useState<"album" | "date" | "flat">("album");
   const [naming, setNaming] = useState<"normalized" | "original">("normalized");
   const [include, setInclude] = useState<"kept_pending" | "kept" | "all">("kept_pending");
@@ -49,6 +55,8 @@ export function ExportPage() {
           naming,
           include,
           album_ids: scope === "albums" ? albumIds : [],
+          all_albums: scope === "all-albums",
+          tag_ids: tagIds,
           volume_bytes: Math.round(Number(volume) * 1024 ** 3),
         }),
       ),
@@ -70,9 +78,17 @@ export function ExportPage() {
             onChange={(e) => setScope(e.target.value)}
             options={[
               ...(owner ? [{ value: "space", label: `Todo el espacio «${space.name}»` }] : []),
+              { value: "all-albums", label: "Todos los álbumes" },
               { value: "albums", label: "Algunos álbumes" },
             ]}
           />
+          {scope === "all-albums" && (
+            <p className={styles.muted}>
+              Todo lo que está en algún álbum ({albums.data?.length ?? 0}{" "}
+              {albums.data?.length === 1 ? "álbum" : "álbumes"}), en una carpeta por álbum si eliges «Por
+              álbum».
+            </p>
+          )}
           {scope === "albums" && (
             <fieldset className={styles.form}>
               <legend>Álbumes</legend>
@@ -91,6 +107,30 @@ export function ExportPage() {
                     }
                   />{" "}
                   {a.name} <span className={styles.muted}>({a.count})</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
+          {(tags.data?.length ?? 0) > 0 && (
+            <fieldset className={styles.form}>
+              <legend>Etiquetas (opcional)</legend>
+              <p className={styles.muted}>
+                {tagIds.length === 0
+                  ? "Sin marcar ninguna, se exporta todo. Marca alguna para exportar solo lo que la tenga."
+                  : "Solo lo que tenga alguna de las etiquetas marcadas."}
+              </p>
+              {tags.data?.map((tag) => (
+                <label key={tag.id} className={styles.row}>
+                  <input
+                    type="checkbox"
+                    checked={tagIds.includes(tag.id)}
+                    onChange={(e) =>
+                      setTagIds((ids) =>
+                        e.target.checked ? [...ids, tag.id] : ids.filter((i) => i !== tag.id),
+                      )
+                    }
+                  />{" "}
+                  {tag.name} <span className={styles.muted}>({tag.count})</span>
                 </label>
               ))}
             </fieldset>

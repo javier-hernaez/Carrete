@@ -13,6 +13,8 @@ export interface PhotoFilters {
   sinAlbum: boolean;
   q: string;
   zona: string; // «sur,oeste,norte,este», desde el mapa
+  etiquetas: string[]; // todas a la vez
+  sinEtiqueta: boolean;
 }
 
 export function readFilters(params: URLSearchParams): PhotoFilters {
@@ -29,6 +31,8 @@ export function readFilters(params: URLSearchParams): PhotoFilters {
     sinAlbum: params.get("sin-album") === "1",
     q: params.get("q") ?? "",
     zona: params.get("zona") ?? "",
+    etiquetas: params.getAll("etiqueta"),
+    sinEtiqueta: params.get("sin-etiqueta") === "1",
   };
 }
 
@@ -53,6 +57,8 @@ export function toApiParams(f: PhotoFilters, extra: Record<string, string> = {})
   if (f.album) p.set("album_id", f.album);
   if (f.sinAlbum) p.set("no_album", "true");
   if (f.q) p.set("q", f.q);
+  for (const tag of f.etiquetas) p.append("tag_id", tag);
+  if (f.sinEtiqueta) p.set("no_tag", "true");
   const zone = f.zona.split(",").map(Number);
   if (zone.length === 4 && zone.every((n) => Number.isFinite(n))) {
     const [south, west, north, east] = zone as [number, number, number, number];
@@ -65,17 +71,38 @@ export function toApiParams(f: PhotoFilters, extra: Record<string, string> = {})
 }
 
 export function activeCount(f: PhotoFilters): number {
-  return [
-    f.estado,
-    f.fav,
-    f.tipo,
-    f.origen,
-    f.persona,
-    f.de || f.a,
-    f.dudosa,
-    f.album,
-    f.sinAlbum,
-    f.q,
-    f.zona,
-  ].filter(Boolean).length;
+  return (
+    [
+      f.estado,
+      f.fav,
+      f.tipo,
+      f.origen,
+      f.persona,
+      f.de || f.a,
+      f.dudosa,
+      f.album,
+      f.sinAlbum,
+      f.q,
+      f.zona,
+    ].filter(Boolean).length + tagCount(f)
+  );
+}
+
+export function tagCount(f: PhotoFilters): number {
+  return f.etiquetas.length + (f.sinEtiqueta ? 1 : 0);
+}
+
+/** Escribe en la URL el filtro de etiquetas (se usa en Fotos y dentro de un álbum). */
+export function withTags(
+  params: URLSearchParams,
+  next: { selected: string[]; untagged: boolean },
+): URLSearchParams {
+  const out = new URLSearchParams(params);
+  out.delete("etiqueta");
+  out.delete("sin-etiqueta");
+  out.delete("desde");
+  out.delete("ver");
+  for (const id of next.selected) out.append("etiqueta", id);
+  if (next.untagged) out.set("sin-etiqueta", "1");
+  return out;
 }

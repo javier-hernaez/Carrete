@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { AssetItem } from "../../api/client";
 import { AlbumPicker } from "../selection/AlbumPicker";
 import { DateDialog } from "../selection/DateDialog";
+import { TagPicker } from "../tags/TagPicker";
 import { useAssetActions } from "./actions";
 import styles from "./viewer.module.css";
 
@@ -19,8 +20,9 @@ export function ViewerActions({
   extra?: React.ReactNode;
 }) {
   const actions = useAssetActions(spaceId);
-  const [dialog, setDialog] = useState<"album" | "date" | null>(null);
+  const [dialog, setDialog] = useState<"album" | "tags" | "date" | null>(null);
   const ids = [asset.id];
+  const tagIds = asset.tag_ids ?? [];
   return (
     <>
       <button
@@ -50,6 +52,14 @@ export function ViewerActions({
       >
         ★ Favorita
       </button>
+      <button
+        type="button"
+        className={styles.action}
+        aria-pressed={tagIds.length > 0}
+        onClick={() => setDialog("tags")}
+      >
+        {tagIds.length > 0 ? `Etiquetas (${tagIds.length})` : "Etiquetas…"}
+      </button>
       <button type="button" className={styles.action} onClick={() => setDialog("album")}>
         Álbum…
       </button>
@@ -77,6 +87,9 @@ export function ViewerActions({
             void actions.addToAlbum(ids, album.id, album.name);
           }}
         />
+      )}
+      {dialog === "tags" && (
+        <TagPicker spaceId={spaceId} ids={ids} tagsOf={() => tagIds} onClose={() => setDialog(null)} />
       )}
       {dialog === "date" && (
         <DateDialog

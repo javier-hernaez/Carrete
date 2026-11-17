@@ -278,6 +278,12 @@ function InfoPanel({ id }: { id: string }) {
             {d.uploaded_by ?? "—"}
             {d.contributors.length > 1 && ` (y ${d.contributors.length - 1} más)`}
           </dd>
+          {d.tags.length > 0 && (
+            <>
+              <dt>Etiquetas</dt>
+              <dd>{d.tags.map((t) => t.name).join(", ")}</dd>
+            </>
+          )}
           {d.albums.length > 0 && (
             <>
               <dt>Álbumes</dt>
