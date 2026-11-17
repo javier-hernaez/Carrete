@@ -1,9 +1,13 @@
-# Actualizaciones semanales de dependencias. Cada propuesta pasa por el CI completo.
+# Actualizaciones semanales de dependencias. Cada propuesta pasa por el CI completo y entra por develop,
+# como cualquier otro cambio. Se esperan 7 días desde cada publicación: una versión recién salida y
+# comprometida suele retirarse antes.
 version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
     schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    cooldown: { default-days: 7 }
     open-pull-requests-limit: 5
     groups:
       python:
@@ -13,6 +17,8 @@ updates:
   - package-ecosystem: npm
     directory: /web
     schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    cooldown: { default-days: 7 }
     open-pull-requests-limit: 5
     groups:
       web:
@@ -22,7 +28,11 @@ updates:
   - package-ecosystem: docker
     directory: /deploy
     schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    cooldown: { default-days: 7 }
 
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly, day: monday }
+    target-branch: develop
+    cooldown: { default-days: 7 }
