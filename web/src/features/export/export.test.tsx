@@ -85,9 +85,35 @@ describe("exportar", () => {
     const scope = await screen.findByLabelText("Qué exportar");
     expect(within(scope).queryByRole("option", { name: /Todo el espacio/ })).not.toBeInTheDocument();
     const button = screen.getByRole("button", { name: "Preparar la exportación" });
+    // Por defecto, todos los álbumes; con «Algunos», hay que elegir al menos uno
+    expect(scope).toHaveValue("all-albums");
+    expect(button).toBeEnabled();
+    await user.selectOptions(scope, "albums");
     expect(button).toBeDisabled();
     await user.click(await screen.findByLabelText(/Boda/));
     expect(button).toBeEnabled();
+  });
+
+  it("exporta todos los álbumes solo con las etiquetas elegidas", async () => {
+    let body: Record<string, unknown> = {};
+    mockApi({
+      [`/api/v1/spaces/${SPACE_A}/tags`]: [
+        { id: "t1", name: "Personas", count: 3 },
+        { id: "t2", name: "Humor", count: 1 },
+      ],
+      [`/api/v1/spaces/${SPACE_A}/exports`]: [],
+      [`POST /api/v1/spaces/${SPACE_A}/exports`]: (init: RequestInit) => {
+        body = JSON.parse(init.body as string) as Record<string, unknown>;
+        return job("queued");
+      },
+    });
+    const user = userEvent.setup();
+    renderAt("/exportar");
+    await user.selectOptions(await screen.findByLabelText("Qué exportar"), "all-albums");
+    await user.click(await screen.findByLabelText(/Humor/));
+    expect(screen.getByText(/Solo lo que tenga alguna/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Preparar la exportación" }));
+    await waitFor(() => expect(body).toMatchObject({ all_albums: true, album_ids: [], tag_ids: ["t2"] }));
   });
 
   it("descarga una selección cuando el ZIP está listo", async () => {

@@ -5,6 +5,7 @@ import type { AssetItem } from "../../api/client";
 import { dayKey, formatDay } from "./format";
 import styles from "./photos.module.css";
 import { Thumb } from "./Thumb";
+import { usePressSelect } from "./usePressSelect";
 
 type Row =
   | { type: "header"; key: string; label: string; ids: string[] }
@@ -18,7 +19,12 @@ interface GridProps {
   selected?: ReadonlySet<string> | undefined;
   onToggle?: ((index: number, event: { shiftKey: boolean }) => void) | undefined;
   onSelectDay?: ((ids: string[]) => void) | undefined;
-  draggable?: boolean | undefined;
+  /** Para seleccionar deslizando el dedo tras una pulsación larga. */
+  onReplace?: ((next: Set<string>) => void) | undefined;
+  /** «Seleccionar el día»: siempre, o solo cuando ya hay algo seleccionado. */
+  dayActions?: "always" | "selecting";
+  /** Casillas siempre visibles (en Revisar), no solo al pasar el ratón. */
+  showChecks?: boolean;
 }
 
 function useWidth() {
@@ -57,14 +63,18 @@ export function Grid({
   selected,
   onToggle,
   onSelectDay,
-  draggable,
+  onReplace,
+  dayActions = "always",
+  showChecks = false,
 }: GridProps) {
   const selecting = (selected?.size ?? 0) > 0;
-  const selectedRef = useRef(selected);
-  useEffect(() => {
-    selectedRef.current = selected;
-  }, [selected]);
   const { ref, width, top: offsetTop } = useWidth();
+  usePressSelect(ref, {
+    enabled: !!onReplace,
+    ids: () => items.map((i) => i.id),
+    selected: () => selected ?? new Set(),
+    replace: (next) => onReplace?.(next),
+  });
   const target = width < 600 ? 104 : 168;
   const columns = Math.max(3, Math.floor(width / target));
   const gap = 3;
@@ -119,6 +129,7 @@ export function Grid({
       className={styles.grid}
       style={{ height: virtualizer.getTotalSize() }}
       data-selecting={selecting ? "" : undefined}
+      data-checks={showChecks ? "" : undefined}
     >
       {virtualRows.map((v) => {
         const row = rows[v.index];
@@ -132,7 +143,7 @@ export function Grid({
               style={{ transform: `translateY(${top}px)`, height: 48 }}
             >
               <h2 className={styles.dayTitle}>{row.label}</h2>
-              {onSelectDay && (
+              {onSelectDay && (dayActions === "always" || selecting) && (
                 <button type="button" className={styles.dayAction} onClick={() => onSelectDay(row.ids)}>
                   {row.ids.every((id) => selected?.has(id)) ? "Quitar el día" : "Seleccionar el día"}
                 </button>
@@ -160,14 +171,7 @@ export function Grid({
                 selecting={selecting}
                 onActivate={() => onOpen(index)}
                 onSelect={onToggle ? (e) => onToggle(index, e) : undefined}
-                dragIds={
-                  draggable
-                    ? () => {
-                        const current = selectedRef.current;
-                        return current?.has(asset.id) ? [...current] : [asset.id];
-                      }
-                    : undefined
-                }
+                index={index}
               />
             ))}
           </div>

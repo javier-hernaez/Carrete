@@ -141,16 +141,33 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   await expect(page.getByText("Una a la papelera")).toBeVisible();
   await expect(page.getByRole("heading", { name: "No hay repetidas" })).toBeVisible();
 
-  // Revisar con el teclado: vale, vale, no vale
+  // Revisar en bloque (lo primero que se ve): marcar una y darle «Vale»
   await page.goto("/revisar");
-  await expect(page.getByText("1 de 3")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Revisar" })).toBeVisible();
+  const pending = page.getByRole("button", { name: /^Seleccionar: / });
+  await expect(pending).toHaveCount(3);
+  await expectAccessible(page);
+  await pending.nth(0).click();
+  await page
+    .getByRole("toolbar", { name: "Acciones sobre la selección" })
+    .getByRole("button", { name: "Vale" })
+    .click();
+  await expect(pending).toHaveCount(2);
+
+  // Revisar de una en una: etiqueta nueva con una sugerencia, y luego vale y no vale con el teclado
+  await page.getByRole("button", { name: "Una a una" }).click();
+  await expect(page.getByText("1 de 2")).toBeVisible();
+  await page.getByRole("button", { name: "+ Etiqueta" }).click();
+  await page.getByRole("dialog", { name: "Etiquetas" }).getByRole("button", { name: "+ Humor" }).click();
+  await expect(page.getByText("Etiqueta «Humor» puesta")).toBeVisible();
+  await page.getByRole("dialog", { name: "Etiquetas" }).getByRole("button", { name: "Cerrar" }).click();
+  await expect(page.getByRole("button", { name: "✓ Humor" })).toBeVisible();
   await expectAccessible(page);
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByText("2 de 3")).toBeVisible();
-  await page.keyboard.press("v");
+  await expect(page.getByText("2 de 2")).toBeVisible();
   await page.keyboard.press("x");
   await expect(page.getByRole("heading", { name: "¡Listo!" })).toBeVisible();
-  await expect(page.getByText(/2 valen y 1 descartados/)).toBeVisible();
+  await expect(page.getByText(/1 valen y 1 descartados/)).toBeVisible();
 
   // Poner la ubicación a mano y ver el lugar en el visor (geocodificación sin conexión)
   await page.goto("/");
@@ -172,19 +189,37 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   ).toBeVisible();
   await page.goBack();
 
-  // Crear un álbum arrastrando la selección a la barra lateral
+  // Un recuerdo al azar encima de la línea temporal; las fichas de etiquetas filtran
   await expect(page.getByText("2 elementos")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Un recuerdo al azar" })).toBeVisible();
+  const tagChips = page.getByRole("group", { name: "Filtrar por etiqueta" });
+  await tagChips.getByRole("button", { name: /Humor/ }).click();
+  await expect(page.getByText("1 elemento", { exact: true })).toBeVisible();
+  await tagChips.getByRole("button", { name: "Todas" }).click();
+  await expect(page.getByText("2 elementos")).toBeVisible();
+
+  // Etiquetar la selección y crear un álbum con ella
   await boxes.nth(0).click({ force: true });
   await boxes.nth(1).click({ force: true });
   await expect(page.getByText("2 seleccionadas")).toBeVisible();
-  page.once("dialog", (dialog) => void dialog.accept("Asturias 2025"));
+  await page.getByRole("button", { name: "Etiquetas…" }).click();
   await page
-    .getByRole("button", { name: /^Foto del/ })
-    .first()
-    .dragTo(page.getByText("+ Suelta aquí para un álbum nuevo"));
-  await expect(page.getByText("Álbum «Asturias 2025» creado con 2 fotos")).toBeVisible();
+    .getByRole("dialog", { name: "Etiquetas de 2" })
+    .getByRole("button", { name: "+ Personas" })
+    .click();
+  await expect(page.getByText("«Personas» puesta a 2")).toBeVisible();
+  await page.getByRole("dialog", { name: "Etiquetas de 2" }).getByRole("button", { name: "Cerrar" }).click();
+  await page.getByRole("button", { name: "Álbum…" }).click();
+  const picker = page.getByRole("dialog", { name: "Añadir 2 a un álbum" });
+  await picker.getByLabel("Nuevo álbum").fill("Asturias 2025");
+  await picker.getByRole("button", { name: "Crear y añadir" }).click();
+  await expect(page.getByText("2 añadidas a «Asturias 2025»")).toBeVisible();
   await page.getByRole("link", { name: "Álbumes" }).first().click();
-  await expect(page.getByRole("link", { name: /Asturias 2025\s*2 elementos/ })).toBeVisible();
+  await page.getByRole("link", { name: /Asturias 2025\s*2 elementos/ }).click();
+  // Dentro del álbum, solo sus etiquetas y su recuento allí
+  const albumTags = page.getByRole("group", { name: "Filtrar el álbum por etiqueta" });
+  await albumTags.getByRole("button", { name: /Humor\s*1/ }).click();
+  await expect(page.getByRole("button", { name: /^Foto del/ })).toHaveCount(1);
   await expectAccessible(page);
 
   // Mapa: la foto de Sevilla aparece como una zona; al proveedor solo se le pide el estilo
@@ -211,8 +246,16 @@ test("de la instalación a ordenar las fotos", async ({ page }) => {
   await expect(page.getByRole("button", { name: /^Foto del/ })).toHaveCount(1);
   await expect(page.getByLabel("Solo la zona elegida en el mapa")).toBeChecked();
 
-  // Exportar el espacio entero y descargarlo
+  // Exportar todos los álbumes, solo con una etiqueta
   await page.goto("/exportar");
+  await page.getByLabel("Qué exportar").selectOption("all-albums");
+  await page.getByLabel(/Humor/).check();
+  await page.getByRole("button", { name: "Preparar la exportación" }).click();
+  await expect(page.getByText(/1 elementos/).first()).toBeVisible();
+  await page.getByLabel(/Humor/).uncheck();
+  await page.getByLabel("Qué exportar").selectOption("space");
+
+  // Exportar el espacio entero y descargarlo
   await expectAccessible(page);
   await page.getByRole("button", { name: "Preparar la exportación" }).click();
   const zipLink = page.getByRole("link", { name: /\.zip$/ }).first();

@@ -16,7 +16,7 @@ from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.db.models import Asset, AssetTag, Tag, User
+from app.db.models import AlbumAsset, Asset, AssetTag, Tag, User
 from app.services import audit
 from app.services.audit import RequestInfo
 from app.services.errors import Conflict, Invalid, NotFound
@@ -65,22 +65,28 @@ class TagSummary:
     count: int
 
 
-def list_tags(db: Session, space_id: uuid.UUID) -> list[TagSummary]:
-    """Etiquetas del espacio con cuántos elementos visibles tiene cada una, por nombre."""
+def list_tags(db: Session, space_id: uuid.UUID, album_id: uuid.UUID | None = None) -> list[TagSummary]:
+    """Etiquetas del espacio con cuántos elementos visibles tiene cada una, por nombre.
+
+    Con un álbum, solo las que aparecen en él y con lo que cuentan dentro (para filtrar el álbum).
+    """
     visible = and_(Asset.trashed_at.is_(None), Asset.review_state != "discarded")
-    counts = (
+    counted = (
         select(AssetTag.tag_id.label("tag_id"), func.count().label("count"))
         .join(Asset, Asset.id == AssetTag.asset_id)
         .where(visible)
-        .group_by(AssetTag.tag_id)
-        .subquery()
     )
-    rows = db.execute(
-        select(Tag, counts.c.count)
-        .outerjoin(counts, counts.c.tag_id == Tag.id)
-        .where(Tag.space_id == space_id)
-        .order_by(Tag.key)
-    ).all()
+    if album_id is not None:
+        counted = counted.where(
+            AssetTag.asset_id.in_(select(AlbumAsset.asset_id).where(AlbumAsset.album_id == album_id))
+        )
+    counts = counted.group_by(AssetTag.tag_id).subquery()
+    stmt = select(Tag, counts.c.count).where(Tag.space_id == space_id).order_by(Tag.key)
+    if album_id is not None:
+        stmt = stmt.join(counts, counts.c.tag_id == Tag.id)
+    else:
+        stmt = stmt.outerjoin(counts, counts.c.tag_id == Tag.id)
+    rows = db.execute(stmt).all()
     return [TagSummary(tag, int(count or 0)) for tag, count in rows]
 
 

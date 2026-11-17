@@ -17,6 +17,7 @@ import { ExportPage } from "../features/export/ExportPage";
 import { DiscardedPage } from "../features/review/DiscardedPage";
 import { ReviewPage } from "../features/review/ReviewPage";
 import { MapPage } from "../features/map/MapPage";
+import { TagsPage } from "../features/tags/TagsPage";
 import { MorePage, NotFoundPage } from "./pages";
 
 export const routes: RouteObject[] = [
@@ -45,6 +46,7 @@ export const routes: RouteObject[] = [
       { path: "descartadas", element: <DiscardedPage /> },
       { path: "actividad", element: <ActivityPage /> },
       { path: "exportar", element: <ExportPage /> },
+      { path: "etiquetas", element: <TagsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

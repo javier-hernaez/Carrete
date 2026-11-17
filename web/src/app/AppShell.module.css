@@ -309,16 +309,4 @@
     color: var(--color-text-subtle);
     font-size: var(--text-xs);
   }
-
-  .newAlbum {
-    color: var(--color-text-subtle);
-    border-style: dashed;
-    border-color: var(--color-border);
-  }
-
-  .dropOver {
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
-    color: var(--color-text);
-  }
 }

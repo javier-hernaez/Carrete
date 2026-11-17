@@ -28,6 +28,8 @@ class ExportIn(BaseModel):
     include: Literal["kept", "kept_pending", "all"] = "kept_pending"
     ids: list[uuid.UUID] = Field(default_factory=list, max_length=10_000)
     album_ids: list[uuid.UUID] = Field(default_factory=list, max_length=500)
+    all_albums: bool = False
+    tag_ids: list[uuid.UUID] = Field(default_factory=list, max_length=200)
     target: Literal["zip", "folder"] = "zip"
     folder: str | None = Field(default=None, max_length=500)
     volume_bytes: int | None = Field(default=None, ge=100 * 1024 * 1024, le=100 * 1024**3)
@@ -75,7 +77,7 @@ def create_export(
     storage: StorageDep,
     info: ReqInfo,
 ) -> ExportOut:
-    if not body.ids and not body.album_ids:
+    if not body.ids and not body.album_ids and not body.all_albums:
         # Exportar el espacio entero es una acción sensible.
         auth.require_recent_auth(current.session)
     params = body.model_dump(mode="json")

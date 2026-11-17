@@ -25,7 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.db.models import Album, AlbumAsset, Asset, Blob, Export, User
+from app.db.models import Album, AlbumAsset, Asset, AssetTag, Blob, Export, Tag, User
 from app.jobs import queue
 from app.services import audit, spaces
 from app.services.audit import RequestInfo
@@ -56,11 +56,29 @@ def _selected_assets(db: Session, space_id: uuid.UUID, params: dict[str, Any]) -
         query = query.where(Asset.id.in_([uuid.UUID(i) for i in params["ids"]]))
     else:
         query = query.where(Asset.review_state.in_(INCLUDE[params.get("include", "kept_pending")]))
-    if params.get("album_ids"):
+    if params.get("all_albums"):
+        # Todo lo que está en algún álbum del espacio (los álbumes de otro espacio no cuentan).
+        query = query.where(
+            Asset.id.in_(
+                select(AlbumAsset.asset_id)
+                .join(Album, Album.id == AlbumAsset.album_id)
+                .where(Album.space_id == space_id)
+            )
+        )
+    elif params.get("album_ids"):
         query = query.where(
             Asset.id.in_(
                 select(AlbumAsset.asset_id).where(
                     AlbumAsset.album_id.in_([uuid.UUID(a) for a in params["album_ids"]])
+                )
+            )
+        )
+    if params.get("tag_ids"):
+        # Con alguna de las etiquetas elegidas: «Personas» o «Humor».
+        query = query.where(
+            Asset.id.in_(
+                select(AssetTag.asset_id).where(
+                    AssetTag.tag_id.in_([uuid.UUID(t) for t in params["tag_ids"]])
                 )
             )
         )
@@ -76,7 +94,8 @@ def create(
     params: dict[str, Any],
     request: RequestInfo,
 ) -> Export:
-    scope = "selection" if params.get("ids") else "albums" if params.get("album_ids") else "space"
+    in_albums = params.get("all_albums") or params.get("album_ids")
+    scope = "selection" if params.get("ids") else "albums" if in_albums else "space"
     # Exportar todo el espacio es cosa del propietario; un álbum o una selección, de cualquiera.
     acc = spaces.access(db, user, space_id, "owner" if scope == "space" else "viewer")
     if params.get("structure", "album") not in STRUCTURES:
@@ -94,6 +113,10 @@ def create(
         album = db.get(Album, uuid.UUID(album_id))
         if album is None or album.space_id != space_id:
             raise NotFound("Ese álbum no existe")
+    for tag_id in params.get("tag_ids") or []:
+        tag = db.get(Tag, uuid.UUID(tag_id))
+        if tag is None or tag.space_id != space_id:
+            raise NotFound("Esa etiqueta no existe")
 
     items = _selected_assets(db, space_id, params)
     if not items:
@@ -114,7 +137,9 @@ def create(
             "naming": params.get("naming", "normalized"),
             "include": params.get("include", "kept_pending"),
             "ids": params.get("ids") or [],
-            "album_ids": params.get("album_ids") or [],
+            "album_ids": [] if params.get("all_albums") else params.get("album_ids") or [],
+            "all_albums": bool(params.get("all_albums")),
+            "tag_ids": params.get("tag_ids") or [],
             "volume_bytes": int(params.get("volume_bytes") or settings.export_volume_bytes),
             **({"folder": params["folder"]} if target == "folder" else {}),
         },
@@ -133,7 +158,13 @@ def create(
         target_type="export",
         target_id=export.id,
         request=request,
-        detail={"scope": scope, "count": len(items), "bytes": total, "target": target},
+        detail={
+            "scope": scope,
+            "count": len(items),
+            "bytes": total,
+            "target": target,
+            "tags": len(params.get("tag_ids") or []),
+        },
     )
     return export
 

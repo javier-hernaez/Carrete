@@ -205,6 +205,8 @@ export const api = {
   // Elementos
   assets: (space: string, params: URLSearchParams) =>
     apiFetch<AssetPage>(`/api/v1/spaces/${space}/assets?${params.toString()}`),
+  randomAsset: (space: string, params: URLSearchParams = new URLSearchParams()) =>
+    apiFetch<AssetItem | null>(`/api/v1/spaces/${space}/assets/random?${params.toString()}`),
   timeline: (space: string, params: URLSearchParams) =>
     apiFetch<Timeline>(`/api/v1/spaces/${space}/timeline?${params.toString()}`),
   asset: (id: string) => apiFetch<AssetDetail>(`/api/v1/assets/${id}`),
@@ -229,7 +231,8 @@ export const api = {
     apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}`, del),
   reorderAlbum: (space: string, id: string, body: S["ReorderIn"]) =>
     apiFetch<undefined>(`/api/v1/spaces/${space}/albums/${id}/reorder`, json(body)),
-  tags: (space: string) => apiFetch<Tag[]>(`/api/v1/spaces/${space}/tags`),
+  tags: (space: string, albumId?: string) =>
+    apiFetch<Tag[]>(`/api/v1/spaces/${space}/tags${albumId ? `?album_id=${albumId}` : ""}`),
   createTag: (space: string, name: string, asset_ids: string[] = []) =>
     apiFetch<Tag>(`/api/v1/spaces/${space}/tags`, json({ name, asset_ids })),
   renameTag: (space: string, id: string, name: string) =>

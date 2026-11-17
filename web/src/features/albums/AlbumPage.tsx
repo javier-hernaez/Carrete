@@ -27,13 +27,15 @@ import { Alert } from "../../design-system/components/Card";
 import { Dialog } from "../../design-system/components/Dialog";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { useAssetActions } from "../photos/actions";
-import { readFilters, toApiParams } from "../photos/filters";
+import { readFilters, tagCount, toApiParams, withTags } from "../photos/filters";
 import { Grid } from "../photos/Grid";
 import { thumbHashToPlaceholder } from "../../media/thumbhash";
 import { Viewer } from "../photos/Viewer";
 import { ViewerActions } from "../photos/ViewerActions";
 import { SelectionBar } from "../selection/SelectionBar";
 import { useSelection } from "../selection/useSelection";
+import { TagFilter } from "../tags/TagFilter";
+import { useTags } from "../tags/tags";
 import { showToast } from "../toast/toast";
 import { albumRange } from "./range";
 import styles from "./albums.module.css";
@@ -54,9 +56,18 @@ function AlbumDetail({ spaceId, albumId, editor }: { spaceId: string; albumId: s
     queryFn: () => api.album(spaceId, albumId),
   });
   const manual = album.data?.sort_mode === "manual";
-  const filters = { ...readFilters(new URLSearchParams()), album: albumId };
+  // Dentro del álbum solo se filtra por etiquetas (y van en la URL, como en Fotos).
+  const fromUrl = readFilters(params);
+  const filters = {
+    ...readFilters(new URLSearchParams()),
+    album: albumId,
+    etiquetas: fromUrl.etiquetas,
+    sinEtiqueta: fromUrl.sinEtiqueta,
+  };
+  const filtered = tagCount(filters) > 0;
+  const albumTags = useTags(spaceId, albumId);
   const assets = useInfiniteQuery({
-    queryKey: ["assets", spaceId, "album", albumId, manual],
+    queryKey: ["assets", spaceId, "album", albumId, manual, filters.etiquetas, filters.sinEtiqueta],
     queryFn: ({ pageParam }) =>
       api.assets(
         spaceId,
@@ -159,12 +170,9 @@ function AlbumDetail({ spaceId, albumId, editor }: { spaceId: string; albumId: s
                 Manual
               </label>
             </div>
-            <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
-              Eliminar álbum
-            </Button>
           </div>
         )}
-        {manual && editor && (
+        {manual && editor && !filtered && (
           <Alert>
             Arrastra las fotos para ordenarlas (con teclado: Espacio para coger, flechas para mover, Espacio
             para soltar).
@@ -172,11 +180,22 @@ function AlbumDetail({ spaceId, albumId, editor }: { spaceId: string; albumId: s
         )}
       </div>
 
+      <TagFilter
+        label="Filtrar el álbum por etiqueta"
+        tags={albumTags.data ?? []}
+        selected={filters.etiquetas}
+        untagged={filters.sinEtiqueta}
+        onChange={(next) => setParams(withTags(params, next), { replace: true })}
+      />
       {assets.isSuccess && items.length === 0 ? (
-        <EmptyState title="Este álbum está vacío">
-          Selecciona fotos en la línea temporal y añádelas, o arrástralas sobre el álbum en la barra lateral.
-        </EmptyState>
-      ) : manual && editor ? (
+        filtered ? (
+          <EmptyState title="Nada con estas etiquetas en este álbum">Prueba a quitar alguna.</EmptyState>
+        ) : (
+          <EmptyState title="Este álbum está vacío">
+            En Fotos, mantén pulsada una foto para seleccionar varias y añádelas con «Álbum…».
+          </EmptyState>
+        )
+      ) : manual && editor && !filtered ? (
         <SortableAlbum
           items={items}
           onOpen={open}
@@ -198,7 +217,22 @@ function AlbumDetail({ spaceId, albumId, editor }: { spaceId: string; albumId: s
           selected={editor ? selection.selected : undefined}
           onToggle={editor ? selection.toggle : undefined}
           onSelectDay={editor ? selection.toggleMany : undefined}
+          onReplace={editor ? selection.replace : undefined}
+          dayActions="selecting"
         />
+      )}
+
+      {editor && (
+        // Eliminar el álbum queda apartado al final, dentro de un desplegable, para no darle sin querer.
+        <details className={styles.albumOptions}>
+          <summary>Más opciones del álbum</summary>
+          <p className={styles.muted}>
+            Eliminar el álbum no borra sus fotos: siguen en Fotos, con sus etiquetas.
+          </p>
+          <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+            Eliminar el álbum…
+          </Button>
+        </details>
       )}
 
       {selection.selected.size > 0 && (
@@ -264,18 +298,23 @@ function AlbumDetail({ spaceId, albumId, editor }: { spaceId: string; albumId: s
       {confirmDelete && (
         <Dialog title="Eliminar el álbum" onClose={() => setConfirmDelete(false)}>
           <p>Se elimina el álbum «{a.name}». Sus fotos no se borran: siguen en la línea temporal.</p>
-          <Button
-            variant="primary"
-            onClick={() =>
-              void api.deleteAlbum(spaceId, albumId).then(async () => {
-                await refresh();
-                showToast("Álbum eliminado");
-                await navigate("/albumes");
-              })
-            }
-          >
-            Eliminar álbum
-          </Button>
+          <div className={styles.dialogButtons}>
+            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() =>
+                void api.deleteAlbum(spaceId, albumId).then(async () => {
+                  await refresh();
+                  showToast("Álbum eliminado");
+                  await navigate("/albumes");
+                })
+              }
+            >
+              Eliminar álbum
+            </Button>
+          </div>
         </Dialog>
       )}
     </div>

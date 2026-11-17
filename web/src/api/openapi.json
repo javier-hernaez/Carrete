@@ -1599,6 +1599,11 @@
             "title": "Album Ids",
             "type": "array"
           },
+          "all_albums": {
+            "default": false,
+            "title": "All Albums",
+            "type": "boolean"
+          },
           "folder": {
             "anyOf": [
               {
@@ -1648,6 +1653,15 @@
             ],
             "title": "Structure",
             "type": "string"
+          },
+          "tag_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Tag Ids",
+            "type": "array"
           },
           "target": {
             "default": "zip",
@@ -6034,6 +6048,380 @@
         ]
       }
     },
+    "/api/v1/spaces/{space_id}/assets/random": {
+      "get": {
+        "description": "Un elemento al azar de todo el espacio (con o sin álbum), con los mismos filtros que la lista.",
+        "operationId": "random_asset_api_v1_spaces__space_id__assets_random_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "space_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Space Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "review",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "pending",
+                      "kept",
+                      "discarded"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review"
+            }
+          },
+          {
+            "in": "query",
+            "name": "favorite",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Favorite"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "photo",
+                    "video"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "camera",
+                    "whatsapp",
+                    "screenshot",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "uploaded_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uploaded By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "album_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Album Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "no_album",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "No Album",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 10,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "no_tag",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "No Tag",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "doubtful",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doubtful"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trashed",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Trashed",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "south",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "South"
+            }
+          },
+          {
+            "in": "query",
+            "name": "west",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "West"
+            }
+          },
+          {
+            "in": "query",
+            "name": "north",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 90,
+                  "minimum": -90,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "North"
+            }
+          },
+          {
+            "in": "query",
+            "name": "east",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 180,
+                  "minimum": -180,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "East"
+            }
+          },
+          {
+            "in": "query",
+            "name": "located",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Located"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AssetOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Random Asset Api V1 Spaces  Space Id  Assets Random Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Random Asset",
+        "tags": [
+          "elementos"
+        ]
+      }
+    },
     "/api/v1/spaces/{space_id}/counters": {
       "get": {
         "description": "Lo que falta por hacer: «312 sin revisar», «8 grupos de repetidas».",
@@ -7059,6 +7447,7 @@
     },
     "/api/v1/spaces/{space_id}/tags": {
       "get": {
+        "description": "Con ``album_id``, solo las etiquetas que hay dentro de ese álbum, con su recuento allí.",
         "operationId": "list_tags_api_v1_spaces__space_id__tags_get",
         "parameters": [
           {
@@ -7069,6 +7458,23 @@
               "format": "uuid",
               "title": "Space Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "album_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Album Id"
             }
           }
         ],

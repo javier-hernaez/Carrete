@@ -100,6 +100,10 @@
 .thumbWrap {
   position: relative;
   overflow: hidden;
+  /* Mantener pulsado selecciona: ni menú de la imagen, ni lupa de texto, ni arrastrar la foto. */
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .thumbWrap .thumb {
@@ -130,7 +134,8 @@
 .thumbWrap:hover .selectBox,
 .selectBox:focus-visible,
 .thumbWrap[data-selected] .selectBox,
-.grid[data-selecting] .selectBox {
+.grid[data-selecting] .selectBox,
+.grid[data-checks] .selectBox {
   opacity: 1;
 }
 
@@ -227,4 +232,98 @@
   left: var(--space-1);
   top: var(--space-1);
   color: #ffd27a;
+}
+
+/* «Un recuerdo»: una foto al azar encima de la línea temporal. */
+.memory {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+
+.memoryPhoto {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 34vh, 340px);
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.memoryPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memoryText {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-6) var(--space-4) var(--space-3);
+  background: linear-gradient(transparent, rgb(0 0 0 / 65%));
+  color: #fff;
+  pointer-events: none;
+}
+
+.memoryKicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.memoryWhen {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.memoryWhen::first-letter {
+  text-transform: uppercase;
+}
+
+.memoryWhere {
+  font-size: var(--text-sm);
+  opacity: 0.9;
+}
+
+.memoryActions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.memoryButton {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 50%);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.memoryButton:hover {
+  background: rgb(0 0 0 / 70%);
+}
+
+.memoryShow {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
 }

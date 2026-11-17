@@ -5,10 +5,24 @@ import { api } from "../../api/client";
 import { useSession } from "../../app/session";
 import { Button } from "../../design-system/components/Button";
 import { SelectField, TextField } from "../../design-system/components/Field";
-import { activeCount, readFilters } from "./filters";
+import { activeCount, readFilters, tagCount } from "./filters";
 import styles from "./photos.module.css";
 
-const KEYS = ["estado", "fav", "tipo", "origen", "persona", "de", "a", "dudosa", "sin-album", "q", "zona"];
+const KEYS = [
+  "estado",
+  "fav",
+  "tipo",
+  "origen",
+  "persona",
+  "de",
+  "a",
+  "dudosa",
+  "sin-album",
+  "q",
+  "zona",
+  "etiqueta",
+  "sin-etiqueta",
+];
 
 export function FiltersBar({ hideState = false }: { hideState?: boolean }) {
   const { space } = useSession();
@@ -28,9 +42,11 @@ export function FiltersBar({ hideState = false }: { hideState?: boolean }) {
     setParams(next, { replace: true });
   };
   const count = activeCount(filters);
+  // Las etiquetas se filtran con sus fichas, fuera del desplegable: no hace falta abrirlo por ellas.
+  const hidden = count - tagCount(filters);
   return (
-    <details className={styles.filters} open={count > 0}>
-      <summary className={styles.filtersSummary}>Filtros{count ? ` (${count})` : ""}</summary>
+    <details className={styles.filters} open={hidden > 0}>
+      <summary className={styles.filtersSummary}>Filtros{hidden ? ` (${hidden})` : ""}</summary>
       <div className={styles.filtersBody}>
         {!hideState && (
           <SelectField

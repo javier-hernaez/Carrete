@@ -17,6 +17,7 @@ interface MoreItem {
 }
 
 const MORE: MoreItem[] = [
+  { label: "more.tags", icon: "tag", to: "/etiquetas" },
   { label: "more.duplicates", icon: "duplicates", to: "/repetidas" },
   { label: "more.discarded", icon: "discarded", to: "/descartadas" },
   { label: "more.trash", icon: "trash", to: "/papelera" },
