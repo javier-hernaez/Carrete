@@ -123,7 +123,7 @@ jobs:
           mkdir -p ../deploy/apk
           cp app/build/outputs/apk/release/app-release*.apk ../deploy/apk/carrete.apk
           printf '{"version_code": %s, "version_name": "%s"}\n' "$CARRETE_APK_VERSION_CODE" "$CARRETE_APK_VERSION_NAME" > ../deploy/apk/carrete-apk.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: carrete-apk
           path: deploy/apk/
