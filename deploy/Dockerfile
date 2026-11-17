@@ -5,7 +5,7 @@
 # pedida: por eso la etapa «dev» va antes que la web).
 
 # --- 1) Base de Python con las herramientas del sistema ----------------------------------------------
-FROM python:3.13-slim AS base
+FROM python:3.15-slim AS base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
