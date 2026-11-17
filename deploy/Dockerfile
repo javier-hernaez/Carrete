@@ -32,6 +32,9 @@ FROM deps AS dev
 COPY backend/requirements-dev.txt /tmp/requirements-dev.txt
 RUN pip install --require-hashes --no-deps -r /tmp/requirements-dev.txt
 WORKDIR /src/backend
+# Sin root. «make» y el CI pasan además -u con su usuario para poder escribir en el repositorio montado.
+ENV HOME=/tmp
+USER 65534:65534
 CMD ["python", "-m", "pytest"]
 
 # --- 4) Web: compila la interfaz (React + Vite) a ficheros estáticos ---------------------------------
@@ -59,8 +62,12 @@ COPY deploy/apk/ ./apk/
 COPY deploy/carrete.sh /usr/local/bin/carrete
 # El usuario real lo fija docker-compose.yml (el dueño de las carpetas de datos en el equipo); este es
 # solo el valor por defecto, sin privilegios.
+# pip no hace falta en producción y arrastra sus propias copias de urllib3, msgpack y pkg_resources:
+# fuera, del entorno virtual y del sistema.
 RUN useradd --system --uid 10001 --no-create-home carrete \
- && mkdir -p /data && chown carrete /data
+ && mkdir -p /data && chown carrete /data \
+ && /opt/venv/bin/python -m pip uninstall -y -q pip \
+ && /usr/local/bin/python -m pip uninstall -y -q pip
 USER carrete
 EXPOSE 8000
 LABEL org.opencontainers.image.title="Carrete" \
