@@ -83,7 +83,12 @@ export function mockApi(routes: Routes = {}) {
       // Por defecto, un espacio vacío.
       if (url.pathname.endsWith("/assets")) return Promise.resolve(json({ items: [], next_cursor: null }));
       if (url.pathname.endsWith("/timeline")) return Promise.resolve(json({ total: 0, months: [] }));
-      if (["/members", "/albums", "/suggestions", "/passkeys", "/map"].some((s) => url.pathname.endsWith(s)))
+      if (url.pathname.endsWith("/assets/random")) return Promise.resolve(json(null));
+      if (
+        ["/members", "/albums", "/tags", "/suggestions", "/passkeys", "/map"].some((s) =>
+          url.pathname.endsWith(s),
+        )
+      )
         return Promise.resolve(json([]));
     }
     if (!(key in table))

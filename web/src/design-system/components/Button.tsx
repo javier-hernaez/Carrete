@@ -5,7 +5,7 @@ import { cx } from "../cx";
 import { Icon, type IconName } from "./Icon";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   icon?: IconName;
   children: ReactNode;
 }

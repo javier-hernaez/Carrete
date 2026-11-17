@@ -77,11 +77,38 @@ describe("álbumes", () => {
     await waitFor(() => expect(patches).toContain(JSON.stringify({ sort_mode: "manual" })));
     expect(await screen.findByRole("list", { name: "Fotos del álbum en orden manual" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Eliminar álbum" }));
+    // Eliminar queda apartado en «Más opciones del álbum»
+    expect(screen.queryByRole("button", { name: /Eliminar/ })).not.toBeVisible();
+    await user.click(screen.getByText("Más opciones del álbum"));
+    await user.click(screen.getByRole("button", { name: "Eliminar el álbum…" }));
     const dialog = await screen.findByRole("dialog", { name: "Eliminar el álbum" });
     expect(within(dialog).getByText(/Sus fotos no se borran/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Eliminar álbum" }));
     await waitFor(() => expect(deleted).toBe(true));
+  });
+
+  it("filtra dentro del álbum por sus etiquetas", async () => {
+    const calls: URL[] = [];
+    mockApi({
+      [`/api/v1/spaces/${SPACE_A}/albums/al1`]: ALBUM,
+      [`/api/v1/spaces/${SPACE_A}/tags`]: (_: RequestInit, url: URL) => {
+        expect(url.searchParams.get("album_id")).toBe("al1");
+        return [{ id: "t1", name: "Personas", count: 1 }];
+      },
+      [`/api/v1/spaces/${SPACE_A}/assets`]: (_: RequestInit, url: URL) => {
+        calls.push(url);
+        return { items: [makeAsset(0)], next_cursor: null };
+      },
+    });
+    const user = userEvent.setup();
+    renderAt("/albumes/al1");
+    const group = await screen.findByRole("group", { name: "Filtrar el álbum por etiqueta" });
+    await user.click(await within(group).findByRole("button", { name: /Personas/ }));
+    await waitFor(() =>
+      expect(
+        calls.some((u) => u.searchParams.get("album_id") === "al1" && u.searchParams.get("tag_id") === "t1"),
+      ).toBe(true),
+    );
   });
 
   it("formatea el rango de fechas", () => {

@@ -31,6 +31,7 @@ export function makeAsset(n: number, overrides: Partial<AssetItem> = {}): AssetI
     is_favorite: false,
     processing_state: "ready",
     source: "camera",
+    tag_ids: [],
     ...overrides,
   };
 }
@@ -134,6 +135,7 @@ describe("línea temporal y visor", () => {
         contributors: [],
         trashed_at: null,
         albums: [],
+        tags: [{ id: "t1", name: "Personas" }],
       },
       ...extra,
     });
@@ -202,6 +204,59 @@ describe("línea temporal y visor", () => {
     expect(screen.getByText(/Mostrando desde 2022-01-31/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Volver a lo más reciente" }));
     expect(screen.queryByText(/Mostrando desde/)).not.toBeInTheDocument();
+  });
+
+  it("muestra un recuerdo al azar, cambia con «Otra» y se puede ocultar", async () => {
+    localStorage.clear();
+    let n = 0;
+    api({
+      [`/api/v1/spaces/${SPACE_A}/assets/random`]: (_: RequestInit, url: URL) => {
+        expect(url.searchParams.get("kind")).toBe("photo");
+        n++;
+        return makeAsset(n === 1 ? 40 : 41);
+      },
+    });
+    const user = userEvent.setup();
+    renderAt("/");
+    const memory = await screen.findByRole("region", { name: "Un recuerdo al azar" });
+    expect(within(memory).getByText("Un recuerdo")).toBeInTheDocument();
+    await user.click(within(memory).getByRole("button", { name: "Otra" }));
+    await waitFor(() => expect(n).toBe(2));
+    // Se abre aunque no esté entre lo cargado en la lista
+    await user.click(within(memory).getByRole("button", { name: "Abrir el recuerdo" }));
+    const viewer = await screen.findByRole("dialog", { name: "Visor de fotos" });
+    expect(within(viewer).getByText("1 de 1")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "Escape" });
+    await user.click(await screen.findByRole("button", { name: "Ocultar el recuerdo" }));
+    expect(screen.queryByRole("region", { name: "Un recuerdo al azar" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ver un recuerdo al azar" })).toBeInTheDocument();
+  });
+
+  it("filtra por etiquetas con fichas (todas a la vez) o sin etiqueta", async () => {
+    const calls: string[] = [];
+    api({
+      [`/api/v1/spaces/${SPACE_A}/tags`]: [
+        { id: "t1", name: "Personas", count: 3 },
+        { id: "t2", name: "Humor", count: 1 },
+      ],
+      [`/api/v1/spaces/${SPACE_A}/assets`]: (_: RequestInit, url: URL) => {
+        calls.push(url.search);
+        return { items, next_cursor: null };
+      },
+    });
+    const user = userEvent.setup();
+    renderAt("/");
+    const group = await screen.findByRole("group", { name: "Filtrar por etiqueta" });
+    await user.click(await within(group).findByRole("button", { name: /Personas/ }));
+    await user.click(within(group).getByRole("button", { name: /Humor/ }));
+    await waitFor(() => expect(calls.some((c) => c.includes("tag_id=t1&tag_id=t2"))).toBe(true));
+    // Con un filtro de etiqueta no se muestra el recuerdo al azar
+    expect(screen.queryByRole("region", { name: "Un recuerdo al azar" })).not.toBeInTheDocument();
+    await user.click(within(group).getByRole("button", { name: "Sin etiqueta" }));
+    await waitFor(() => expect(calls.at(-1)).toContain("no_tag=true"));
+    expect(calls.at(-1)).not.toContain("tag_id");
+    await user.click(within(group).getByRole("button", { name: "Todas" }));
+    await waitFor(() => expect(calls.at(-1)).not.toContain("no_tag"));
   });
 
   it("explica cuando no hay nada", async () => {

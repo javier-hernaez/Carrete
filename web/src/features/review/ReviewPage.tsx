@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
-import { api, type Album, type AssetItem } from "../../api/client";
+import { api, type Album, type AssetItem, type Tag } from "../../api/client";
 import { errorMessage } from "../../app/errors";
 import { canEdit, useSession } from "../../app/session";
 import { EmptyState } from "../../design-system/components/EmptyState";
@@ -11,7 +11,12 @@ import { readFilters, toApiParams } from "../photos/filters";
 import { formatDateTime, formatDuration, SOURCE_LABEL } from "../photos/format";
 import { AlbumPicker } from "../selection/AlbumPicker";
 import { rememberAlbum, useAlbums } from "../selection/albums";
+import { TagPicker } from "../tags/TagPicker";
+import { useTags } from "../tags/tags";
 import { showToast } from "../toast/toast";
+import { ModeSwitch } from "./ModeSwitch";
+import { readMode, saveMode, type ReviewMode } from "./mode";
+import { ReviewGrid } from "./ReviewGrid";
 import styles from "./review.module.css";
 
 type Decision = {
@@ -23,7 +28,7 @@ type Decision = {
 
 const SWIPE = 70;
 
-/** Modo Revisar: de una en una, decisiones inmediatas y deshacer. */
+/** Revisar: en bloque sobre una cuadrícula, o de una en una con gestos, atajos y deshacer. */
 export function ReviewPage() {
   const { space } = useSession();
   if (!space) return <EmptyState title="Aún no tienes ningún espacio" />;
@@ -31,10 +36,24 @@ export function ReviewPage() {
     return (
       <EmptyState title="Solo puedes ver este espacio">Con el rol de lector no se puede revisar.</EmptyState>
     );
-  return <Review spaceId={space.id} />;
+  return <ReviewModes spaceId={space.id} />;
 }
 
-function Review({ spaceId }: { spaceId: string }) {
+function ReviewModes({ spaceId }: { spaceId: string }) {
+  const [mode, setMode] = useState<ReviewMode>(readMode);
+  const change = (next: ReviewMode) => {
+    saveMode(next);
+    setMode(next);
+  };
+  return mode === "grid" ? (
+    <ReviewGrid spaceId={spaceId} onMode={change} />
+  ) : (
+    <Review spaceId={spaceId} onMode={change} />
+  );
+}
+
+/** De una en una: decisiones inmediatas y deshacer. */
+function Review({ spaceId, onMode }: { spaceId: string; onMode: (mode: ReviewMode) => void }) {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -60,7 +79,9 @@ function Review({ spaceId }: { spaceId: string }) {
   const [history, setHistory] = useState<Decision[]>([]);
   const [overrides, setOverrides] = useState<Record<string, Partial<AssetItem>>>({});
   const [picker, setPicker] = useState(false);
+  const [tagPicker, setTagPicker] = useState(false);
   const albums = useAlbums(spaceId);
+  const tags = useTags(spaceId);
   const asset = useMemo(() => {
     const current = items[index];
     return current ? { ...current, ...overrides[current.id] } : undefined;
@@ -126,6 +147,20 @@ function Review({ spaceId }: { spaceId: string }) {
     [asset, send, spaceId],
   );
 
+  // Etiquetas: se ponen y quitan sin pasar a la siguiente (una foto puede llevar varias).
+  const setTag = useCallback(
+    (tag: Tag, has: boolean, send_ = true) => {
+      if (!asset) return;
+      if (send_) send([asset.id], has ? "add_tag" : "remove_tag", { tag_id: tag.id });
+      const current = (asset.tag_ids ?? []).filter((id) => id !== tag.id);
+      setOverrides((o) => ({
+        ...o,
+        [asset.id]: { ...o[asset.id], tag_ids: has ? [...current, tag.id] : current },
+      }));
+    },
+    [asset, send],
+  );
+
   const undo = useCallback(() => {
     const last = history[history.length - 1];
     if (!last) return;
@@ -141,7 +176,11 @@ function Review({ spaceId }: { spaceId: string }) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (picker || (e.target instanceof Element && e.target.closest("input, textarea, select, dialog")))
+      if (
+        picker ||
+        tagPicker ||
+        (e.target instanceof Element && e.target.closest("input, textarea, select, dialog"))
+      )
         return;
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && key === "z") undo();
@@ -163,7 +202,7 @@ function Review({ spaceId }: { spaceId: string }) {
     return () => {
       window.removeEventListener("keydown", handler);
     };
-  }, [decide, undo, picker, albums.sorted, navigate]);
+  }, [decide, undo, picker, tagPicker, albums.sorted, navigate]);
 
   // Gestos: derecha vale, izquierda no vale, arriba favorita; doble toque favorita.
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -223,6 +262,7 @@ function Review({ spaceId }: { spaceId: string }) {
         <div className={styles.progressText} aria-live="polite">
           {index + 1} de {total}
         </div>
+        <ModeSwitch mode="one" onMode={onMode} dark />
         <progress className={styles.progress} max={total} value={index} aria-label="Progreso" />
       </header>
       <div
@@ -327,6 +367,35 @@ function Review({ spaceId }: { spaceId: string }) {
             </button>
           ))}
         </div>
+      )}
+      <div className={styles.recent} aria-label="Etiquetas">
+        {(tags.data ?? []).map((tag) => {
+          const has = (asset.tag_ids ?? []).includes(tag.id);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              className={styles.chip}
+              aria-pressed={has}
+              onClick={() => setTag(tag, !has)}
+            >
+              {has ? "✓ " : ""}
+              {tag.name}
+            </button>
+          );
+        })}
+        <button type="button" className={styles.chip} onClick={() => setTagPicker(true)}>
+          + Etiqueta
+        </button>
+      </div>
+      {tagPicker && (
+        <TagPicker
+          spaceId={spaceId}
+          ids={[asset.id]}
+          tagsOf={() => asset.tag_ids ?? []}
+          onClose={() => setTagPicker(false)}
+          onChanged={(tag, has) => setTag(tag, has, false)}
+        />
       )}
       {picker && (
         <AlbumPicker

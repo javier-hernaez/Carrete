@@ -25,6 +25,7 @@ export const es = {
   "more.discarded": "Descartadas",
   "more.trash": "Papelera",
   "more.export": "Exportar",
+  "more.tags": "Etiquetas",
   "more.activity": "Actividad",
   "more.space": "Espacio y miembros",
   "more.settings": "Ajustes",

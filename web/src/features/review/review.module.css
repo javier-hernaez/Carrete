@@ -11,7 +11,7 @@
 
 .top {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-1) var(--space-3);
   padding: var(--space-2) var(--space-3);
@@ -207,6 +207,12 @@
   cursor: pointer;
 }
 
+.chip[aria-pressed="true"] {
+  border-color: #f0954f;
+  background: #f0954f;
+  color: #1b1712;
+}
+
 .chip kbd {
   font-family: var(--font-mono);
   opacity: 0.7;
@@ -219,4 +225,66 @@
   color: var(--color-accent);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Cuadrícula (en bloque) */
+.gridPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gridHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.gridTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+}
+
+.gridHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.mode,
+.modeDark {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+.modeDark {
+  background: rgb(255 255 255 / 12%);
+}
+
+.mode button,
+.modeDark button {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mode button[aria-pressed="true"] {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.modeDark button[aria-pressed="true"] {
+  background: rgb(255 255 255 / 22%);
 }

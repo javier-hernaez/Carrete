@@ -7,7 +7,7 @@ import { Alert } from "../../design-system/components/Card";
 import { EmptyState } from "../../design-system/components/EmptyState";
 import { errorMessage } from "../../app/errors";
 import { t } from "../../i18n";
-import { readFilters, activeCount } from "./filters";
+import { readFilters, activeCount, withTags } from "./filters";
 import { FiltersBar } from "./FiltersBar";
 import { formatMonth } from "./format";
 import { Grid } from "./Grid";
@@ -17,6 +17,10 @@ import { SelectionBar } from "../selection/SelectionBar";
 import { useSelection } from "../selection/useSelection";
 import { Viewer } from "./Viewer";
 import { ViewerActions } from "./ViewerActions";
+import { RandomPick } from "./RandomPick";
+import { useRandomPick } from "./random";
+import { TagFilter } from "../tags/TagFilter";
+import { useTags } from "../tags/tags";
 
 /** Línea temporal del espacio con filtros y visor. */
 export function PhotosPage() {
@@ -40,6 +44,11 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
   const ids = useMemo(() => assets.items.map((a) => a.id), [assets.items]);
   const selection = useSelection(ids);
   const index = viewing ? assets.items.findIndex((a) => a.id === viewing) : -1;
+  const tags = useTags(spaceId);
+  const random = useRandomPick(spaceId);
+  // El recuerdo al azar puede no estar entre lo cargado de la lista: se abre en un visor propio.
+  const randomOpen = index < 0 && !!viewing && random.data?.id === viewing ? random.data : null;
+  const showRandom = activeCount(filters) === 0 && !start;
 
   const open = (i: number) => {
     const next = new URLSearchParams(params);
@@ -92,6 +101,22 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
           </label>
         )}
       </div>
+      {showRandom && (
+        <RandomPick
+          query={random}
+          onOpen={(asset) => {
+            const next = new URLSearchParams(params);
+            next.set("ver", asset.id);
+            setParams(next);
+          }}
+        />
+      )}
+      <TagFilter
+        tags={tags.data ?? []}
+        selected={filters.etiquetas}
+        untagged={filters.sinEtiqueta}
+        onChange={(next) => setParams(withTags(params, next), { replace: true })}
+      />
       <FiltersBar />
       {start && (
         <Alert>
@@ -127,7 +152,8 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
           selected={editor ? selection.selected : undefined}
           onToggle={editor ? selection.toggle : undefined}
           onSelectDay={editor ? selection.toggleMany : undefined}
-          draggable={editor}
+          onReplace={editor ? selection.replace : undefined}
+          dayActions="selecting"
         />
       )}
       {selection.selected.size > 0 && (
@@ -137,6 +163,18 @@ function SpaceTimeline({ spaceId, editor }: { spaceId: string; editor: boolean }
           items={assets.items}
           onClear={selection.clear}
           onSelectAll={selection.selectAll}
+        />
+      )}
+      {randomOpen && (
+        <Viewer
+          items={[randomOpen]}
+          index={0}
+          onIndex={() => undefined}
+          onClose={close}
+          hideNav
+          actions={(asset) =>
+            editor ? <ViewerActions spaceId={spaceId} asset={asset} onRemoved={close} /> : null
+          }
         />
       )}
       {index >= 0 && (

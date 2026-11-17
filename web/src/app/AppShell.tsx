@@ -102,7 +102,7 @@ export function AppShell() {
             </li>
           ))}
         </ul>
-        {space && <SidebarAlbums spaceId={space.id} editor={space.role !== "viewer"} />}
+        {space && <SidebarAlbums spaceId={space.id} />}
       </nav>
 
       <main id="contenido" className={cx(styles.main, withFab && styles.mainWithFab)} tabIndex={-1}>

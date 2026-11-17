@@ -72,6 +72,12 @@ def test_tags_end_to_end(owner: Person, tmp_path: Path, engine: Engine, new_clie
     listing = {t["name"]: t["count"] for t in owner.get(url).json()}
     assert listing == {"Humor": 1, "Personas": 2}
 
+    # Dentro de un álbum: solo las etiquetas que hay en él, con su recuento allí
+    album = owner.post(f"/api/v1/spaces/{space}/albums", json={"name": "Viaje", "asset_ids": [a]}).json()
+    inside = owner.get(url, params={"album_id": album["id"]}).json()
+    assert [(t["name"], t["count"]) for t in inside] == [("Personas", 1)]
+    assert owner.get(url, params={"album_id": personas["id"]}).status_code == 404
+
     # Renombrar; no se puede chocar con otra
     renamed = owner.patch(f"{url}/{humor['id']}", json={"name": "Risas"})
     assert renamed.json()["name"] == "Risas"

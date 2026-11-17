@@ -29,6 +29,7 @@ export async function downloadSelection(
       structure: "flat",
       naming: "normalized",
       include: "all",
+      all_albums: false,
     });
     showToast(ids.length === 1 ? "Preparando la descarga…" : `Preparando ${ids.length} fotos en un ZIP…`);
     for (let i = 0; i < 600 && (job.state === "queued" || job.state === "running"); i++) {

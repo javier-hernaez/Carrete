@@ -255,6 +255,12 @@ def list_assets(
     return rows[:limit], next_cursor
 
 
+def random_asset(db: Session, space_id: uuid.UUID, f: Filters) -> Asset | None:
+    """Un elemento al azar entre los que se ven (para «Un recuerdo» en la línea temporal)."""
+    stmt = apply_filters(select(Asset), space_id, f).where(Asset.processing_state == "ready")
+    return db.scalar(stmt.order_by(func.random()).limit(1))
+
+
 def month_counts(db: Session, space_id: uuid.UUID, f: Filters) -> list[tuple[int, int, int]]:
     """(año, mes, número) para la barra de fechas, de lo más reciente a lo más antiguo."""
     year = func.extract("year", Asset.taken_at_local)

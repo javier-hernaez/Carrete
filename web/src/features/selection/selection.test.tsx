@@ -1,6 +1,6 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { mockApi, renderAt, SPACE_A } from "../../test/render";
 import { makeAsset } from "../photos/photos.test";
@@ -54,7 +54,9 @@ describe("selección múltiple", () => {
     await user.click(screen.getByRole("button", { name: "Deshacer" }));
     await waitFor(() => expect(calls[1]).toMatchObject({ action: "revert", snapshot: {} }));
 
-    // Día entero
+    // Día entero: el botón solo aparece con la selección en marcha
+    expect(screen.queryByRole("button", { name: "Seleccionar el día" })).not.toBeInTheDocument();
+    await user.click(boxes[0]!);
     await user.click(screen.getAllByRole("button", { name: "Seleccionar el día" })[0]!);
     expect(screen.getByText("3 seleccionadas")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Quitar el día" }));
@@ -111,47 +113,79 @@ describe("selección múltiple", () => {
     expect(calls[2]).toMatchObject({ state: "discarded" });
   });
 
-  it("arrastra la selección a un álbum de la barra lateral", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("mantener pulsado selecciona y, sin soltar, deslizar marca el rango", async () => {
+    api([]);
+    renderAt("/");
+    const thumbs = await screen.findAllByRole("button", { name: /^Foto del/ });
+    expect(thumbs[0]).not.toHaveAttribute("draggable", "true");
+    const cell = (i: number) => thumbs[i]!.closest("[data-index]")!;
+    // jsdom no calcula posiciones: «lo que hay bajo el dedo» es la miniatura según la x del toque.
+    document.elementFromPoint = (x: number) => cell(Math.min(3, Math.floor(x / 100)));
+    vi.useFakeTimers();
+    fireEvent.touchStart(thumbs[0]!, { touches: [{ clientX: 10, clientY: 10 }] });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(screen.getByText("1 seleccionada")).toBeInTheDocument();
+    fireEvent.touchMove(thumbs[0]!, { touches: [{ clientX: 210, clientY: 10 }] });
+    expect(screen.getByText("3 seleccionadas")).toBeInTheDocument();
+    fireEvent.touchEnd(thumbs[0]!, { touches: [] });
+    // El clic que sigue al soltar no abre el visor ni cambia la selección
+    fireEvent.click(thumbs[2]!);
+    expect(screen.getByText("3 seleccionadas")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Visor de fotos" })).not.toBeInTheDocument();
+
+    // Mover el dedo antes de tiempo es desplazar la página: no selecciona
+    fireEvent.touchStart(thumbs[3]!, { touches: [{ clientX: 310, clientY: 10 }] });
+    fireEvent.touchMove(thumbs[3]!, { touches: [{ clientX: 310, clientY: 80 }] });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    fireEvent.touchEnd(thumbs[3]!, { touches: [] });
+    expect(screen.getByText("3 seleccionadas")).toBeInTheDocument();
+  });
+
+  it("pone etiquetas a la selección y crea una nueva", async () => {
     const calls: Record<string, unknown>[] = [];
+    let created: Record<string, unknown> = {};
     api(calls);
     mockApi({
-      [`/api/v1/spaces/${SPACE_A}/assets`]: { items, next_cursor: null },
-      [`/api/v1/spaces/${SPACE_A}/albums`]: [
-        {
-          id: "al1",
-          name: "Asturias",
-          description: null,
-          count: 3,
-          cover_asset_id: null,
-          sort_mode: "date",
-          first: null,
-          last: null,
-        },
-      ],
+      [`/api/v1/spaces/${SPACE_A}/assets`]: {
+        items: items.map((a, i) => ({ ...a, tag_ids: i === 0 ? ["t1"] : [] })),
+        next_cursor: null,
+      },
+      [`/api/v1/spaces/${SPACE_A}/albums`]: [],
+      [`/api/v1/spaces/${SPACE_A}/tags`]: [{ id: "t1", name: "Personas", count: 1 }],
+      [`POST /api/v1/spaces/${SPACE_A}/tags`]: (init: RequestInit) => {
+        created = JSON.parse(init.body as string) as Record<string, unknown>;
+        return { id: "t9", name: "Humor", count: 2 };
+      },
       [`POST /api/v1/spaces/${SPACE_A}/assets/batch`]: (init: RequestInit) => {
         calls.push(JSON.parse(init.body as string) as Record<string, unknown>);
-        return { count: 2, undo: null };
+        return { count: 1, undo: null };
       },
     });
+    const user = userEvent.setup();
     renderAt("/");
-    const target = await screen.findByRole("link", { name: /Asturias/ });
-    const data = new Map<string, string>([
-      ["application/x-carrete-ids", JSON.stringify([items[0]?.id, items[1]?.id])],
-    ]);
-    const dataTransfer = {
-      types: ["application/x-carrete-ids"],
-      getData: (t: string) => data.get(t) ?? "",
-      dropEffect: "none",
-    };
-    fireEvent.dragOver(target, { dataTransfer });
-    fireEvent.drop(target, { dataTransfer });
-    await waitFor(() =>
-      expect(calls[0]).toMatchObject({
-        action: "add_album",
-        album_id: "al1",
-        ids: [items[0]?.id, items[1]?.id],
-      }),
-    );
-    expect(await screen.findByText("2 añadidas a «Asturias»")).toBeInTheDocument();
+    const boxes = await screen.findAllByRole("button", { name: /^Seleccionar: / });
+    await user.click(boxes[0]!);
+    await user.click(boxes[1]!);
+    await user.click(screen.getByRole("button", { name: "Etiquetas…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Etiquetas de 2" });
+    // Una de las dos la tiene: estado mixto; al tocar, se pone a las dos
+    const personas = await within(dialog).findByRole("button", { name: /Personas/ });
+    expect(personas).toHaveAttribute("aria-pressed", "mixed");
+    await user.click(personas);
+    await waitFor(() => expect(calls[0]).toMatchObject({ action: "add_tag", tag_id: "t1" }));
+    expect(personas).toHaveAttribute("aria-pressed", "true");
+    // Sugerencias para empezar y crear una nueva
+    expect(within(dialog).getByRole("button", { name: "+ Paisajes" })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "+ Humor" }));
+    await waitFor(() => expect(created).toMatchObject({ name: "Humor" }));
+    expect((created.asset_ids as string[]).length).toBe(2);
   });
 });

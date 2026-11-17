@@ -4,6 +4,31 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versiones 
 
 ## [Sin publicar]
 
+### Añadido — Etiquetas y revisar en bloque
+
+- Etiquetas en la web: «Etiquetas…» en el visor y en la selección (con «Personas», «Paisajes» y
+  «Humor» como sugerencias para empezar), fichas para ponerlas y quitarlas en Revisar sin pasar a la
+  siguiente, y página «Más → Etiquetas» para renombrarlas o eliminarlas (sin borrar fotos).
+- Filtro por etiquetas con fichas en Fotos y dentro de cada álbum (solo las etiquetas que hay en él,
+  con su recuento allí: `GET /tags?album_id=`). Varias a la vez: fotos que las tienen todas.
+- Revisar en bloque: cuadrícula de lo pendiente con casillas y «Seleccionar el día» siempre a la vista,
+  y las acciones de la selección para todas a la vez. Es el modo por defecto; «Una a una» sigue
+  disponible y se recuerda el elegido.
+- Seleccionar con el dedo: mantener pulsada una foto la selecciona y, sin soltar, deslizar marca todas
+  las que hay entre medias (o las desmarca). Cerca del borde, la página se desplaza sola.
+- «Un recuerdo»: una foto al azar de todo el espacio encima de la línea temporal, con «Otra» y
+  «Ocultar» (`GET /assets/random`).
+- Exportar «Todos los álbumes» y, en cualquier exportación, solo lo que tenga alguna de las etiquetas
+  elegidas (`all_albums` y `tag_ids`).
+
+### Cambiado — Selección y álbumes
+
+- Ya no se pueden arrastrar fotos (sobre todo en el móvil, mantener pulsado las «cogía» para moverlas):
+  la barra lateral solo enlaza los álbumes y se añade con «Álbum…».
+- En Fotos, «Seleccionar el día» aparece solo con la selección en marcha.
+- «Eliminar el álbum» pasa al final de la página, dentro de «Más opciones del álbum», con un botón
+  rojo y confirmación con «Cancelar».
+
 ### Corregido — Móvil
 
 - App Android: se cerraba al pulsar «Elegir del móvil» en móviles cuyo selector de fotos admite menos de

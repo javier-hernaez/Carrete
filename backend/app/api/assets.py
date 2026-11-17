@@ -179,6 +179,18 @@ def list_assets(
     return AssetPage(items=[asset_out(a, tags.get(a.id)) for a in items], next_cursor=next_cursor)
 
 
+@router.get("/spaces/{space_id}/assets/random", response_model=AssetOut | None)
+def random_asset(space_id: uuid.UUID, current: FullAuth, db: DB, filters: FiltersDep) -> AssetOut | None:
+    """Un elemento al azar de todo el espacio (con o sin álbum), con los mismos filtros que la lista."""
+    spaces.access(db, current.user, space_id)
+    asset = service.random_asset(db, space_id, filters)
+    if asset is None:
+        return None
+    from app.services.tags import tag_ids_by_asset
+
+    return asset_out(asset, tag_ids_by_asset(db, [asset.id]).get(asset.id))
+
+
 class MonthCount(BaseModel):
     year: int
     month: int

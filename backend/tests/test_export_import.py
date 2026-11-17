@@ -412,3 +412,60 @@ def test_import_folder_command(
         cli.main(["import", str(disk), "--space", "No existe"])
     cli.main(["library"])
     assert "Biblioteca: 3 ficheros" in capsys.readouterr().out
+
+
+def test_export_all_albums_and_tags(
+    owner: Person, worker: Worker, library_space: dict[str, str], engine: Engine, new_client, tmp_path: Path
+) -> None:  # type: ignore[no-untyped-def]
+    space = library_space["space"]
+    viaje = owner.post(
+        f"/api/v1/spaces/{space}/albums", json={"name": "Viaje", "asset_ids": [library_space["suelta"]]}
+    ).json()
+    otra = upload(owner, space, make_jpeg(tmp_path / "otra.jpg", pattern=5, color=(20, 160, 90)))
+    drain(worker)
+    tags = f"/api/v1/spaces/{space}/tags"
+    personas = owner.post(tags, json={"name": "Personas", "asset_ids": [library_space["boda"], otra]}).json()
+    humor = owner.post(tags, json={"name": "Humor", "asset_ids": [library_space["suelta"]]}).json()
+
+    # Todos los álbumes: lo que está en alguno (Boda y Viaje), no lo suelto
+    everything = _export(owner, space, all_albums=True)
+    assert everything["total_items"] == 2 and everything["params"]["scope"] == "albums"
+    assert everything["params"]["all_albums"] is True
+    drain(worker)
+    data = owner.get(f"/api/v1/spaces/{space}/exports/{everything['id']}/files/1").content
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        folders = {n.split("/")[0] for n in zf.namelist() if not n.startswith("carrete-")}
+    assert folders == {"Boda", "Viaje"}
+
+    # Todos los álbumes, solo con alguna de las etiquetas elegidas
+    assert _export(owner, space, all_albums=True, tag_ids=[personas["id"]])["total_items"] == 1
+    both = _export(owner, space, all_albums=True, tag_ids=[personas["id"], humor["id"]])
+    assert both["total_items"] == 2
+    # Algunos álbumes con etiquetas
+    assert (
+        owner.post(
+            f"/api/v1/spaces/{space}/exports", json={"album_ids": [viaje["id"]], "tag_ids": [personas["id"]]}
+        ).json()["code"]
+        == "empty_export"
+    )
+    # Todo el espacio con una etiqueta (propietario): también lo que no está en ningún álbum
+    assert _export(owner, space, tag_ids=[personas["id"]])["total_items"] == 2
+
+    # Un lector puede exportar todos los álbumes, pero no el espacio entero por etiquetas
+    lector = join(new_client(), engine, invite(owner, space, "viewer"), "lector")
+    assert _export(lector, space, all_albums=True)["total_items"] == 2
+    assert lector.post(f"/api/v1/spaces/{space}/exports", json={"tag_ids": [humor["id"]]}).status_code == 403
+
+
+def test_random_asset(owner: Person, worker: Worker, library_space: dict[str, str]) -> None:
+    space = library_space["space"]
+    url = f"/api/v1/spaces/{space}/assets/random"
+    seen = {owner.get(url).json()["id"] for _ in range(30)}
+    # Nunca lo descartado; con el tiempo salen las dos que se ven
+    assert seen == {library_space["boda"], library_space["suelta"]}
+    assert owner.get(url, params={"favorite": "true"}).json()["id"] == library_space["boda"]
+    owner.post(
+        f"/api/v1/spaces/{space}/assets/batch",
+        json={"ids": [library_space["boda"], library_space["suelta"]], "action": "trash"},
+    )
+    assert owner.get(url).json() is None

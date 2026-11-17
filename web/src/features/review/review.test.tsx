@@ -35,6 +35,7 @@ describe("Revisar", () => {
   beforeEach(() => {
     calls = [];
     localStorage.clear();
+    localStorage.setItem("carrete:revisar-modo", "one");
     mockApi({
       [`/api/v1/spaces/${SPACE_A}/assets`]: (_: RequestInit, url: URL) => {
         expect(url.searchParams.getAll("review")).toEqual(["pending"]);
@@ -95,6 +96,52 @@ describe("Revisar", () => {
     await waitFor(() =>
       expect(calls.some((c) => c.action === "add_album" && c.album_id === "al1")).toBe(true),
     );
+  });
+
+  it("pone y quita etiquetas sin pasar a la siguiente", async () => {
+    mockApi({
+      [`/api/v1/spaces/${SPACE_A}/assets`]: { items, next_cursor: null },
+      [`/api/v1/spaces/${SPACE_A}/albums`]: [],
+      [`/api/v1/spaces/${SPACE_A}/tags`]: [{ id: "t1", name: "Humor", count: 0 }],
+      [`POST /api/v1/spaces/${SPACE_A}/assets/batch`]: (init: RequestInit) => {
+        calls.push(JSON.parse(init.body as string) as (typeof calls)[number]);
+        return { count: 1, undo: null };
+      },
+    });
+    const user = userEvent.setup();
+    renderAt("/revisar");
+    const chips = await screen.findByRole("region", { name: "Revisar" });
+    const humor = await within(chips).findByRole("button", { name: "Humor" });
+    await user.click(humor);
+    expect(within(chips).getByRole("button", { name: "✓ Humor" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("1 de 3")).toBeInTheDocument();
+    await user.click(within(chips).getByRole("button", { name: "✓ Humor" }));
+    await waitFor(() =>
+      expect(calls.map((c) => [c.action, c.tag_id])).toEqual([
+        ["add_tag", "t1"],
+        ["remove_tag", "t1"],
+      ]),
+    );
+  });
+
+  it("en bloque: cuadrícula con casillas, día entero y decisión para todas", async () => {
+    localStorage.removeItem("carrete:revisar-modo");
+    const user = userEvent.setup();
+    renderAt("/revisar");
+    expect(await screen.findByRole("heading", { name: "Revisar" })).toBeInTheDocument();
+    // Casillas a la vista y «Seleccionar el día» sin tener que empezar a seleccionar
+    const boxes = await screen.findAllByRole("button", { name: /^Seleccionar: / });
+    expect(boxes).toHaveLength(3);
+    await user.click(screen.getAllByRole("button", { name: "Seleccionar el día" })[0]!);
+    expect(screen.getByText("3 seleccionadas")).toBeInTheDocument();
+    const bar = screen.getByRole("toolbar", { name: "Acciones sobre la selección" });
+    await user.click(within(bar).getByRole("button", { name: "Descartar" }));
+    await waitFor(() => expect(calls[0]).toMatchObject({ action: "review", state: "discarded" }));
+    expect(calls[0]?.ids).toHaveLength(3);
+    // Se recuerda el modo elegido
+    await user.click(screen.getByRole("button", { name: "Una a una" }));
+    expect(await screen.findByText("1 de 3")).toBeInTheDocument();
+    expect(localStorage.getItem("carrete:revisar-modo")).toBe("one");
   });
 
   it("explica cuando no hay nada que revisar y bloquea a los lectores", async () => {
