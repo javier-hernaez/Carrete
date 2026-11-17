@@ -35,7 +35,7 @@ WORKDIR /src/backend
 CMD ["python", "-m", "pytest"]
 
 # --- 4) Web: compila la interfaz (React + Vite) a ficheros estáticos ---------------------------------
-FROM node:22-alpine AS web
+FROM node:26-alpine AS web
 WORKDIR /web
 # Reintentos generosos: la red del mini PC a veces corta descargas largas.
 ENV npm_config_fetch_retries=6 npm_config_fetch_retry_mintimeout=20000 npm_config_fetch_retry_maxtimeout=120000
