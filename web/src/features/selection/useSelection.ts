@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-/** Selección múltiple de la cuadrícula: clic, Mayús+clic para rangos, día entero. */
+/** Selección múltiple de la cuadrícula: clic, Mayús+clic para rangos, día entero, deslizar el dedo. */
 export function useSelection(ids: string[]) {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<number | null>(null);
@@ -40,5 +40,7 @@ export function useSelection(ids: string[]) {
     setAnchor(null);
   }, []);
 
-  return { selected, toggle, toggleMany, clear, selectAll: () => setSelected(new Set(ids)) };
+  const replace = useCallback((next: Set<string>) => setSelected(next), []);
+
+  return { selected, toggle, toggleMany, replace, clear, selectAll: () => setSelected(new Set(ids)) };
 }
